@@ -1,5 +1,25 @@
 {
+  "name": "mstr",
+  "version": "0.1.0",
+  "engines": {
+    "npm": "use-pnpm",
+    "yarn": "use-pnpm"
+  },
+  "scripts": {
+    "deploy": "./script/deploy/deploy.sh",
+    "fmt:check": "forge fmt --check && prettier . --check",
+    "fmt": "forge fmt && prettier . --write",
+    "lint:check": "pnpm run fmt:check && pnpm run solhint:check",
+    "lint": "pnpm run fmt && pnpm run solhint",
+    "postinstall": "./shell/install.sh",
+    "publish": "./shell/publish.sh",
+    "size": "forge clean && forge build --sizes --skip test --skip '*/Mock*.sol'",
+    "solhint:check": "solhint --config ./.solhint.json 'src/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'",
+    "solhint": "solhint --fix --config ./.solhint.json 'src/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'",
+    "test": "forge test -vvv"
+  },
   "devDependencies": {
-    "@types/bun": "^1.1.6"
+    "solhint-community": "3.7.0",
+    "prettier": "3.3.3"
   }
 }

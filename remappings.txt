@@ -1,3 +1,6 @@
-@forge-std=dependencies/forge-std-1.9.2/src
-forge-std=dependencies/forge-std-1.9.2/src
-@forge-std-1.9.2=dependencies/forge-std-1.9.2
+@forge-std/=dependencies/forge-std-1.9.4/src/
+@openzeppelin-contracts-4.9.6/=dependencies/@openzeppelin-contracts-4.9.6/
+axis-core-1.0.1/=dependencies/axis-core-1.0.1/src/
+axis-periphery-1.0.0/=dependencies/axis-periphery-1.0.0/src/
+solady-0.0.261/=dependencies/solady-0.0.261/src/
+solmate-6.8.0/=dependencies/solmate-6.8.0/src/

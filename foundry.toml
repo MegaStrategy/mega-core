@@ -1,11 +1,35 @@
 [profile.default]
 src = "src"
 out = "out"
-libs = ["dependencies"]
+fs_permissions = [{access = "read-write", path = "./bytecode/"}, {access = "read", path = "./script/"}, {access = "read-write", path = "./deployments/"}]
 verbosity = 2
 ffi = true
+solc_version = "0.8.19"
+evm_version = "paris"
+no-match-test = "optimal"
+libs = ["node_modules", "lib"]
+
+[fuzz]
+runs = 4096
+
+# Remappings are setup using remappings.txt, since forge seems to ignore remappings here
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = false
+multiline_func_header = "params_first"
+quote_style = "double"
+number_underscore = "thousands"
+wrap_comments = false
+ignore = [
+  "src/lib/**",
+]
 
 [dependencies]
-forge-std = "1.9.2"
-
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+forge-std = "1.9.4"
+solady = "0.0.261"
+axis-core = "1.0.1"
+axis-periphery = "1.0.0"
+"@openzeppelin-contracts" = "4.9.6"
+solmate = "6.8.0"

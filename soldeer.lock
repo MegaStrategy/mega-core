@@ -1,6 +1,41 @@
+[[dependencies]]
+name = "@openzeppelin-contracts"
+version = "4.9.6"
+url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/4_9_6_14-03-2024_06:11:55_contracts.zip"
+checksum = "57f2cae4b45b91b0847e58c36ea70aee0fb3212cc09b47279627f0764f87e5ee"
+integrity = "861134d6a3739362ce5ef6541538e23ca1df10ec47151f105057bea0bb710330"
+
+[[dependencies]]
+name = "axis-core"
+version = "1.0.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/axis-core/1_0_1_22-08-2024_01:53:20_axis-core.zip"
+checksum = "90ee8eca451f4454ad911c52d014bebbbacc3e0ba2260ad19e56e32598ea9d21"
+integrity = "381ce84e3d947c891a53aa651a59328bdcba27534116bf5c55f57833a5603962"
+
+[[dependencies]]
+name = "axis-periphery"
+version = "1.0.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/axis-periphery/1_0_0_22-08-2024_19:37:58_axis-periphery.zip"
+checksum = "fb20c7ebe7ab30697b72300c8c9e4cc847de98c35ab8c05b5d71fe3ed59fead0"
+integrity = "bdf5b00ff9c557d0f7c8ed4c77d03b45e8eea8bffdb14fa6354ae4734d38f91e"
 
 [[dependencies]]
 name = "forge-std"
-version = "1.9.2"
-source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_2_06-08-2024_17:31:25_forge-std-1.9.2.zip"
-checksum = "20fd008c7c69b6c737cc0284469d1c76497107bc3e004d8381f6d8781cb27980"
+version = "1.9.4"
+url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_4_25-10-2024_14:36:59_forge-std-1.9.zip"
+checksum = "b5be24beb5e4dab5e42221b2ad1288b64c826bee5ee71b6159ba93ffe86f14d4"
+integrity = "3874463846ab995a6a9a88412913cacec6144f7605daa1af57c2d8bf3f210b13"
+
+[[dependencies]]
+name = "solady"
+version = "0.0.261"
+url = "https://soldeer-revisions.s3.amazonaws.com/solady/0_0_261_02-11-2024_12:19:31_solady.zip"
+checksum = "e5cc9d6dd9ffc613d655fbb6728d53b45df55c445f95f34f402e3f110550ac36"
+integrity = "d9d92ae902d185b5ee887a833459c2f8f4f011998a195037154b176dc88639bd"
+
+[[dependencies]]
+name = "solmate"
+version = "6.8.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/solmate/6_8_0_29-10-2024_19:01:45_solmate.zip"
+checksum = "e3ec0f0182cb3bbedecf8a0bcc39897266534a795ec732b2b03dafa285d78a5b"
+integrity = "a22e5a352de0231f671ee8adf5667bbe83c50012670083987bd1099a69feb429"
