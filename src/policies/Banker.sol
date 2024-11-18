@@ -40,6 +40,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     error InvalidDebtToken();
     error InvalidParam(string name);
+    error Inactive();
     error DebtTokenMatured();
     error DebtTokenNotMatured();
     error OnlyLocal();
@@ -82,6 +83,9 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     TOKENv1 internal TOKEN;
     uint8 internal _tokenDecimals;
 
+    // Local state
+    bool public active;
+
     // Auction parameters
     uint48 internal constant ONE_HUNDRED_PERCENT = 100e2;
     uint48 public maxDiscount;
@@ -96,7 +100,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     constructor(
         Kernel kernel_,
-        address auctionHouse_
+        address auctionHouse_,
+        uint48 maxDiscount_,
+        uint24 minFillPercent_,
+        uint48 referrerFee_,
+        uint256 maxBids_
     )
         Policy(kernel_)
         BaseCallback(
@@ -145,12 +153,37 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         permissions[5] = Permissions(TOKEN_KEYCODE, TOKENv1.decreaseMintApproval.selector);
     }
 
+    // ========== INITIALIZATION ========== //
+
+    function initialize(
+        uint48 maxDiscount_,
+        uint24 minFillPercent_,
+        uint48 referrerFee_,
+        uint256 maxBids_
+    ) external onlyRole("admin") {
+        active = true;
+
+        maxDiscount = maxDiscount_;
+        minFillPercent = minFillPercent_;
+        referrerFee = referrerFee_;
+        maxBids = maxBids_;
+    }
+
+    function shutdown() external onlyRole("admin") {
+        active = false;
+    }
+
+    modifier onlyWhileActive() {
+        if (!active) revert Inactive();
+        _;
+    }
+
     // ========== AUCTION ========== //
 
     function auction(
         DebtTokenParams calldata dtParams_,
         AuctionParams calldata aParams_
-    ) external onlyRole("manager") {
+    ) external onlyRole("manager") onlyWhileActive {
         // TODO should we restrict the asset to a predefined list?
 
         // Inputs are validated when creating the debt token and launching the auction
