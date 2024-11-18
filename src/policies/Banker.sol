@@ -147,7 +147,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // ========== AUCTION ========== //
 
-    function auctionDebt(
+    function auction(
         DebtTokenParams calldata dtParams_,
         AuctionParams calldata aParams_
     ) external onlyRole("manager") {
