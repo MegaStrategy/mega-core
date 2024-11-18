@@ -16,7 +16,6 @@ import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
 import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/batch/EMP.sol";
 
 abstract contract BankerTest is Test, WithSalts {
-    
     // System contracts
     Kernel public kernel;
     OlympusRoles public ROLES;
@@ -82,10 +81,7 @@ abstract contract BankerTest is Test, WithSalts {
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
         bytes32 salt; // TODO need salt since the Banker policy is a callback
-        banker = new Banker{salt: salt}(
-            kernel,
-            address(auctionHouse)
-        );
+        banker = new Banker{salt: salt}(kernel, address(auctionHouse));
 
         // Install the modules and policies in the Kernel
         kernel.executeAction(Actions.InstallModule, address(ROLES));
@@ -101,6 +97,4 @@ abstract contract BankerTest is Test, WithSalts {
         // Deploy test ERC20 tokens
         stablecoin = new MockERC20("Stablecoin", "STBL", 18);
     }
-
-
 }
