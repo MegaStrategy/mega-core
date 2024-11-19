@@ -406,7 +406,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     // For example, in order to do buy backs of the token below the backing
     // value, we need to have paid back all outstanding debts so as to not
     // increase credit risk by exchanging reserves for tokens.
-    function redeem(address debtToken_, uint256 amount_) external {
+    function redeem(address debtToken_, uint256 amount_) external onlyWhileActive {
         // Validate that the debt token was created by this issuer
         if (!createdBy[debtToken_]) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
@@ -438,7 +438,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         emit DebtRepaid(debtToken_, msg.sender, amount_);
     }
 
-    function convert(address debtToken_, uint256 amount_) external {
+    function convert(address debtToken_, uint256 amount_) external onlyWhileActive {
         // Validate the debt token was created by this issuer
         if (!createdBy[debtToken_]) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
@@ -455,6 +455,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         if (block.timestamp >= maturity) revert DebtTokenMatured();
 
         // Burn the debt tokens from the sender
+        // Requires approval from the sender
         debtToken.burnFrom(msg.sender, amount_);
 
         // Calculate the amount of TOKEN to mint

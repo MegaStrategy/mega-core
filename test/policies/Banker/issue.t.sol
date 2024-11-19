@@ -3,8 +3,6 @@ pragma solidity 0.8.19;
 
 import {Banker} from "src/policies/Banker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
-import {ConvertibleDebtToken} from "src/misc/ConvertibleDebtToken.sol";
-import {Timestamp} from "axis-core-1.0.1/lib/Timestamp.sol";
 import {MockERC20, ERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 
 import {BankerTest} from "./BankerTest.sol";
