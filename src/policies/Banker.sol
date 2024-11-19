@@ -435,7 +435,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         debtToken.burnFrom(msg.sender, amount_);
 
         // Transfer the underlying asset to the sender from the TRSRY
-        // TODO handle withdrawals in the savings vault asset
+        // This optionally handles withdrawals from a savings vault asset
         // so that the system can earn yield while waiting for the
         // repayment to happen
         ERC4626 savingsVault = savingsVaults[asset];
