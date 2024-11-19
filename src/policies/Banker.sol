@@ -119,7 +119,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     {}
 
     function configureDependencies() external override returns (Keycode[] memory dependencies) {
-        dependencies = new Keycode[](2);
+        dependencies = new Keycode[](3);
         dependencies[0] = toKeycode("TRSRY");
         dependencies[1] = toKeycode("TOKEN");
         dependencies[2] = toKeycode("ROLES");

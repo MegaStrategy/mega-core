@@ -125,7 +125,7 @@ abstract contract BankerTest is Test, WithSalts {
         auctionParams.start = uint48(block.timestamp + 1);
         auctionParams.duration = 10;
         auctionParams.capacity = 1e18;
-        auctionParams.auctionPublicKey = ECIES.calcPubKey(Point(0, 0), auctionPrivateKey);
+        auctionParams.auctionPublicKey = ECIES.calcPubKey(Point(1, 2), auctionPrivateKey);
         auctionParams.infoHash = "ipfsHash";
     }
 

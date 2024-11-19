@@ -11,7 +11,7 @@ contract BankerAuctionTest is BankerTest {
     // ======= Tests ======= //
 
     // when the policy is not active
-    // [ ] it reverts
+    // [X] it reverts
     // when the caller is not permissioned
     // [ ] it reverts
     // when the auction parameters are invalid
@@ -31,6 +31,7 @@ contract BankerAuctionTest is BankerTest {
         vm.expectRevert(Banker.Inactive.selector);
 
         // Call
+        vm.prank(manager);
         banker.auction(debtTokenParams, auctionParams);
     }
 }
