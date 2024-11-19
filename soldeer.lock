@@ -17,7 +17,7 @@ name = "axis-periphery"
 version = "1.0.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/axis-periphery/1_0_0_22-08-2024_19:37:58_axis-periphery.zip"
 checksum = "fb20c7ebe7ab30697b72300c8c9e4cc847de98c35ab8c05b5d71fe3ed59fead0"
-integrity = "bdf5b00ff9c557d0f7c8ed4c77d03b45e8eea8bffdb14fa6354ae4734d38f91e"
+integrity = "86faa770c63aa953d4a05c2ae082b8c02a8e193cc9b6498faff26da11b57c503"
 
 [[dependencies]]
 name = "forge-std"
