@@ -18,10 +18,11 @@ contract TestSalts is Script, WithEnvironment, WithSalts {
     string public constant BANKER = "Banker";
     address public constant AUCTION_HOUSE = address(0xA);
     address public constant KERNEL = address(0xB);
-    address public constant CREATE2_DEPLOYER =
-        address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
+    address public constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
 
-    function _setUp(string calldata chain_) internal {
+    function _setUp(
+        string calldata chain_
+    ) internal {
         _loadEnv(chain_);
         _createBytecodeDirectory();
     }

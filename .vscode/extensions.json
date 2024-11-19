@@ -1,6 +1,6 @@
 {
-    "recommendations": [
-        "nomicfoundation.hardhat-solidity",
-        "gruntfuggly.todo-tree"
-    ]
+  "recommendations": [
+    "nomicfoundation.hardhat-solidity",
+    "gruntfuggly.todo-tree"
+  ]
 }
