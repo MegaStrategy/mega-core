@@ -25,7 +25,7 @@ contract ConvertibleDebtToken is ERC20 {
         address asset_,
         uint48 maturity_,
         uint256 conversionPrice_
-    ) ERC20(name_, symbol_, ERC20(asset).decimals()) {
+    ) ERC20(name_, symbol_, ERC20(asset_).decimals()) {
         // Validate the asset is not the zero address
         if (asset_ == address(0)) revert InvalidParam("asset");
 
