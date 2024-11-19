@@ -483,10 +483,10 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         // Burn the debt tokens from the sender
         debtToken.burnFrom(msg.sender, amount_);
 
-        // Calculate the amount of OHM to mint
+        // Calculate the amount of TOKEN to mint
         uint256 mintAmount = _getConvertedAmount(amount_, conversionPrice);
 
-        // Mint the OHM to the sender
+        // Mint the TOKEN to the sender
         TOKEN.mint(msg.sender, mintAmount);
 
         // Reduce this contract's withdrawal approval for the asset by the amount converted
