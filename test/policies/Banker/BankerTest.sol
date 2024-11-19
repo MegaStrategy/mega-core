@@ -16,6 +16,8 @@ import {WithSalts} from "../../lib/WithSalts.sol";
 
 import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
 import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/auctions/batch/EMP.sol";
+import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
+import {Point, ECIES} from "axis-core-1.0.1/lib/ECIES.sol";
 
 abstract contract BankerTest is Test, WithSalts {
     // System contracts
@@ -44,10 +46,18 @@ abstract contract BankerTest is Test, WithSalts {
     address public buyer = address(0x6);
 
     // System parameters
-    uint256 public maxDiscount = 10e2;
-    uint256 public minFillPercent = 100e2;
-    uint256 public referrerFee = 0;
+    uint48 public maxDiscount = 10e2;
+    uint24 public minFillPercent = 100e2;
+    uint48 public referrerFee = 0;
     uint256 public maxBids = 1000;
+
+    uint48 public constant debtTokenMaturity = 1_000_000 + 100;
+    uint256 public constant debtTokenConversionPrice = 5e18;
+
+    Banker.DebtTokenParams public debtTokenParams;
+    Banker.AuctionParams public auctionParams;
+
+    uint256 public constant auctionPrivateKey = 1234e18;
 
     function setUp() public {
         // Set block timestamp to be non-zero
@@ -104,5 +114,44 @@ abstract contract BankerTest is Test, WithSalts {
         deal(address(stablecoin), manager, 1e18);
         deal(address(stablecoin), admin, 1e18);
         deal(address(stablecoin), buyer, 1e18);
+
+        // Set debt token defaults
+        debtTokenParams.asset = address(stablecoin);
+        debtTokenParams.maturity = debtTokenMaturity;
+        debtTokenParams.conversionPrice = debtTokenConversionPrice;
+
+        // Set auction defaults
+        auctionParams.start = uint48(block.timestamp + 1);
+        auctionParams.duration = 10;
+        auctionParams.capacity = 1e18;
+        auctionParams.auctionPublicKey = ECIES.calcPubKey(Point(0, 0), auctionPrivateKey);
+        auctionParams.infoHash = "ipfsHash";
+    }
+
+    // ======= Modifiers ======= //
+
+    modifier givenPolicyIsActive() {
+        banker.initialize(maxDiscount, minFillPercent, referrerFee, maxBids);
+        _;
+    }
+
+    modifier givenCuratorFeeIsSet(uint48 curatorFee_) {
+        auctionHouse.setCuratorFee(toKeycode("EMPA"), curatorFee_);
+        _;
+    }
+
+    modifier givenDebtTokenAsset(address asset_) {
+        debtTokenParams.asset = asset_;
+        _;
+    }
+
+    modifier givenDebtTokenMaturity(uint48 maturity_) {
+        debtTokenParams.maturity = maturity_;
+        _;
+    }
+
+    modifier givenDebtTokenConversionPrice(uint256 conversionPrice_) {
+        debtTokenParams.conversionPrice = conversionPrice_;
+        _;
     }
 }

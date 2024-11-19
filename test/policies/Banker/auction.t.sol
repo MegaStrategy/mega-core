@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import {Banker} from "src/policies/Banker.sol";
+
 import {BankerTest} from "./BankerTest.sol";
 
 contract BankerAuctionTest is BankerTest {
-    // Tests
-    // when the caller is not permissioned
-    // [ ] it reverts
+    // ======= Modifiers ======= //
+
+    // ======= Tests ======= //
+
     // when the policy is not active
+    // [ ] it reverts
+    // when the caller is not permissioned
     // [ ] it reverts
     // when the auction parameters are invalid
     // [ ] it reverts
@@ -21,4 +26,11 @@ contract BankerAuctionTest is BankerTest {
     // [ ] the policy is the curator
     // [ ] the policy has accepted curation
     // [ ] the DebtAuction event is emitted
+
+    function test_policyNotActive() public {
+        vm.expectRevert(Banker.Inactive.selector);
+
+        // Call
+        banker.auction(debtTokenParams, auctionParams);
+    }
 }
