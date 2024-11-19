@@ -29,8 +29,8 @@ contract ConvertibleDebtToken is ERC20 {
         // Validate the asset is not the zero address
         if (asset_ == address(0)) revert InvalidParam("asset");
 
-        // Validate that the maturity is not sooner than the current block timestamp
-        if (maturity_ < block.timestamp) revert InvalidParam("maturity");
+        // Validate that the maturity is in the future
+        if (maturity_ <= block.timestamp) revert InvalidParam("maturity");
 
         // Validate that the conversion price is not zero
         if (conversionPrice_ == 0) revert InvalidParam("conversionPrice");

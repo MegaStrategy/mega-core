@@ -10,6 +10,7 @@ import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
 import {MSTR as MasterStrategy} from "src/modules/TOKEN/MSTR.sol";
 
 import {Test} from "@forge-std/Test.sol";
+import {console2} from "@forge-std/console2.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 import {WithSalts} from "../../lib/WithSalts.sol";
@@ -71,7 +72,7 @@ abstract contract BankerTest is Test, WithSalts {
         // We don't use permit2 here because it's not needed for the tests
         // Create a BatchAuctionHouse at a deterministic address, since it is used as input to callbacks
         BatchAuctionHouse _auctionHouse = new BatchAuctionHouse(OWNER, PROTOCOL, PERMIT2);
-        auctionHouse = BatchAuctionHouse(address(0x000000000000000000000000000000000000000A));
+        auctionHouse = BatchAuctionHouse(address(0x00000000000000000000000000000000000000AA));
         vm.etch(address(auctionHouse), address(_auctionHouse).code);
         vm.store(address(auctionHouse), bytes32(uint256(0)), bytes32(abi.encode(OWNER))); // Owner
         vm.store(address(auctionHouse), bytes32(uint256(6)), bytes32(abi.encode(1))); // Reentrancy
@@ -86,7 +87,7 @@ abstract contract BankerTest is Test, WithSalts {
 
         // This contract will be the kernel executor since it is set to msg.sender on creation
         Kernel _kernel = new Kernel();
-        kernel = Kernel(address(0xB));
+        kernel = Kernel(address(0xBB));
         vm.etch(address(kernel), address(_kernel).code);
         vm.store(address(kernel), bytes32(uint256(0)), bytes32(abi.encode(address(this))));
 

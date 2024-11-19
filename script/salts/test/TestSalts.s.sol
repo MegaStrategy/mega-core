@@ -16,8 +16,8 @@ import {Banker} from "../../../src/policies/Banker.sol";
 
 contract TestSalts is Script, WithEnvironment, WithSalts {
     string public constant BANKER = "Banker";
-    address public constant AUCTION_HOUSE = address(0xA);
-    address public constant KERNEL = address(0xB);
+    address public constant AUCTION_HOUSE = address(0xAA);
+    address public constant KERNEL = address(0xBB);
     address public constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
 
     function _setUp(
@@ -40,11 +40,11 @@ contract TestSalts is Script, WithEnvironment, WithSalts {
     }
 
     function generateBanker() public {
-        // 11000111 = 0xC7
+        // 11100111 = 0xE7
         bytes memory args = abi.encode(KERNEL, AUCTION_HOUSE);
         bytes memory contractCode = type(Banker).creationCode;
         (string memory bytecodePath, bytes32 bytecodeHash) =
             _writeBytecode(BANKER, contractCode, args);
-        _setTestSalt(bytecodePath, "C7", BANKER, bytecodeHash);
+        _setTestSalt(bytecodePath, "E7", BANKER, bytecodeHash);
     }
 }

@@ -98,6 +98,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // ========== SETUP ========== //
 
+    // Uses callback permissions 11100111, so must be prefixed with 0xE7
     constructor(
         Kernel kernel_,
         address auctionHouse_
@@ -108,7 +109,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
             Callbacks.Permissions({
                 onCreate: true,
                 onCancel: true,
-                onCurate: false,
+                onCurate: true,
                 onPurchase: false,
                 onBid: false,
                 onSettle: true,
@@ -196,7 +197,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
         // Calculate min bid size from max bids
         // Round up to be conservative
-        uint256 minBidSize = mulDivUp(minPrice, aParams_.capacity, maxBids);
+        uint256 minBidSize = mulDivUp(minPrice, aParams_.capacity, maxBids * 10 ** decimals);
 
         // Create auction for debt token
         bytes memory implParams = abi.encode(
