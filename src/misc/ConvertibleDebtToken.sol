@@ -55,6 +55,10 @@ contract ConvertibleDebtToken is ERC20 {
     }
 
     function burnFrom(address from_, uint256 amount_) external onlyIssuer {
+        uint256 allowed = allowance[from_][msg.sender];
+
+        if (allowed != type(uint256).max) allowance[from_][msg.sender] = allowed - amount_;
+
         _burn(from_, amount_);
     }
 

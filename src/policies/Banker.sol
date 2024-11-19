@@ -431,11 +431,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         if (amount_ == 0) revert InvalidParam("amount");
 
         // Burn the debt tokens from the sender
-        // TODO currently does not require approval since the issuer can burn these
-        // This may be viewed poorly by users, even if the contract is incapable
-        // of burning tokens except in legitimate cases
-        // Need to decide if this should be changed to the
-        // more common behavior of requiring an approval
+        // Requires approval from the sender
         debtToken.burnFrom(msg.sender, amount_);
 
         // Transfer the underlying asset to the sender from the TRSRY
