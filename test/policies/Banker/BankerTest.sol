@@ -59,6 +59,10 @@ abstract contract BankerTest is Test, WithSalts {
 
     uint256 public constant auctionPrivateKey = 1234e18;
 
+    uint256 public constant auctionCapacity = 100e18;
+    uint48 public constant auctionStart = 1_000_000 + 1;
+    uint48 public constant auctionDuration = 1 days;
+
     function setUp() public {
         // Set block timestamp to be non-zero
         vm.warp(1_000_000);
@@ -73,7 +77,10 @@ abstract contract BankerTest is Test, WithSalts {
         vm.store(address(auctionHouse), bytes32(uint256(6)), bytes32(abi.encode(1))); // Reentrancy
         vm.store(address(auctionHouse), bytes32(uint256(7)), bytes32(abi.encode(PROTOCOL))); // Protocol
 
+        // Install the EMP auction module
         empa = new EncryptedMarginalPrice(address(auctionHouse));
+        vm.prank(OWNER);
+        auctionHouse.installModule(empa);
 
         // Deploy system contracts
 
@@ -91,9 +98,7 @@ abstract contract BankerTest is Test, WithSalts {
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
         bytes memory args = abi.encode(kernel, address(auctionHouse));
-        bytes32 salt = _getTestSalt(
-            "Banker", type(Banker).creationCode, args
-        );
+        bytes32 salt = _getTestSalt("Banker", type(Banker).creationCode, args);
         vm.broadcast();
         banker = new Banker{salt: salt}(kernel, address(auctionHouse));
 
@@ -122,9 +127,9 @@ abstract contract BankerTest is Test, WithSalts {
         debtTokenParams.conversionPrice = debtTokenConversionPrice;
 
         // Set auction defaults
-        auctionParams.start = uint48(block.timestamp + 1);
-        auctionParams.duration = 10;
-        auctionParams.capacity = 1e18;
+        auctionParams.start = auctionStart;
+        auctionParams.duration = auctionDuration;
+        auctionParams.capacity = auctionCapacity;
         auctionParams.auctionPublicKey = ECIES.calcPubKey(Point(1, 2), auctionPrivateKey);
         auctionParams.infoHash = "ipfsHash";
     }
@@ -132,26 +137,35 @@ abstract contract BankerTest is Test, WithSalts {
     // ======= Modifiers ======= //
 
     modifier givenPolicyIsActive() {
+        vm.prank(admin);
         banker.initialize(maxDiscount, minFillPercent, referrerFee, maxBids);
         _;
     }
 
-    modifier givenCuratorFeeIsSet(uint48 curatorFee_) {
+    modifier givenCuratorFeeIsSet(
+        uint48 curatorFee_
+    ) {
         auctionHouse.setCuratorFee(toKeycode("EMPA"), curatorFee_);
         _;
     }
 
-    modifier givenDebtTokenAsset(address asset_) {
+    modifier givenDebtTokenAsset(
+        address asset_
+    ) {
         debtTokenParams.asset = asset_;
         _;
     }
 
-    modifier givenDebtTokenMaturity(uint48 maturity_) {
+    modifier givenDebtTokenMaturity(
+        uint48 maturity_
+    ) {
         debtTokenParams.maturity = maturity_;
         _;
     }
 
-    modifier givenDebtTokenConversionPrice(uint256 conversionPrice_) {
+    modifier givenDebtTokenConversionPrice(
+        uint256 conversionPrice_
+    ) {
         debtTokenParams.conversionPrice = conversionPrice_;
         _;
     }
