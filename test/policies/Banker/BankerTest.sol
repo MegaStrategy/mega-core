@@ -64,6 +64,8 @@ abstract contract BankerTest is Test, WithSalts {
     uint48 public constant auctionStart = 1_000_000 + 1;
     uint48 public constant auctionDuration = 1 days;
 
+    address public debtToken;
+
     function setUp() public {
         // Set block timestamp to be non-zero
         vm.warp(1_000_000);
@@ -168,6 +170,18 @@ abstract contract BankerTest is Test, WithSalts {
         uint256 conversionPrice_
     ) {
         debtTokenParams.conversionPrice = conversionPrice_;
+        _;
+    }
+
+    function _createDebtToken() internal {
+        vm.prank(manager);
+        debtToken = banker.createDebtToken(
+            debtTokenParams.asset, debtTokenParams.maturity, debtTokenParams.conversionPrice
+        );
+    }
+
+    modifier givenDebtTokenCreated() {
+        _createDebtToken();
         _;
     }
 }

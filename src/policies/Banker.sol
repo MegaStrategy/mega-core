@@ -438,6 +438,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         // This optionally handles withdrawals from a savings vault asset
         // so that the system can earn yield while waiting for the
         // repayment to happen
+        // TODO need to handle withdraw approvals for savings vaults
         ERC4626 savingsVault = savingsVaults[asset];
         if (address(savingsVault) != address(0)) {
             // Get the equivalent balance of savings vault tokens
