@@ -329,8 +329,8 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         address asset_,
         uint48 maturity_,
         uint256 conversionPrice_
-    ) external onlyRole("manager") {
-        _createDebtToken(DebtTokenParams(asset_, maturity_, conversionPrice_));
+    ) external onlyRole("manager") onlyWhileActive returns (address) {
+        return _createDebtToken(DebtTokenParams(asset_, maturity_, conversionPrice_));
     }
 
     function _createDebtToken(
@@ -341,6 +341,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
             _computeNameAndSymbol(dtParams_.asset, dtParams_.maturity);
 
         // Create a new debt token
+        // Parameters are validated in the constructor
         debtToken = address(
             new ConvertibleDebtToken(
                 name, symbol, dtParams_.asset, dtParams_.maturity, dtParams_.conversionPrice
@@ -358,7 +359,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // ========== ISSUANCE =========== //
 
-    function issue(address debtToken_, address to_, uint256 amount_) external onlyRole("manager") {
+    function issue(
+        address debtToken_,
+        address to_,
+        uint256 amount_
+    ) external onlyRole("manager") onlyWhileActive {
         _issue(debtToken_, to_, amount_);
     }
 
