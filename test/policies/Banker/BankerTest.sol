@@ -94,6 +94,7 @@ abstract contract BankerTest is Test, WithSalts {
         bytes32 salt = _getTestSalt(
             "Banker", type(Banker).creationCode, args
         );
+        vm.broadcast();
         banker = new Banker{salt: salt}(kernel, address(auctionHouse));
 
         // Install the modules and policies in the Kernel
