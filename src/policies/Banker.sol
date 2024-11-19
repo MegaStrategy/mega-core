@@ -94,7 +94,6 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     uint256 public maxBids;
 
     mapping(address => bool) public createdBy;
-    mapping(ERC20 asset => ERC4626 savingsVault) public savingsVaults;
 
     // ========== SETUP ========== //
 
@@ -309,16 +308,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         // because the receiveQuoteTokens flag is set for the callback
         // We allow the admin to configure a savings vault to deposit
         // the proceeds into prior to sending to the treasury (e.g. sUSDS for USDS)
-        ERC20 asset = ERC20(quoteToken);
-        ERC4626 savingsVault = savingsVaults[asset];
-        if (address(savingsVault) != address(0)) {
-            // Savings vault is already approved by the asset token
-
-            // Deposit asset token into savings vault and credit the TRSRY
-            savingsVault.deposit(proceeds_, address(TRSRY));
-        } else {
-            asset.safeTransfer(address(TRSRY), proceeds_);
-        }
+        ERC20(quoteToken).safeTransfer(address(TRSRY), proceeds_);
 
         emit AuctionSucceeded(baseToken, refund_, quoteToken, proceeds_);
     }
@@ -435,24 +425,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         debtToken.burnFrom(msg.sender, amount_);
 
         // Transfer the underlying asset to the sender from the TRSRY
-        // This optionally handles withdrawals from a savings vault asset
-        // so that the system can earn yield while waiting for the
-        // repayment to happen
-        // TODO need to handle withdraw approvals for savings vaults
-        ERC4626 savingsVault = savingsVaults[asset];
-        if (address(savingsVault) != address(0)) {
-            // Get the equivalent balance of savings vault tokens
-            uint256 shares = savingsVault.previewWithdraw(amount_);
-
-            // Withdraw the savings vault tokens from the TRSRY
-            TRSRY.withdrawReserves(address(this), savingsVault, shares);
-
-            // Withdraw the asset from the savings vault
-            savingsVault.withdraw(amount_, msg.sender, address(this));
-        } else {
-            // Withdraw from the treasury and send to the caller
-            TRSRY.withdrawReserves(msg.sender, asset, amount_);
-        }
+        TRSRY.withdrawReserves(msg.sender, asset, amount_);
 
         // Calculate the amount of tokens that could have been minted against the debt tokens
         uint256 mintAmount = _getConvertedAmount(amount_, conversionPrice);
