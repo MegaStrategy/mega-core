@@ -13,23 +13,23 @@ contract BankerCreateTokenTest is BankerTest {
     using Timestamp for uint48;
 
     // test cases
-    // [ ] when the policy is not active
-    //     [ ] it reverts
-    // [ ] when the caller is not permissioned
-    //     [ ] it reverts
-    // [ ] when the asset is the zero address
-    //     [ ] it reverts
-    // [ ] when the asset is not a valid ERC20
-    //     [ ] it reverts
-    // [ ] when the maturity is not in the future
-    //     [ ] it reverts
-    // [ ] when the conversion price is zero
-    //     [ ] it reverts
-    // [ ] when the parameters are valid
-    //     [ ] it creates a ConvertibleDebtToken with the given parameters
-    //     [ ] it stores the debt token address in the createdBy mapping
-    //     [ ] the token name is the asset name plus the maturity date
-    //     [ ] the token symbol is the asset symbol plus the maturity date
+    // [X] when the policy is not active
+    //     [X] it reverts
+    // [X] when the caller is not permissioned
+    //     [X] it reverts
+    // [X] when the asset is the zero address
+    //     [X] it reverts
+    // [X] when the asset is not a valid ERC20
+    //     [X] it reverts
+    // [X] when the maturity is not in the future
+    //     [X] it reverts
+    // [X] when the conversion price is zero
+    //     [X] it reverts
+    // [X] when the parameters are valid
+    //     [X] it creates a ConvertibleDebtToken with the given parameters
+    //     [X] it stores the debt token address in the createdBy mapping
+    //     [X] the token name is the asset name plus the maturity date
+    //     [X] the token symbol is the asset symbol plus the maturity date
 
     function test_policyNotActive_reverts() public {
         vm.prank(manager);
