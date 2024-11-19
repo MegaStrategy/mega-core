@@ -100,11 +100,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     constructor(
         Kernel kernel_,
-        address auctionHouse_,
-        uint48 maxDiscount_,
-        uint24 minFillPercent_,
-        uint48 referrerFee_,
-        uint256 maxBids_
+        address auctionHouse_
     )
         Policy(kernel_)
         BaseCallback(
@@ -380,9 +376,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         if (block.timestamp >= maturity) revert DebtTokenMatured();
 
         // Increase this contract's withdrawal approval for the asset by the amount issued
+        // This is to ensure that the debt token can be redeemed
         TRSRY.increaseWithdrawApproval(address(this), asset, amount);
 
         // Increase this contract's mint approval for the amount divided by the conversion rate
+        // This is to ensure that the debt token can be converted
         uint256 mintAmount = _getConvertedAmount(amount, conversionPrice);
         TOKEN.increaseMintApproval(address(this), mintAmount);
 

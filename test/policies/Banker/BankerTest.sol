@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "src/Kernel.sol";
+import {Kernel, Actions} from "src/Kernel.sol";
 
-import "src/policies/Banker.sol";
-import "src/policies/RolesAdmin.sol";
-import "src/modules/ROLES/OlympusRoles.sol";
-import "src/modules/TRSRY/OlympusTreasury.sol";
-import "src/modules/TOKEN/MSTR.sol";
+import {Banker} from "src/policies/Banker.sol";
+import {RolesAdmin} from "src/policies/RolesAdmin.sol";
+import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
+import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
+import {MSTR as MasterStrategy} from "src/modules/TOKEN/MSTR.sol";
 
 import {Test} from "@forge-std/Test.sol";
-import {ERC20, MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
+import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
+import {WithSalts} from "../../lib/WithSalts.sol";
 
 import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
 import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/auctions/batch/EMP.sol";
@@ -20,7 +22,7 @@ abstract contract BankerTest is Test, WithSalts {
     Kernel public kernel;
     OlympusRoles public ROLES;
     OlympusTreasury public TRSRY;
-    MSTR public MSTR;
+    MasterStrategy public MSTR;
     Banker public banker;
     RolesAdmin public rolesAdmin;
 
@@ -51,11 +53,6 @@ abstract contract BankerTest is Test, WithSalts {
         // Set block timestamp to be non-zero
         vm.warp(1_000_000);
 
-        // Fund the addresses that we'll use to call the contracts
-        vm.mint(manager, 1e18);
-        vm.mint(admin, 1e18);
-        vm.mint(buyer, 1e18);
-
         // Deploy axis contracts
         // We don't use permit2 here because it's not needed for the tests
         // Create a BatchAuctionHouse at a deterministic address, since it is used as input to callbacks
@@ -79,18 +76,21 @@ abstract contract BankerTest is Test, WithSalts {
         // Modules
         ROLES = new OlympusRoles(kernel);
         TRSRY = new OlympusTreasury(kernel);
-        MSTR = new MSTR(kernel, "Master Strategy", "MSTR");
+        MSTR = new MasterStrategy(kernel, "Master Strategy", "MSTR");
 
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
-        bytes32 salt; // TODO need salt since the Banker policy is a callback
+        bytes memory args = abi.encode(kernel, address(auctionHouse));
+        bytes32 salt = _getTestSalt(
+            "Banker", type(Banker).creationCode, args
+        );
         banker = new Banker{salt: salt}(kernel, address(auctionHouse));
 
         // Install the modules and policies in the Kernel
         kernel.executeAction(Actions.InstallModule, address(ROLES));
         kernel.executeAction(Actions.InstallModule, address(TRSRY));
         kernel.executeAction(Actions.InstallModule, address(MSTR));
-        kernel.executeAction(Actions.InstallPolicy, address(rolesAdmin));
+        kernel.executeAction(Actions.ActivatePolicy, address(rolesAdmin));
         kernel.executeAction(Actions.ActivatePolicy, address(banker));
 
         // Set permissioned roles
@@ -99,5 +99,10 @@ abstract contract BankerTest is Test, WithSalts {
 
         // Deploy test ERC20 tokens
         stablecoin = new MockERC20("Stablecoin", "STBL", 18);
+
+        // Fund the addresses that we'll use to call the contracts
+        deal(address(stablecoin), manager, 1e18);
+        deal(address(stablecoin), admin, 1e18);
+        deal(address(stablecoin), buyer, 1e18);
     }
 }
