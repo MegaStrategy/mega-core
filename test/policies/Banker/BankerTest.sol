@@ -13,7 +13,7 @@ import {Test} from "@forge-std/Test.sol";
 import {ERC20, MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 
 import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
-import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/batch/EMP.sol";
+import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/auctions/batch/EMP.sol";
 
 abstract contract BankerTest is Test, WithSalts {
     // System contracts
@@ -71,7 +71,10 @@ abstract contract BankerTest is Test, WithSalts {
         // Deploy system contracts
 
         // This contract will be the kernel executor since it is set to msg.sender on creation
-        kernel = new Kernel();
+        Kernel _kernel = new Kernel();
+        kernel = Kernel(address(0xB));
+        vm.etch(address(kernel), address(_kernel).code);
+        vm.store(address(kernel), bytes32(uint256(0)), bytes32(abi.encode(address(this))));
 
         // Modules
         ROLES = new OlympusRoles(kernel);
