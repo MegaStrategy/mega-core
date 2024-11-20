@@ -206,6 +206,10 @@ abstract contract BankerTest is Test, WithSalts {
     modifier givenAuctionIsCreated() {
         vm.prank(manager);
         banker.auction(debtTokenParams, auctionParams);
+
+        // Set the debt token based on the auction
+        (, address baseToken,,,,,,,) = auctionHouse.lotRouting(0);
+        debtToken = baseToken;
         _;
     }
 }

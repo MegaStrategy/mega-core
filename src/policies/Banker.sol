@@ -23,7 +23,6 @@ import {ConvertibleDebtToken} from "src/misc/ConvertibleDebtToken.sol";
 
 // External
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
-import {ERC4626} from "solmate-6.8.0/tokens/ERC4626.sol";
 import {TransferHelper} from "src/lib/TransferHelper.sol";
 
 // Requirements
@@ -240,6 +239,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         emit DebtAuction(lotId);
     }
 
+    /// @inheritdoc BaseCallback
     function _onCreate(
         uint96,
         address seller_,
@@ -262,6 +262,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         _issue(baseToken_, msg.sender, capacity_);
     }
 
+    /// @inheritdoc BaseCallback
     function _onCancel(uint96 lotId_, uint256 refund_, bool, bytes calldata) internal override {
         // Lot ID is validated by the higher level function
 
@@ -272,10 +273,14 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         ConvertibleDebtToken(baseToken).burn(refund_);
     }
 
-    // Not implemented
+    /// @inheritdoc BaseCallback
+    /// @dev        Not implemented
+    ///             This implicitly means that curator fees are not supported, as the AuctionHouse
+    ///             will revert if the curator fee is set and the curator fees are not sent.
     function _onCurate(uint96, uint256, bool, bytes calldata) internal override {}
 
-    // Not implemented
+    /// @inheritdoc BaseCallback
+    /// @dev        Not implemented
     function _onPurchase(
         uint96,
         address,
@@ -285,9 +290,12 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         bytes calldata
     ) internal override {}
 
-    // Not Implemented
+    /// @inheritdoc BaseCallback
+    /// @dev        Not implemented
     function _onBid(uint96, uint64, address, uint256, bytes calldata) internal override {}
 
+    /// @inheritdoc BaseCallback
+    /// @dev        Not implemented
     function _onSettle(
         uint96 lotId_,
         uint256 proceeds_,
