@@ -8,11 +8,11 @@ contract BankerShutdownTest is BankerTest {
     // ======= Tests ======= //
 
     // when the caller is not permissioned
-    // [X] it reverts
+    //  [X] it reverts
     // when the policy is not active
-    // [X] the policy is still inactive
+    //  [X] the policy is still inactive
     // when the policy is active
-    // [X] it sets the policy to inactive
+    //  [X] it sets the policy to inactive
 
     function test_callerNotPermissioned_reverts() public {
         vm.expectRevert(

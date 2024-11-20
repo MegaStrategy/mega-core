@@ -24,20 +24,19 @@ contract BankerAuctionTest is BankerTest {
     // ======= Tests ======= //
 
     // when the policy is not active
-    // [X] it reverts
+    //  [X] it reverts
     // when the caller is not permissioned
-    // [X] it reverts
+    //  [X] it reverts
     // when the auction parameters are invalid
-    // [X] it reverts
-    // [X] it reverts
+    //  [X] it reverts
     // when the debt token asset is the zero address
-    // [X] it reverts
+    //  [X] it reverts
     // given the parameters are valid
-    // [X] it creates an EMP auction with the given auction parameters
-    // [X] the AuctionHouse receives the capacity in debt tokens
-    // [X] the policy is the curator
-    // [X] the policy has accepted curation
-    // [X] the DebtAuction event is emitted
+    //  [X] it creates an EMP auction with the given auction parameters
+    //  [X] the AuctionHouse receives the capacity in debt tokens
+    //  [X] the policy is the curator
+    //  [X] the policy has accepted curation
+    //  [X] the DebtAuction event is emitted
 
     function test_policyNotActive() public {
         vm.expectRevert(Banker.Inactive.selector);
