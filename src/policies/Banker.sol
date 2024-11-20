@@ -537,7 +537,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
             revert InvalidParam("minFillPercent");
         }
 
-        minFillPercent_;
+        minFillPercent = minFillPercent_;
 
         emit MinFillPercentSet(minFillPercent_);
     }
