@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
-import {BankerTest} from "./BankerTest.sol";
+import {BankerTest} from "../BankerTest.sol";
 
 contract BankerShutdownTest is BankerTest {
     // ======= Tests ======= //
