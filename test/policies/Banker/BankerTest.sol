@@ -202,4 +202,10 @@ abstract contract BankerTest is Test, WithSalts {
         _fundTreasury(amount_);
         _;
     }
+
+    modifier givenAuctionIsCreated() {
+        vm.prank(manager);
+        banker.auction(debtTokenParams, auctionParams);
+        _;
+    }
 }
