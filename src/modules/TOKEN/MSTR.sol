@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import "src/modules/TOKEN/TOKEN.v1.sol";
-import "src/Kernel.sol";
+import {ERC20} from "@openzeppelin-contracts-4.9.6/token/ERC20/ERC20.sol";
+import {ERC20Permit} from "@openzeppelin-contracts-4.9.6/token/ERC20/extensions/ERC20Permit.sol";
+import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
+import {Kernel, Module, Keycode, toKeycode} from "src/Kernel.sol";
 
 /// @notice Token implementation for the system
 /// @dev This is a fork of the OlympusMinter, but modified to use the contract as the token instead of an external one

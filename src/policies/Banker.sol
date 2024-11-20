@@ -11,7 +11,7 @@ import {Point} from "axis-core-1.0.1/lib/ECIES.sol";
 import {toKeycode as toAxisKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
 import {Timestamp} from "axis-core-1.0.1/lib/Timestamp.sol";
 
-import "src/Kernel.sol";
+import {Kernel, Policy, Keycode, toKeycode, Permissions} from "src/Kernel.sol";
 
 // Modules
 import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
