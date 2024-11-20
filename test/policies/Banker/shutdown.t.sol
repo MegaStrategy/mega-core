@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Banker} from "src/policies/Banker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {BankerTest} from "./BankerTest.sol";
 
@@ -17,7 +16,7 @@ contract BankerShutdownTest is BankerTest {
 
     function test_callerNotPermissioned_reverts() public {
         vm.expectRevert(
-            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes("admin"))
+            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("admin"))
         );
         banker.shutdown();
     }

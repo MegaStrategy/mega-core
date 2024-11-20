@@ -12,6 +12,7 @@ import {
     keycodeFromVeecode
 } from "axis-core-1.0.1/modules/Keycode.sol";
 import {ICallback} from "axis-core-1.0.1/interfaces/ICallback.sol";
+import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 import {BankerTest} from "./BankerTest.sol";
 
@@ -111,7 +112,7 @@ contract BankerAuctionTest is BankerTest {
         // EMP auction is created
         (
             address seller,
-            ,
+            address baseToken,
             address quoteToken,
             Veecode auctionReference,
             uint256 funding,
@@ -163,5 +164,12 @@ contract BankerAuctionTest is BankerTest {
 
         assertEq(curator, address(banker), "curator == banker");
         assertTrue(curated, "curated");
+
+        // Convertible debt token
+        assertEq(
+            ERC20(baseToken).totalSupply(),
+            auctionCapacity,
+            "baseToken.totalSupply() == auctionCapacity"
+        );
     }
 }
