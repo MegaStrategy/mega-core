@@ -51,10 +51,7 @@ contract MSTR is TOKENv1 {
     }
 
     /// @inheritdoc TOKENv1
-    function burnFrom(
-        address from_,
-        uint256 amount_
-    ) external override permissioned onlyWhileActive {
+    function burnFrom(address from_, uint256 amount_) external override onlyWhileActive {
         if (amount_ == 0) revert TOKEN_ZeroAmount();
 
         // Spend the allowance of the caller
