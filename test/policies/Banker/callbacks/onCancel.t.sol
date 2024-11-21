@@ -23,7 +23,12 @@ contract BankerCallbackOnCancelTest is BankerTest {
         banker.onCancel(0, 0, true, "");
     }
 
-    function test_callerIsNotAuctionHouse() public givenPolicyIsActive givenDebtTokenCreated givenAuctionIsCreated {
+    function test_callerIsNotAuctionHouse()
+        public
+        givenPolicyIsActive
+        givenDebtTokenCreated
+        givenAuctionIsCreated
+    {
         vm.expectRevert(abi.encodeWithSelector(BaseCallback.Callback_NotAuthorized.selector));
 
         // Call
@@ -31,13 +36,22 @@ contract BankerCallbackOnCancelTest is BankerTest {
         banker.onCancel(0, 0, true, "");
     }
 
-    function test_success() public givenPolicyIsActive givenDebtTokenCreated givenAuctionIsCreated {
+    function test_success()
+        public
+        givenPolicyIsActive
+        givenDebtTokenCreated
+        givenAuctionIsCreated
+    {
         // Call
         vm.prank(address(auctionHouse));
         banker.onCancel(0, auctionCapacity, true, "");
 
         // Assert
         assertEq(ERC20(debtToken).balanceOf(address(banker)), 0, "banker: debtToken.balance == 0");
-        assertEq(ERC20(debtToken).balanceOf(address(auctionHouse)), 0, "auctionHouse: debtToken.balance == auctionCapacity");
+        assertEq(
+            ERC20(debtToken).balanceOf(address(auctionHouse)),
+            0,
+            "auctionHouse: debtToken.balance == auctionCapacity"
+        );
     }
 }

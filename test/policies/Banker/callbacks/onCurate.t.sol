@@ -32,7 +32,12 @@ contract BankerCallbackOnCurateTest is BankerTest {
         banker.onCurate(0, 0, true, "");
     }
 
-    function test_curatorHasFee() public givenPolicyIsActive givenDebtTokenCreated givenAuctionIsCreated {
+    function test_curatorHasFee()
+        public
+        givenPolicyIsActive
+        givenDebtTokenCreated
+        givenAuctionIsCreated
+    {
         vm.prank(address(auctionHouse));
         banker.onCurate(0, 100, true, "");
 
@@ -45,7 +50,12 @@ contract BankerCallbackOnCurateTest is BankerTest {
         );
     }
 
-    function test_curatorHasNoFee() public givenPolicyIsActive givenDebtTokenCreated givenAuctionIsCreated {
+    function test_curatorHasNoFee()
+        public
+        givenPolicyIsActive
+        givenDebtTokenCreated
+        givenAuctionIsCreated
+    {
         vm.prank(address(auctionHouse));
         banker.onCurate(0, 0, false, "");
 
