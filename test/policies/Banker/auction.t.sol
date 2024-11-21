@@ -38,7 +38,7 @@ contract BankerAuctionTest is BankerTest {
     //  [X] the policy has accepted curation
     //  [X] the DebtAuction event is emitted
 
-    function test_policyNotActive() public {
+    function test_policyNotActive_reverts() public {
         vm.expectRevert(Banker.Inactive.selector);
 
         // Call
@@ -46,7 +46,7 @@ contract BankerAuctionTest is BankerTest {
         banker.auction(debtTokenParams, auctionParams);
     }
 
-    function test_callerNotPermissioned() public {
+    function test_callerNotPermissioned_reverts() public {
         vm.expectRevert(
             abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("manager"))
         );
@@ -56,7 +56,7 @@ contract BankerAuctionTest is BankerTest {
         banker.auction(debtTokenParams, auctionParams);
     }
 
-    function test_debtToken_zeroAddress()
+    function test_debtToken_zeroAddress_reverts()
         public
         givenPolicyIsActive
         givenDebtTokenAsset(address(0))
@@ -68,7 +68,7 @@ contract BankerAuctionTest is BankerTest {
         banker.auction(debtTokenParams, auctionParams);
     }
 
-    function test_auctionParameters_invalid() public givenPolicyIsActive {
+    function test_auctionParameters_invalid_reverts() public givenPolicyIsActive {
         // Set the auction start time to the past
         auctionParams.start = uint48(block.timestamp - 1);
 
@@ -83,7 +83,7 @@ contract BankerAuctionTest is BankerTest {
         banker.auction(debtTokenParams, auctionParams);
     }
 
-    function test_debtTokenMaturity_invalid(
+    function test_debtTokenMaturity_invalid_reverts(
         uint48 maturity_
     ) public givenPolicyIsActive {
         uint48 maturity = uint48(bound(maturity_, 0, block.timestamp));
@@ -99,9 +99,9 @@ contract BankerAuctionTest is BankerTest {
     }
 
     function test_auction_success() public givenPolicyIsActive {
-        // // Expect emit
-        // emit DebtAuction(1);
-        // vm.expectEmit(address(banker));
+        // Expect emit
+        vm.expectEmit(address(banker));
+        emit DebtAuction(0);
 
         // Call
         vm.prank(manager);

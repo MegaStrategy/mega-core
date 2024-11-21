@@ -3,13 +3,8 @@ pragma solidity 0.8.19;
 
 // Scripting libraries
 import {Script} from "@forge-std/Script.sol";
-import {console2} from "@forge-std/console2.sol";
 import {WithEnvironment} from "../../WithEnvironment.s.sol";
 import {WithSalts} from "../WithSalts.s.sol";
-
-// Libraries
-import {Callbacks} from "axis-core-1.0.1/lib/Callbacks.sol";
-import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 
 // Contracts
 import {Banker} from "../../../src/policies/Banker.sol";

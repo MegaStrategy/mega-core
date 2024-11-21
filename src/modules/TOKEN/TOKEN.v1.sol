@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import "src/Kernel.sol";
-import {
-    ERC20Votes,
-    ERC20Permit,
-    ERC20
-} from "@openzeppelin-contracts-4.9.6/token/ERC20/extensions/ERC20Votes.sol";
+import {Module} from "src/Kernel.sol";
+import {ERC20Votes} from "@openzeppelin-contracts-4.9.6/token/ERC20/extensions/ERC20Votes.sol";
 
 /// @notice Token for the overall system
 abstract contract TOKENv1 is ERC20Votes, Module {

@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import {Banker} from "src/policies/Banker.sol";
-import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {ConvertibleDebtToken} from "src/misc/ConvertibleDebtToken.sol";
 

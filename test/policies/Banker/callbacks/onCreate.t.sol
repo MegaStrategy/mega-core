@@ -25,7 +25,7 @@ contract BankerCallbackOnCreateTest is BankerTest {
     //  [X] it reverts
     // [X] it issues the convertible debt token to the auction house
 
-    function test_sellerIsNotBanker() public givenPolicyIsActive givenDebtTokenCreated {
+    function test_sellerIsNotBanker_reverts() public givenPolicyIsActive givenDebtTokenCreated {
         vm.expectRevert(abi.encodeWithSelector(Banker.OnlyLocal.selector));
 
         // Call
@@ -33,28 +33,32 @@ contract BankerCallbackOnCreateTest is BankerTest {
         banker.onCreate(0, address(this), debtToken, address(0), auctionCapacity, true, "");
     }
 
-    function test_prefundIsFalse() public givenPolicyIsActive givenDebtTokenCreated {
+    function test_prefundIsFalse_reverts() public givenPolicyIsActive givenDebtTokenCreated {
         vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "prefund"));
 
         vm.prank(address(auctionHouse));
         banker.onCreate(0, address(banker), debtToken, address(0), auctionCapacity, false, "");
     }
 
-    function test_callbackAlreadyCalled() public givenPolicyIsActive givenAuctionIsCreated {
+    function test_callbackAlreadyCalled_reverts()
+        public
+        givenPolicyIsActive
+        givenAuctionIsCreated
+    {
         vm.expectRevert(abi.encodeWithSelector(BaseCallback.Callback_InvalidParams.selector));
 
         vm.prank(address(auctionHouse));
         banker.onCreate(0, address(banker), debtToken, address(0), auctionCapacity, true, "");
     }
 
-    function test_amountIsZero() public givenPolicyIsActive givenDebtTokenCreated {
+    function test_amountIsZero_reverts() public givenPolicyIsActive givenDebtTokenCreated {
         vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "amount"));
 
         vm.prank(address(auctionHouse));
         banker.onCreate(0, address(banker), debtToken, address(0), 0, true, "");
     }
 
-    function test_debtTokenIsNotCreatedByIssuer() public givenPolicyIsActive {
+    function test_debtTokenIsNotCreatedByIssuer_reverts() public givenPolicyIsActive {
         // Create another token
         ConvertibleDebtToken anotherDebtToken = new ConvertibleDebtToken(
             "Another Debt Token",
@@ -72,7 +76,7 @@ contract BankerCallbackOnCreateTest is BankerTest {
         );
     }
 
-    function test_debtTokenHasMatured(
+    function test_debtTokenHasMatured_reverts(
         uint48 maturityElapsed_
     ) public givenPolicyIsActive givenDebtTokenCreated {
         uint48 maturityElapsed = uint48(bound(maturityElapsed_, 0, 1 weeks));

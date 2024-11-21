@@ -15,7 +15,7 @@ contract BankerCallbackOnCancelTest is BankerTest {
     //  [X] it reverts
     // [X] it burns the refunded amount of debt tokens
 
-    function test_lotDoesNotExist() public givenPolicyIsActive {
+    function test_lotDoesNotExist_reverts() public givenPolicyIsActive {
         vm.expectRevert(abi.encodeWithSelector(BaseCallback.Callback_NotAuthorized.selector));
 
         // Call
@@ -23,12 +23,7 @@ contract BankerCallbackOnCancelTest is BankerTest {
         banker.onCancel(0, 0, true, "");
     }
 
-    function test_callerIsNotAuctionHouse()
-        public
-        givenPolicyIsActive
-        givenDebtTokenCreated
-        givenAuctionIsCreated
-    {
+    function test_callerIsNotAuctionHouse_reverts() public givenPolicyIsActive {
         vm.expectRevert(abi.encodeWithSelector(BaseCallback.Callback_NotAuthorized.selector));
 
         // Call
@@ -36,12 +31,12 @@ contract BankerCallbackOnCancelTest is BankerTest {
         banker.onCancel(0, 0, true, "");
     }
 
-    function test_success()
-        public
-        givenPolicyIsActive
-        givenDebtTokenCreated
-        givenAuctionIsCreated
-    {
+    function test_success() public givenPolicyIsActive givenAuctionIsCreated {
+        // Provide base tokens to the callback from the AuctionHouse
+        // This is expected to be provided by the auction house
+        vm.prank(address(auctionHouse));
+        ERC20(debtToken).transfer(address(banker), auctionCapacity);
+
         // Call
         vm.prank(address(auctionHouse));
         banker.onCancel(0, auctionCapacity, true, "");
