@@ -60,7 +60,12 @@ contract Issuer is Policy, RolesConsumer {
     }
 
     /// @inheritdoc Policy
-    function requestPermissions() external view override returns (Permissions[] memory permissions) {
+    function requestPermissions()
+        external
+        view
+        override
+        returns (Permissions[] memory permissions)
+    {
         Keycode TOKEN_KEYCODE = TOKEN.KEYCODE();
 
         permissions = new Permissions[](3);
