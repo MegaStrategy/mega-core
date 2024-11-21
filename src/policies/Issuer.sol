@@ -11,6 +11,7 @@ import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
 // Other Local
 import {oToken} from "src/misc/oToken.sol";
 
+import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {Timestamp} from "axis-core-1.0.1/lib/Timestamp.sol";
 
 contract Issuer is Policy, RolesConsumer {
@@ -59,7 +60,7 @@ contract Issuer is Policy, RolesConsumer {
     }
 
     /// @inheritdoc Policy
-    function requestPermissions() external view override returns (Permissions[] memory requests) {
+    function requestPermissions() external view override returns (Permissions[] memory permissions) {
         Keycode TOKEN_KEYCODE = TOKEN.KEYCODE();
 
         permissions = new Permissions[](3);
@@ -87,37 +88,37 @@ contract Issuer is Policy, RolesConsumer {
         address quoteToken_,
         uint48 expiry_,
         uint256 convertiblePrice_
-    ) external onlyRole("admin") returns (address oToken) {
+    ) external onlyRole("admin") returns (address token) {
         // Create oToken
         // Expiry and convertible price are validated in the token constructor
         (string memory name, string memory symbol) = _computeNameAndSymbol(address(TOKEN), expiry_);
 
-        address oToken = address(
-            new OptionToken(name, symbol, address(TOKEN), quoteToken_, expiry_, convertiblePrice_)
+        token = address(
+            new oToken(name, symbol, address(TOKEN), quoteToken_, expiry_, convertiblePrice_)
         );
 
         // Mark the oToken as created by this contract
-        createdBy[oToken] = true;
+        createdBy[token] = true;
 
         // Emit event
-        emit oTokenCreated(oToken, expiry_, convertiblePrice_);
+        emit oTokenCreated(token, expiry_, convertiblePrice_);
     }
 
-    function issueO(address oToken_, address to_, uint256 amount_) external onlyRole("admin") {
+    function issueO(address token_, address to_, uint256 amount_) external onlyRole("admin") {
         // Validate that the oToken was created by this contract
-        if (!createdBy[oToken_]) revert InvalidParam("oToken");
+        if (!createdBy[token_]) revert InvalidParam("token");
 
         // Mint the oToken
-        oToken(oToken_).mint(to_, amount_);
+        oToken(token_).mint(to_, amount_);
     }
 
-    function convertO(address oToken_, uint256 amount_) external {
+    function convertO(address token_, uint256 amount_) external {
         // Validate that the oToken was created by this contract
-        if (!createdBy[oToken_]) revert InvalidParam("oToken");
+        if (!createdBy[token_]) revert InvalidParam("token");
 
         // Get token data
-        (, address quoteToken, uint48 expiry, uint256 convertiblePrice) =
-            oToken(oToken_).getTokenData();
+        (, ERC20 quoteToken, uint48 expiry, uint256 convertiblePrice) =
+            oToken(token_).getTokenData();
 
         // Validate that the oToken has not expired
         if (expiry <= block.timestamp) revert oTokenExpired();
@@ -127,11 +128,11 @@ contract Issuer is Policy, RolesConsumer {
 
         // Transfer the quote token from the caller to the treasury
         // Requires approval to transfer
-        ERC20(quoteToken).transferFrom(msg.sender, address(TRSRY), quoteAmount);
+        quoteToken.transferFrom(msg.sender, address(TRSRY), quoteAmount);
 
         // Burn the oToken from the caller
         // Requires approval to burn
-        oToken(oToken_).burnFrom(msg.sender, amount_);
+        oToken(token_).burnFrom(msg.sender, amount_);
 
         // Mint TOKEN to the caller
         TOKEN.mint(msg.sender, amount_);
@@ -145,7 +146,7 @@ contract Issuer is Policy, RolesConsumer {
     /// @return     string      The symbol of the oToken
     function _computeNameAndSymbol(
         address asset_,
-        uint48 maturity_
+        uint48 expiry_
     ) internal view returns (string memory, string memory) {
         // Get the date components
         (string memory year, string memory month, string memory day) = expiry_.toPaddedString();

@@ -43,8 +43,8 @@ contract oToken is ERC20 {
         ISSUER = msg.sender;
         baseToken = ERC20(baseToken_);
         quoteToken = ERC20(quoteToken_);
-        maturity = maturity_;
-        conversionPrice = conversionPrice_;
+        expiry = expiry_;
+        convertiblePrice = convertiblePrice_;
     }
 
     // ========== MODIFIERS ========== //
