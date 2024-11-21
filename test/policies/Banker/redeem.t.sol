@@ -3,7 +3,8 @@ pragma solidity 0.8.19;
 
 import {Banker} from "src/policies/Banker.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
-import {ConvertibleDebtToken} from "src/misc/ConvertibleDebtToken.sol";
+import {ConvertibleDebtToken} from
+    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtToken.sol";
 
 import {BankerTest} from "./BankerTest.sol";
 
@@ -41,7 +42,8 @@ contract BankerRedeemTest is BankerTest {
                 "FDT",
                 debtTokenParams.asset,
                 debtTokenParams.maturity,
-                debtTokenParams.conversionPrice
+                debtTokenParams.conversionPrice,
+                OWNER
             )
         );
         deal(_debtToken, buyer, 1e18);

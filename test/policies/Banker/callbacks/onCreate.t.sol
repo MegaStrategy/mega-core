@@ -3,7 +3,8 @@ pragma solidity 0.8.19;
 
 import {Banker} from "src/policies/Banker.sol";
 import {BaseCallback} from "axis-core-1.0.1/bases/BaseCallback.sol";
-import {ConvertibleDebtToken} from "src/misc/ConvertibleDebtToken.sol";
+import {ConvertibleDebtToken} from
+    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtToken.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 import {BankerTest} from "../BankerTest.sol";
@@ -65,7 +66,8 @@ contract BankerCallbackOnCreateTest is BankerTest {
             "ADT",
             address(stablecoin),
             debtTokenMaturity,
-            debtTokenConversionPrice
+            debtTokenConversionPrice,
+            OWNER
         );
 
         vm.expectRevert(abi.encodeWithSelector(Banker.InvalidDebtToken.selector));

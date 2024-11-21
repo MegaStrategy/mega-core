@@ -3,7 +3,8 @@ pragma solidity 0.8.19;
 
 import {Banker} from "src/policies/Banker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
-import {ConvertibleDebtToken} from "src/misc/ConvertibleDebtToken.sol";
+import {ConvertibleDebtToken} from
+    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtToken.sol";
 import {Timestamp} from "axis-core-1.0.1/lib/Timestamp.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
@@ -116,6 +117,6 @@ contract BankerCreateTokenTest is BankerTest {
         assertEq(cdt.symbol(), expectedSymbol);
 
         // Check the debt token was stored in the createdBy mapping
-        assertTrue(banker.createdBy(debtToken));
+        assertTrue(convertibleDebtTokenFactory.createdBy(debtToken));
     }
 }

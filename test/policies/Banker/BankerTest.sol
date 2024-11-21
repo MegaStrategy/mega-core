@@ -17,6 +17,7 @@ import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
 import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/auctions/batch/EMP.sol";
 import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
 import {Point, ECIES} from "axis-core-1.0.1/lib/ECIES.sol";
+import {ConvertibleDebtTokenFactory} from "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtTokenFactory.sol";
 
 // solhint-disable max-states-count
 
@@ -39,6 +40,7 @@ abstract contract BankerTest is Test, WithSalts {
 
     BatchAuctionHouse public auctionHouse;
     EncryptedMarginalPrice public empa;
+    ConvertibleDebtTokenFactory public convertibleDebtTokenFactory;
 
     // Permissioned addresses
     address public manager = address(0x4);
@@ -98,12 +100,17 @@ abstract contract BankerTest is Test, WithSalts {
         TRSRY = new OlympusTreasury(kernel);
         MSTR = new MasterStrategy(kernel, "Master Strategy", "MSTR");
 
+        // Create the factory at a deterministic address
+        ConvertibleDebtTokenFactory _convertibleDebtTokenFactory = new ConvertibleDebtTokenFactory();
+        convertibleDebtTokenFactory = ConvertibleDebtTokenFactory(address(0x00000000000000000000000000000000000000ff));
+        vm.etch(address(_convertibleDebtTokenFactory), address(_convertibleDebtTokenFactory).code);
+
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
-        bytes memory args = abi.encode(kernel, address(auctionHouse));
+        bytes memory args = abi.encode(kernel, address(auctionHouse), address(convertibleDebtTokenFactory));
         bytes32 salt = _getTestSalt("Banker", type(Banker).creationCode, args);
         vm.broadcast();
-        banker = new Banker{salt: salt}(kernel, address(auctionHouse));
+        banker = new Banker{salt: salt}(kernel, address(auctionHouse), address(convertibleDebtTokenFactory));
 
         // Install the modules and policies in the Kernel
         kernel.executeAction(Actions.InstallModule, address(ROLES));

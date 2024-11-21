@@ -20,6 +20,12 @@ checksum = "fb20c7ebe7ab30697b72300c8c9e4cc847de98c35ab8c05b5d71fe3ed59fead0"
 integrity = "86faa770c63aa953d4a05c2ae082b8c02a8e193cc9b6498faff26da11b57c503"
 
 [[dependencies]]
+name = "derivatives"
+version = "0.1.0"
+git = "git@github.com:Axis-Fi/derivatives.git"
+rev = "6596012881114f46b87cc036cbe992ef898ea466"
+
+[[dependencies]]
 name = "forge-std"
 version = "1.9.4"
 url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_4_25-10-2024_14:36:59_forge-std-1.9.zip"

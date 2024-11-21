@@ -13,6 +13,7 @@ contract TestSalts is Script, WithEnvironment, WithSalts {
     string public constant BANKER = "Banker";
     address public constant AUCTION_HOUSE = address(0xAA);
     address public constant KERNEL = address(0xBB);
+    address public constant CONVERTIBLE_DEBT_TOKEN_FACTORY = address(0x00000000000000000000000000000000000000ff);
     address public constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
 
     function _setUp(
@@ -36,7 +37,7 @@ contract TestSalts is Script, WithEnvironment, WithSalts {
 
     function generateBanker() public {
         // 11100111 = 0xE7
-        bytes memory args = abi.encode(KERNEL, AUCTION_HOUSE);
+        bytes memory args = abi.encode(KERNEL, AUCTION_HOUSE, CONVERTIBLE_DEBT_TOKEN_FACTORY);
         bytes memory contractCode = type(Banker).creationCode;
         (string memory bytecodePath, bytes32 bytecodeHash) =
             _writeBytecode(BANKER, contractCode, args);

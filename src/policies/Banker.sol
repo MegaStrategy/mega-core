@@ -9,7 +9,6 @@ import {IEncryptedMarginalPrice} from
     "axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
 import {Point} from "axis-core-1.0.1/lib/ECIES.sol";
 import {toKeycode as toAxisKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
-import {Timestamp} from "axis-core-1.0.1/lib/Timestamp.sol";
 
 import {Kernel, Policy, Keycode, toKeycode, Permissions} from "src/Kernel.sol";
 
@@ -19,20 +18,18 @@ import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
 import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
 
 // Other Local
-import {ConvertibleDebtToken} from "src/misc/ConvertibleDebtToken.sol";
+import {ConvertibleDebtTokenFactory} from
+    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtTokenFactory.sol";
+import {ConvertibleDebtToken} from
+    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtToken.sol";
 
 // External
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {TransferHelper} from "src/lib/TransferHelper.sol";
 
-// Requirements
-// [X] factory for ERC20 convertible debt tokens
-// [X] callback for batch (and maybe atomic?) auctions
-// [X] create debt auctions
-// [X] debt redemption / conversion
-
+/// @title  Banker
+/// @notice Policy that launches EMP-style auctions to sell convertible debt tokens
 contract Banker is Policy, RolesConsumer, BaseCallback {
-    using Timestamp for uint48;
     using TransferHelper for ERC20;
 
     // ========== ERRORS ========== //
@@ -46,9 +43,6 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // ========== EVENTS ========== //
 
-    event DebtTokenCreated(
-        address debtToken, address asset, uint48 maturity, uint256 conversionPrice
-    );
     event DebtAuction(uint96 lotId);
     event DebtIssued(address debtToken, address to, uint256 amount);
     event DebtRepaid(address debtToken, address from, uint256 amount);
@@ -84,6 +78,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // Local state
     bool public active;
+    ConvertibleDebtTokenFactory internal _convertibleDebtTokenFactory;
 
     // Auction parameters
     uint48 internal constant ONE_HUNDRED_PERCENT = 100e2;
@@ -92,14 +87,13 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     uint48 public referrerFee;
     uint256 public maxBids;
 
-    mapping(address => bool) public createdBy;
-
     // ========== SETUP ========== //
 
     // Uses callback permissions 11100111, so must be prefixed with 0xE7
     constructor(
         Kernel kernel_,
-        address auctionHouse_
+        address auctionHouse_,
+        address convertibleDebtTokenFactory_
     )
         Policy(kernel_)
         BaseCallback(
@@ -115,7 +109,13 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
                 sendBaseTokens: true
             })
         )
-    {}
+    {
+        if (convertibleDebtTokenFactory_ == address(0)) {
+            revert InvalidParam("convertibleDebtTokenFactory");
+        }
+
+        _convertibleDebtTokenFactory = ConvertibleDebtTokenFactory(convertibleDebtTokenFactory_);
+    }
 
     function configureDependencies() external override returns (Keycode[] memory dependencies) {
         dependencies = new Keycode[](3);
@@ -334,25 +334,13 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     function _createDebtToken(
         DebtTokenParams memory dtParams_
     ) internal returns (address debtToken) {
-        // Get the name and symbol for the debt token from the asset being borrowed and maturity
-        (string memory name, string memory symbol) =
-            _computeNameAndSymbol(dtParams_.asset, dtParams_.maturity);
-
-        // Create a new debt token
-        // Parameters are validated in the constructor
-        debtToken = address(
-            new ConvertibleDebtToken(
-                name, symbol, dtParams_.asset, dtParams_.maturity, dtParams_.conversionPrice
-            )
+        debtToken = _convertibleDebtTokenFactory.create(
+            dtParams_.asset,
+            dtParams_.maturity,
+            dtParams_.conversionPrice
         );
 
-        // Mark the debt token as created by this issuer
-        createdBy[debtToken] = true;
-
-        // Emit an event
-        emit DebtTokenCreated(
-            debtToken, dtParams_.asset, dtParams_.maturity, dtParams_.conversionPrice
-        );
+        return debtToken;
     }
 
     // ========== ISSUANCE =========== //
@@ -367,7 +355,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     function _issue(address debtToken_, address to_, uint256 amount) internal {
         // Validate that the debt token was created by this issuer
-        if (!createdBy[debtToken_]) revert InvalidDebtToken();
+        if (!_convertibleDebtTokenFactory.createdBy(debtToken_)) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
 
         // Check that the amount is not zero
@@ -416,7 +404,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     // increase credit risk by exchanging reserves for tokens.
     function redeem(address debtToken_, uint256 amount_) external onlyWhileActive {
         // Validate that the debt token was created by this issuer
-        if (!createdBy[debtToken_]) revert InvalidDebtToken();
+        if (!_convertibleDebtTokenFactory.createdBy(debtToken_)) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
 
         // Get the particulars from the debt token
@@ -448,7 +436,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     function convert(address debtToken_, uint256 amount_) external onlyWhileActive {
         // Validate the debt token was created by this issuer
-        if (!createdBy[debtToken_]) revert InvalidDebtToken();
+        if (!_convertibleDebtTokenFactory.createdBy(debtToken_)) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
 
         // Check that the amount is not zero
@@ -481,25 +469,6 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     }
 
     // ========== HELPERS =========== //
-
-    /// @notice     Computes the name and symbol of a vesting token
-    ///
-    /// @param      asset_      The address of the underlying token
-    /// @param      maturity_   The timestamp at which the vesting matures
-    /// @return     string      The name of the vesting token
-    /// @return     string      The symbol of the vesting token
-    function _computeNameAndSymbol(
-        address asset_,
-        uint48 maturity_
-    ) internal view returns (string memory, string memory) {
-        // Get the date components
-        (string memory year, string memory month, string memory day) = maturity_.toPaddedString();
-
-        return (
-            string(abi.encodePacked(ERC20(asset_).name(), " ", year, "-", month, "-", day)),
-            string(abi.encodePacked(ERC20(asset_).symbol(), " ", year, "-", month, "-", day))
-        );
-    }
 
     /// @notice Convert an amount of asset to TOKEN at the conversion price
     /// @dev The conversion rate is the price of TOKEN in the asset that the tokens can be converted at

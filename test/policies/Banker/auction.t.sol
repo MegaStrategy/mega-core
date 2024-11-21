@@ -4,7 +4,8 @@ pragma solidity 0.8.19;
 import {Banker} from "src/policies/Banker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {IAuction} from "axis-core-1.0.1/interfaces/modules/IAuction.sol";
-import {ConvertibleDebtToken} from "src/misc/ConvertibleDebtToken.sol";
+import {ConvertibleDebtToken} from
+    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtToken.sol";
 import {
     Veecode,
     fromKeycode,

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on error
+set -e
+
 echo ""
 echo "*** Installing forge dependencies"
 forge install

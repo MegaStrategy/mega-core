@@ -14,6 +14,8 @@ import {oToken} from "src/misc/oToken.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {Timestamp} from "axis-core-1.0.1/lib/Timestamp.sol";
 
+/// @title  Issuer
+/// @notice Policy that manages issuance of MSTR and options tokens
 contract Issuer is Policy, RolesConsumer {
     using Timestamp for uint48;
 
