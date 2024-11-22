@@ -13,7 +13,8 @@ contract TestSalts is Script, WithEnvironment, WithSalts {
     string public constant BANKER = "Banker";
     address public constant AUCTION_HOUSE = address(0xAA);
     address public constant KERNEL = address(0xBB);
-    address public constant CONVERTIBLE_DEBT_TOKEN_FACTORY = address(0x00000000000000000000000000000000000000ff);
+    address public constant CONVERTIBLE_DEBT_TOKEN_FACTORY =
+        address(0x00000000000000000000000000000000000000ff);
     address public constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
 
     function _setUp(

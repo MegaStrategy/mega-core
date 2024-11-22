@@ -343,9 +343,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         if (dtParams_.conversionPrice == 0) revert InvalidParam("conversionPrice");
 
         debtToken = _convertibleDebtTokenFactory.create(
-            dtParams_.asset,
-            dtParams_.maturity,
-            dtParams_.conversionPrice
+            dtParams_.asset, dtParams_.maturity, dtParams_.conversionPrice
         );
 
         return debtToken;
