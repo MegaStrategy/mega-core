@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import {TokenTest} from "./TokenTest.sol";
 import {TOKENv1} from "src/modules/TOKEN/MSTR.sol";
-import {Module} from "src/Kernel.sol";
 
 contract BurnFromTest is TokenTest {
     // when the module is not locally active

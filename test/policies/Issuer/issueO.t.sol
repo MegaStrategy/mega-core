@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import {Issuer} from "src/policies/Issuer.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
-import {FixedStrikeOptionTeller as oTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
 import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptionToken.sol";
 
 import {IssuerTest} from "./IssuerTest.sol";

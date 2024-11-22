@@ -13,7 +13,6 @@ import {Test} from "@forge-std/Test.sol";
 import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 
 import {FixedStrikeOptionTeller as oTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
-import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptionToken.sol";
 import {Authority} from "solmate-6.8.0/auth/Auth.sol";
 
 // solhint-disable max-states-count

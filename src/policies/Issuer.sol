@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.8.19;
 
-import "src/Kernel.sol";
+import {Kernel, Policy, Keycode, toKeycode, Permissions} from "src/Kernel.sol";
 
 // Modules
 import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
@@ -27,6 +27,7 @@ contract Issuer is Policy, RolesConsumer {
 
     // ========== EVENTS ========== //
 
+    // solhint-disable-next-line event-name-camelcase
     event oTokenCreated(address indexed oToken);
 
     // ========== STATE ========== //

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Issuer} from "src/policies/Issuer.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 
 import {IssuerTest} from "./IssuerTest.sol";
