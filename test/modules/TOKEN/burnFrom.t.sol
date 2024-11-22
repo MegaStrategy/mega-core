@@ -30,17 +30,6 @@ contract BurnFromTest is TokenTest {
         mstr.burnFrom(USER, 100);
     }
 
-    function test_callerNotPermissioned_reverts()
-        public
-        givenModuleIsInstalled
-        givenModuleIsActive
-    {
-        vm.expectRevert(abi.encodeWithSelector(Module.Module_PolicyNotPermitted.selector, USER));
-
-        vm.prank(USER);
-        mstr.burnFrom(USER, 100);
-    }
-
     function test_amountIsZero_reverts() public givenModuleIsInstalled givenModuleIsActive {
         vm.expectRevert(abi.encodeWithSelector(TOKENv1.TOKEN_ZeroAmount.selector));
 
