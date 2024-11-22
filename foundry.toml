@@ -35,4 +35,3 @@ axis-periphery = "1.0.0"
 "@openzeppelin-contracts" = "4.9.6"
 solmate = "6.8.0"
 derivatives = { version = "0.1.0", git = "git@github.com:Axis-Fi/derivatives.git", rev = "165bc234c2f092ae586cbc292f6130f25990221d" }
-bp-options = { version = "1.0.0", git = "git@github.com:Bond-Protocol/option-contracts.git" , rev = "197aba1d8d7ca6d458a0c7a53cb1247d7ec42cfd"}

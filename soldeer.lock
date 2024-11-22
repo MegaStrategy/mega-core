@@ -20,12 +20,6 @@ checksum = "fb20c7ebe7ab30697b72300c8c9e4cc847de98c35ab8c05b5d71fe3ed59fead0"
 integrity = "bdf5b00ff9c557d0f7c8ed4c77d03b45e8eea8bffdb14fa6354ae4734d38f91e"
 
 [[dependencies]]
-name = "bp-options"
-version = "1.0.0"
-git = "git@github.com:Bond-Protocol/option-contracts.git"
-rev = "197aba1d8d7ca6d458a0c7a53cb1247d7ec42cfd"
-
-[[dependencies]]
 name = "derivatives"
 version = "0.1.0"
 git = "git@github.com:Axis-Fi/derivatives.git"
