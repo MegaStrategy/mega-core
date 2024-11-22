@@ -34,7 +34,6 @@ contract Issuer is Policy, RolesConsumer {
     // Modules
     TRSRYv1 internal TRSRY;
     TOKENv1 internal TOKEN;
-    uint8 internal _tokenDecimals;
 
     // Local state
     bool public active;
@@ -52,7 +51,7 @@ contract Issuer is Policy, RolesConsumer {
 
     /// @inheritdoc Policy
     function configureDependencies() external override returns (Keycode[] memory dependencies) {
-        dependencies = new Keycode[](2);
+        dependencies = new Keycode[](3);
         dependencies[0] = toKeycode("TRSRY");
         dependencies[1] = toKeycode("TOKEN");
         dependencies[2] = toKeycode("ROLES");
@@ -60,8 +59,6 @@ contract Issuer is Policy, RolesConsumer {
         TRSRY = TRSRYv1(getModuleAddress(dependencies[0]));
         TOKEN = TOKENv1(getModuleAddress(dependencies[1]));
         ROLES = ROLESv1(getModuleAddress(dependencies[2]));
-
-        _tokenDecimals = TOKEN.decimals();
     }
 
     /// @inheritdoc Policy
@@ -73,10 +70,9 @@ contract Issuer is Policy, RolesConsumer {
     {
         Keycode TOKEN_KEYCODE = TOKEN.KEYCODE();
 
-        permissions = new Permissions[](3);
+        permissions = new Permissions[](2);
         permissions[0] = Permissions(TOKEN_KEYCODE, TOKENv1.mint.selector);
         permissions[1] = Permissions(TOKEN_KEYCODE, TOKENv1.increaseMintApproval.selector);
-        permissions[2] = Permissions(TOKEN_KEYCODE, TOKENv1.decreaseMintApproval.selector);
     }
 
     // ========= MINT ========= //
@@ -85,6 +81,12 @@ contract Issuer is Policy, RolesConsumer {
     /// @param to_ Address to mint to
     /// @param amount_ Amount to mint
     function mint(address to_, uint256 amount_) external onlyRole("admin") {
+        // Amount must be greater than zero
+        if (amount_ == 0) revert InvalidParam("amount");
+
+        // To address must not be zero
+        if (to_ == address(0)) revert InvalidParam("to");
+
         // Increase mint allowance by provided amount
         TOKEN.increaseMintApproval(address(this), amount_);
 
@@ -94,6 +96,11 @@ contract Issuer is Policy, RolesConsumer {
 
     // ========== oTokens ========= //
 
+    /// @notice Create an oToken
+    /// @param quoteToken_ The token to quote the option in
+    /// @param expiry_ The expiry timestamp of the option, in seconds
+    /// @param convertiblePrice_ The price at which the option can be converted
+    /// @dev Note: the expiry timestamp is rounded down to the nearest day
     function createO(
         address quoteToken_,
         uint48 expiry_,
@@ -103,8 +110,8 @@ contract Issuer is Policy, RolesConsumer {
         // Teller validates the inputs
         token = address(
             teller.deploy(
-                address(TOKEN), // payoutToken_ = MSTR
-                quoteToken_, // quoteToken_ = quoteToken
+                ERC20(address(TOKEN)), // payoutToken_ = MSTR
+                ERC20(quoteToken_), // quoteToken_ = quoteToken
                 uint48(0), // eligible_ = immediately: TODO should we allow setting this?
                 expiry_, // expiry_ = expiry
                 address(TRSRY), // receiver_ = treasury (where funds go when options are exercised)
@@ -123,6 +130,9 @@ contract Issuer is Policy, RolesConsumer {
     function issueO(address token_, address to_, uint256 amount_) external onlyRole("admin") {
         // Validate that the oToken was created by this contract
         if (!createdBy[token_]) revert InvalidParam("token");
+
+        // Cannot send to zero address
+        if (to_ == address(0)) revert InvalidParam("to");
 
         // Amount must be greater than zero
         if (amount_ == 0) revert InvalidParam("amount");

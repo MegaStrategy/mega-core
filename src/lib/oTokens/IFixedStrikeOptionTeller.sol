@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity >=0.8.0;
 
-import {IOptionTeller} from "./IOptionTeller.sol";
+import {IOptionTeller, ERC20} from "./IOptionTeller.sol";
 import {FixedStrikeOptionToken} from "./FixedStrikeOptionToken.sol";
 
 interface IFixedStrikeOptionTeller is IOptionTeller {
@@ -16,8 +16,8 @@ interface IFixedStrikeOptionTeller is IOptionTeller {
     /// @param strikePrice_ Strike price of the option token (in units of quoteToken per payoutToken)
     /// @return             Address of the ERC20 fixed strike option token being created
     function deploy(
-        address payoutToken_,
-        address quoteToken_,
+        ERC20 payoutToken_,
+        ERC20 quoteToken_,
         uint48 eligible_,
         uint48 expiry_,
         address receiver_,
@@ -56,7 +56,7 @@ interface IFixedStrikeOptionTeller is IOptionTeller {
     function exerciseCost(
         FixedStrikeOptionToken optionToken_,
         uint256 amount_
-    ) external view returns (address, uint256);
+    ) external view returns (ERC20, uint256);
 
     /// @notice             Get the FixedStrikeOptionToken contract corresponding to the params, reverts if no token exists
     /// @param payoutToken_ ERC20 token that the purchaser will receive on execution
@@ -68,8 +68,8 @@ interface IFixedStrikeOptionTeller is IOptionTeller {
     /// @param strikePrice_ Strike price of the option token (in units of quoteToken per payoutToken)
     /// @return token_      FixedStrikeOptionToken contract address
     function getOptionToken(
-        address payoutToken_,
-        address quoteToken_,
+        ERC20 payoutToken_,
+        ERC20 quoteToken_,
         uint48 eligible_,
         uint48 expiry_,
         address receiver_,
@@ -87,8 +87,8 @@ interface IFixedStrikeOptionTeller is IOptionTeller {
     /// @param strikePrice_ Strike price of the option token (in units of quoteToken per payoutToken)
     /// @return hash_       Hash ID of the fixed strike option token with these parameters
     function getOptionTokenHash(
-        address payoutToken_,
-        address quoteToken_,
+        ERC20 payoutToken_,
+        ERC20 quoteToken_,
         uint48 eligible_,
         uint48 expiry_,
         address receiver_,
