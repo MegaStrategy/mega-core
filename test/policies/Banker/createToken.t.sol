@@ -117,6 +117,6 @@ contract BankerCreateTokenTest is BankerTest {
         assertEq(cdt.symbol(), expectedSymbol);
 
         // Check the debt token was stored in the createdBy mapping
-        assertTrue(convertibleDebtTokenFactory.createdBy(debtToken));
+        assertTrue(banker.createdBy(debtToken));
     }
 }

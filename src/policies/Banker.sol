@@ -87,6 +87,9 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     uint48 public referrerFee;
     uint256 public maxBids;
 
+    /// @notice Mapping of CDTs created by this contract
+    mapping(address cdt => bool) public createdBy;
+
     // ========== SETUP ========== //
 
     // Uses callback permissions 11100111, so must be prefixed with 0xE7
@@ -334,6 +337,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     function _createDebtToken(
         DebtTokenParams memory dtParams_
     ) internal returns (address debtToken) {
+        // Need to validate that the conversion price is non-zero
+        // This contract does not need to set the conversion price later
+        // so we ensure it is set initially
+        if (dtParams_.conversionPrice == 0) revert InvalidParam("conversionPrice");
+
         debtToken = _convertibleDebtTokenFactory.create(
             dtParams_.asset,
             dtParams_.maturity,
@@ -355,7 +363,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     function _issue(address debtToken_, address to_, uint256 amount) internal {
         // Validate that the debt token was created by this issuer
-        if (!_convertibleDebtTokenFactory.createdBy(debtToken_)) revert InvalidDebtToken();
+        if (!createdBy[debtToken_]) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
 
         // Check that the amount is not zero
@@ -404,7 +412,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     // increase credit risk by exchanging reserves for tokens.
     function redeem(address debtToken_, uint256 amount_) external onlyWhileActive {
         // Validate that the debt token was created by this issuer
-        if (!_convertibleDebtTokenFactory.createdBy(debtToken_)) revert InvalidDebtToken();
+        if (!createdBy[debtToken_]) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
 
         // Get the particulars from the debt token
@@ -436,7 +444,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     function convert(address debtToken_, uint256 amount_) external onlyWhileActive {
         // Validate the debt token was created by this issuer
-        if (!_convertibleDebtTokenFactory.createdBy(debtToken_)) revert InvalidDebtToken();
+        if (!createdBy[debtToken_]) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
 
         // Check that the amount is not zero
