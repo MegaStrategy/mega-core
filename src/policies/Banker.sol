@@ -346,6 +346,9 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
             dtParams_.asset, dtParams_.maturity, dtParams_.conversionPrice
         );
 
+        // Mark the debt token as created by this contract
+        createdBy[debtToken] = true;
+
         return debtToken;
     }
 
