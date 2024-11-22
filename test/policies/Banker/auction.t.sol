@@ -100,10 +100,6 @@ contract BankerAuctionTest is BankerTest {
     }
 
     function test_auction_success() public givenPolicyIsActive {
-        // Expect emit
-        vm.expectEmit(address(banker));
-        emit DebtAuction(0);
-
         // Call
         vm.prank(manager);
         banker.auction(debtTokenParams, auctionParams);

@@ -105,7 +105,7 @@ abstract contract BankerTest is Test, WithSalts {
         ConvertibleDebtTokenFactory _convertibleDebtTokenFactory = new ConvertibleDebtTokenFactory();
         convertibleDebtTokenFactory =
             ConvertibleDebtTokenFactory(address(0x00000000000000000000000000000000000000ff));
-        vm.etch(address(_convertibleDebtTokenFactory), address(_convertibleDebtTokenFactory).code);
+        vm.etch(address(convertibleDebtTokenFactory), address(_convertibleDebtTokenFactory).code);
 
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
