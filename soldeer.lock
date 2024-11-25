@@ -22,7 +22,7 @@ integrity = "289e922ce8d2419e991f94b6a26339377e255931a7e61a3d44725642ff97ba41"
 [[dependencies]]
 name = "derivatives"
 version = "0.1.0"
-git = "git@github.com:Axis-Fi/derivatives.git"
+git = "https://github.com/Axis-Fi/derivatives.git"
 rev = "165bc234c2f092ae586cbc292f6130f25990221d"
 
 [[dependencies]]
