@@ -20,6 +20,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -29,23 +34,21 @@ jobs:
         run: |
           forge --version
 
-      - name: Run Forge fmt
+      - name: Install Dependencies
         run: |
-          forge fmt --check
-        id: fmt
+          pnpm install
+
+      - name: Run Lint Check
+        run: |
+          pnpm run lint:check
+        id: lint
 
       - name: Run Forge build
         run: |
-          forge --version
-          forge soldeer install
           forge build --sizes
         id: build
 
-      - name: Install Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Run Forge tests
         run: |
-          bun install
           forge test -vvv
         id: test
