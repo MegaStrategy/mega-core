@@ -1,0 +1,42 @@
+{
+  "sequence": [
+    {
+      "name": "Kernel"
+    },
+    {
+      "name": "OlympusTreasury",
+      "args": {}
+    },
+    {
+      "name": "MSTR",
+      "args": {
+        "name": "MegaStrategy",
+        "symbol": "MSTE"
+      }
+    },
+    {
+      "name": "OlympusRoles",
+      "args": {}
+    },
+    {
+      "name": "TreasuryCustodian",
+      "args": {}
+    },
+    {
+      "name": "RolesAdmin",
+      "args": {}
+    },
+    {
+      "name": "Emergency",
+      "args": {}
+    },
+    {
+      "name": "Banker",
+      "args": {}
+    },
+    {
+      "name": "Issuer",
+      "args": {}
+    }
+  ]
+}

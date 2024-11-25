@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity 0.8.15;
+pragma solidity 0.8.19;
 
+// solhint-disable-next-line no-global-import
 import "src/Kernel.sol";
-import {ROLESv1, RolesConsumer} from "modules/ROLES/OlympusRoles.sol";
-import {TRSRYv1} from "modules/TRSRY/TRSRY.v1.sol";
-import {TOKENv1} from "modules/TOKEN/TOKEN.v1.sol";
+import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
+import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
+import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
 
 // Contract to allow emergency shutdown of minting and treasury withdrawals
 contract Emergency is Policy, RolesConsumer {
