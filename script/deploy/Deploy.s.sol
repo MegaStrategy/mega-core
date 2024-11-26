@@ -6,6 +6,9 @@ import {stdJson} from "@forge-std/StdJson.sol";
 import {WithSalts} from "../salts/WithSalts.s.sol";
 import {WithEnvironment} from "./WithEnvironment.s.sol";
 
+import {Authority} from "solmate-6.8.0/auth/Auth.sol";
+import {FixedStrikeOptionTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
+
 // solhint-disable-next-line no-global-import
 import "src/Kernel.sol";
 import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
@@ -55,6 +58,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         selectorMap["Emergency"] = this._deployEmergency.selector;
         selectorMap["Banker"] = this._deployBanker.selector;
         selectorMap["Issuer"] = this._deployIssuer.selector;
+        selectorMap["FixedStrikeOptionTeller"] = this._deployFixedStrikeOptionTeller.selector;
 
         // Load env data
         _loadEnv(chain_);
@@ -277,7 +281,23 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         return (address(issuer), "mega.policies.Issuer");
     }
 
-    // TODO fixed options teller
+    function _deployFixedStrikeOptionTeller(
+        bytes memory args_
+    ) public returns (address, string memory) {
+        (address guardian_, address authority_) = abi.decode(args_, (address, address));
+
+        // Ensure the args are set
+        require(guardian_ != address(0), "Guardian must be set");
+        require(authority_ != address(0), "Authority must be set");
+
+        // Deploy FixedStrikeOptionTeller
+        vm.broadcast();
+        FixedStrikeOptionTeller teller =
+            new FixedStrikeOptionTeller(guardian_, Authority(authority_));
+        console2.log("FixedStrikeOptionTeller deployed at:", address(teller));
+
+        return (address(teller), "axis.options.FixedStrikeOptionTeller");
+    }
 
     // ========== VERIFICATION ========== //
 

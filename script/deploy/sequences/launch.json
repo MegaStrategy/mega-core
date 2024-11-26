@@ -35,6 +35,13 @@
       "args": {}
     },
     {
+      "name": "FixedStrikeOptionTeller",
+      "args": {
+        "guardian": "0x0000000000000000000000000000000000000000",
+        "authority": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
       "name": "Issuer",
       "args": {}
     }
