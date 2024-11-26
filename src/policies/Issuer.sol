@@ -79,6 +79,11 @@ contract Issuer is Policy, RolesConsumer {
     // ========= MINT ========= //
 
     /// @notice Mint MSTR to an address
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    ///         - The amount is zero
+    ///         - The to address is zero
+    ///
     /// @param to_ Address to mint to
     /// @param amount_ Amount to mint
     function mint(address to_, uint256 amount_) external onlyRole("admin") {
@@ -98,10 +103,16 @@ contract Issuer is Policy, RolesConsumer {
     // ========== oTokens ========= //
 
     /// @notice Create an oToken
-    /// @param quoteToken_ The token to quote the option in
-    /// @param expiry_ The expiry timestamp of the option, in seconds
-    /// @param convertiblePrice_ The price at which the option can be converted
-    /// @dev Note: the expiry timestamp is rounded down to the nearest day
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    ///         - Validation by the oToken teller fails
+    ///
+    ///         Note: the expiry timestamp is rounded down to the nearest day
+    ///
+    /// @param quoteToken_          The token to quote the option in
+    /// @param expiry_              The expiry timestamp of the option, in seconds
+    /// @param convertiblePrice_    The price at which the option can be converted
+    /// @return token               The address of the created oToken
     function createO(
         address quoteToken_,
         uint48 expiry_,
@@ -128,6 +139,16 @@ contract Issuer is Policy, RolesConsumer {
         emit oTokenCreated(token);
     }
 
+    /// @notice Issue oTokens to an address
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    ///         - `token_` is not an oToken created by this contract
+    ///         - `to_` is zero
+    ///         - `amount_` is zero
+    ///
+    /// @param token_      The oToken to issue
+    /// @param to_         The address to send the oTokens to
+    /// @param amount_     The amount of oTokens to issue
     function issueO(address token_, address to_, uint256 amount_) external onlyRole("admin") {
         // Validate that the oToken was created by this contract
         if (!createdBy[token_]) revert InvalidParam("token");
@@ -151,6 +172,11 @@ contract Issuer is Policy, RolesConsumer {
         ERC20(token_).safeTransfer(to_, amount_);
     }
 
+    /// @notice Set the oToken teller
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    ///
+    /// @param teller_ The new oToken teller
     function setTeller(
         address teller_
     ) external onlyRole("admin") {
