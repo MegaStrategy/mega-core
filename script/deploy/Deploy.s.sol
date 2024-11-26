@@ -3,8 +3,8 @@ pragma solidity 0.8.19;
 
 import {Script, console2} from "@forge-std/Script.sol";
 import {stdJson} from "@forge-std/StdJson.sol";
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {WithSalts} from "../salts/WithSalts.s.sol";
+import {WithEnvironment} from "./WithEnvironment.s.sol";
 
 // solhint-disable-next-line no-global-import
 import "src/Kernel.sol";
@@ -21,70 +21,27 @@ import {Issuer} from "src/policies/Issuer.sol";
 // solhint-disable max-states-count
 /// @notice Script to deploy the system
 /// @dev    The address that this script is broadcast from must have write access to the contracts being configured
-contract Deploy is Script, WithSalts {
+contract Deploy is Script, WithSalts, WithEnvironment {
     using stdJson for string;
 
     Kernel public kernel;
 
-    // Modules
-    OlympusTreasury public TRSRY;
-    OlympusRoles public ROLES;
-    MSTR public TOKEN;
-
-    // Policies
-    RolesAdmin public rolesAdmin;
-    TreasuryCustodian public treasuryCustodian;
-    Emergency public emergency;
-    Banker public banker;
-    Issuer public issuer;
-
-    // Construction variables
-
-    // Token addresses
-    ERC20 public weth;
-    ERC20 public usdc;
-
-    // External contracts
-    address public auctionHouse;
-    address public cdtFactory;
-    address public oTeller;
-
     // Deploy system storage
-    string public chain;
-    string public env;
     mapping(string => bytes4) public selectorMap;
     mapping(string => bytes) public argsMap;
     string[] public deployments;
+
+    // Post-deployment storage
+    string[] public deploymentKeys;
     mapping(string => address) public deployedTo;
 
-    function _load(
+    function _loadEnv(
         string calldata chain_
-    ) internal {
-        chain = chain_;
+    ) internal override {
+        super._loadEnv(chain_);
 
-        // Load environment addresses
-        env = vm.readFile("./script/env.json");
-
-        // Non-bophades contracts
-        weth = ERC20(envAddress("external.tokens.WETH"));
-        usdc = ERC20(envAddress("external.tokens.USDC"));
-
-        // Bophades contracts
-        kernel = Kernel(envAddress("mega.Kernel"));
-        TRSRY = OlympusTreasury(envAddress("mega.modules.OlympusTreasury"));
-        TOKEN = MSTR(envAddress("mega.modules.MSTR"));
-        ROLES = OlympusRoles(envAddress("mega.modules.OlympusRoles"));
-
-        rolesAdmin = RolesAdmin(envAddress("mega.policies.RolesAdmin"));
-        treasuryCustodian = TreasuryCustodian(envAddress("mega.policies.TreasuryCustodian"));
-        emergency = Emergency(envAddress("mega.policies.Emergency"));
-        banker = Banker(envAddress("mega.policies.Banker"));
-        issuer = Issuer(envAddress("mega.policies.Issuer"));
-
-        // External contracts
-        auctionHouse = envAddress("axis.BatchAuctionHouse");
-        cdtFactory = envAddress("axis.derivatives.ConvertibleDebtTokenFactory");
-        oTeller = envAddress("axis.options.FixedStrikeOptionTeller");
+        // Don't validate that the kernel address is not zero, in case it hasn't been deployed yet
+        kernel = Kernel(_envAddress("mega.Kernel"));
     }
 
     function _setUp(string calldata chain_, string calldata deployFilePath_) internal {
@@ -100,7 +57,7 @@ contract Deploy is Script, WithSalts {
         selectorMap["Issuer"] = this._deployIssuer.selector;
 
         // Load env data
-        _load(chain_);
+        _loadEnv(chain_);
 
         // Load deployment data
         string memory data = vm.readFile(deployFilePath_);
@@ -164,6 +121,11 @@ contract Deploy is Script, WithSalts {
             kernel = new Kernel();
             console2.log("Kernel deployed at:", address(kernel));
             console2.log("");
+
+            // Store the deployed contract address for logging
+            string memory deployKey = "mega.Kernel";
+            deploymentKeys.push(deployKey);
+            deployedTo[deployKey] = address(kernel);
         }
 
         // Iterate through deployments
@@ -178,13 +140,13 @@ contract Deploy is Script, WithSalts {
             (bool success, bytes memory data) =
                 address(this).call(abi.encodeWithSelector(selector, args));
             require(success, string.concat("Failed to deploy ", deployments[i]));
+            (address deployedAddress, string memory deployKey) = abi.decode(data, (address, string));
             console2.log("");
 
             // Store the deployed contract address for logging
-            deployedTo[name] = abi.decode(data, (address));
+            deploymentKeys.push(deployKey);
+            deployedTo[deployKey] = deployedAddress;
         }
-
-        // TODO make deployment addresses available to subsequent deployments
 
         // Save deployments to file
         _saveDeployment(chain_);
@@ -195,86 +157,89 @@ contract Deploy is Script, WithSalts {
     // Module deployment functions
     function _deployTreasury(
         bytes memory
-    ) public returns (address) {
+    ) public returns (address, string memory) {
         // No additional arguments for Treasury module
 
         // Deploy Treasury module
         vm.broadcast();
-        TRSRY = new OlympusTreasury(kernel);
+        OlympusTreasury TRSRY = new OlympusTreasury(kernel);
         console2.log("Treasury deployed at:", address(TRSRY));
 
-        return address(TRSRY);
+        return (address(TRSRY), "mega.modules.OlympusTreasury");
     }
 
     function _deployRoles(
         bytes memory
-    ) public returns (address) {
+    ) public returns (address, string memory) {
         // No additional arguments for Roles module
 
         // Deploy Roles module
         vm.broadcast();
-        ROLES = new OlympusRoles(kernel);
+        OlympusRoles ROLES = new OlympusRoles(kernel);
         console2.log("Roles deployed at:", address(ROLES));
 
-        return address(ROLES);
+        return (address(ROLES), "mega.modules.OlympusRoles");
     }
 
     function _deployToken(
         bytes memory args
-    ) public returns (address) {
+    ) public returns (address, string memory) {
         (string memory name, string memory symbol) = abi.decode(args, (string, string));
 
         // Deploy Token module
         vm.broadcast();
-        TOKEN = new MSTR(kernel, name, symbol);
+        MSTR TOKEN = new MSTR(kernel, name, symbol);
         console2.log("Token deployed at:", address(TOKEN));
 
-        return address(TOKEN);
+        return (address(TOKEN), "mega.modules.MSTR");
     }
 
     function _deployRolesAdmin(
         bytes memory
-    ) public returns (address) {
+    ) public returns (address, string memory) {
         // No additional arguments for RolesAdmin policy
 
         // Deploy RolesAdmin policy
         vm.broadcast();
-        rolesAdmin = new RolesAdmin(kernel);
+        RolesAdmin rolesAdmin = new RolesAdmin(kernel);
         console2.log("RolesAdmin deployed at:", address(rolesAdmin));
 
-        return address(rolesAdmin);
+        return (address(rolesAdmin), "mega.policies.RolesAdmin");
     }
 
     function _deployTreasuryCustodian(
         bytes memory
-    ) public returns (address) {
+    ) public returns (address, string memory) {
         // No additional arguments for TreasuryCustodian policy
 
         // Deploy TreasuryCustodian policy
         vm.broadcast();
-        treasuryCustodian = new TreasuryCustodian(kernel);
+        TreasuryCustodian treasuryCustodian = new TreasuryCustodian(kernel);
         console2.log("TreasuryCustodian deployed at:", address(treasuryCustodian));
 
-        return address(treasuryCustodian);
+        return (address(treasuryCustodian), "mega.policies.TreasuryCustodian");
     }
 
     function _deployEmergency(
         bytes memory
-    ) public returns (address) {
+    ) public returns (address, string memory) {
         // No additional arguments for Emergency policy
 
         // Deploy Emergency policy
         vm.broadcast();
-        emergency = new Emergency(kernel);
+        Emergency emergency = new Emergency(kernel);
         console2.log("Emergency deployed at:", address(emergency));
 
-        return address(emergency);
+        return (address(emergency), "mega.policies.Emergency");
     }
 
     function _deployBanker(
         bytes memory
-    ) public returns (address) {
+    ) public returns (address, string memory) {
         // No additional arguments for Banker policy
+
+        address auctionHouse = _getAddressNotZero("axis.BatchAuctionHouse");
+        address cdtFactory = _getAddressNotZero("axis.derivatives.ConvertibleDebtTokenFactory");
 
         // Generate the salt
         // This is not a vanity address, so the salt and derived address doesn't really matter
@@ -292,31 +257,44 @@ contract Deploy is Script, WithSalts {
 
         // Deploy Banker policy
         vm.broadcast();
-        banker = new Banker{salt: salt_}(kernel, auctionHouse, cdtFactory);
+        Banker banker = new Banker{salt: salt_}(kernel, auctionHouse, cdtFactory);
         console2.log("Banker deployed at:", address(banker));
 
-        return address(banker);
+        return (address(banker), "mega.policies.Banker");
     }
 
     function _deployIssuer(
         bytes memory
-    ) public returns (address) {
+    ) public returns (address, string memory) {
         // No additional arguments for Issuer policy
 
         // Deploy Issuer policy
         vm.broadcast();
-        issuer = new Issuer(kernel, oTeller);
+        Issuer issuer =
+            new Issuer(kernel, _getAddressNotZero("axis.options.FixedStrikeOptionTeller"));
         console2.log("Issuer deployed at:", address(issuer));
 
-        return address(issuer);
+        return (address(issuer), "mega.policies.Issuer");
     }
+
+    // TODO fixed options teller
 
     // ========== VERIFICATION ========== //
 
     function kernelInstallation(
         string calldata chain_
     ) external {
-        _load(chain_);
+        _loadEnv(chain_);
+
+        OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
+        OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
+        MSTR TOKEN = MSTR(_getAddressNotZero("mega.modules.MSTR"));
+        RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
+        TreasuryCustodian treasuryCustodian =
+            TreasuryCustodian(_getAddressNotZero("mega.policies.TreasuryCustodian"));
+        Emergency emergency = Emergency(_getAddressNotZero("mega.policies.Emergency"));
+        Banker banker = Banker(_getAddressNotZero("mega.policies.Banker"));
+        Issuer issuer = Issuer(_getAddressNotZero("mega.policies.Issuer"));
 
         vm.startBroadcast();
 
@@ -340,7 +318,17 @@ contract Deploy is Script, WithSalts {
     function verifyKernelInstallation(
         string calldata chain_
     ) external {
-        _load(chain_);
+        _loadEnv(chain_);
+
+        OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
+        MSTR TOKEN = MSTR(_getAddressNotZero("mega.modules.MSTR"));
+        OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
+        RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
+        TreasuryCustodian treasuryCustodian =
+            TreasuryCustodian(_getAddressNotZero("mega.policies.TreasuryCustodian"));
+        Emergency emergency = Emergency(_getAddressNotZero("mega.policies.Emergency"));
+        Banker banker = Banker(_getAddressNotZero("mega.policies.Banker"));
+        Issuer issuer = Issuer(_getAddressNotZero("mega.policies.Issuer"));
 
         // Modules
         // TRSRY
@@ -371,7 +359,9 @@ contract Deploy is Script, WithSalts {
 
     /// @dev Should be called by the deployer address after deployment
     function pushAuth(string calldata chain_, address governance_, address council_) external {
-        _load(chain_);
+        _loadEnv(chain_);
+
+        RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
 
         vm.startBroadcast();
         // Give the council the admin and manager roles
@@ -410,26 +400,22 @@ contract Deploy is Script, WithSalts {
         vm.writeLine(file, "{");
 
         // Iterate through the contracts that were deployed and write their addresses to the file
-        uint256 len = deployments.length;
+        uint256 len = deploymentKeys.length;
         // All except the last one
         for (uint256 i; i < len - 1; ++i) {
+            string memory deployKey = deploymentKeys[i];
             vm.writeLine(
                 file,
-                string.concat(
-                    "\"", deployments[i], "\": \"", vm.toString(deployedTo[deployments[i]]), "\","
-                )
+                string.concat("\"", deployKey, "\": \"", vm.toString(deployedTo[deployKey]), "\",")
             );
         }
 
         // Write the last deployment without a comma
+        string memory lastDeployKey = deploymentKeys[len - 1];
         vm.writeLine(
             file,
             string.concat(
-                "\"",
-                deployments[len - 1],
-                "\": \"",
-                vm.toString(deployedTo[deployments[len - 1]]),
-                "\""
+                "\"", lastDeployKey, "\": \"", vm.toString(deployedTo[lastDeployKey]), "\""
             )
         );
         vm.writeLine(file, "}");
@@ -437,13 +423,32 @@ contract Deploy is Script, WithSalts {
         // Update the env.json file
         console2.log("Updating env.json");
         for (uint256 i; i < len; ++i) {
+            string memory deployKey = deploymentKeys[i];
+
             string[] memory inputs = new string[](3);
             inputs[0] = "./script/deploy/write_deployment.sh";
-            inputs[1] = string.concat("current.", chain_, ".", deployments[i]);
-            inputs[2] = vm.toString(deployedTo[deployments[i]]);
+            inputs[1] = string.concat("current.", chain_, ".", deployKey);
+            inputs[2] = vm.toString(deployedTo[deployKey]);
 
             vm.ffi(inputs);
         }
         console2.log("Done");
+    }
+
+    // ========== HELPER FUNCTIONS ========== //
+
+    function _getAddressNotZero(
+        string memory key_
+    ) internal view returns (address) {
+        // Get from deployed addresses first
+        address deployedAddress = deployedTo[key_];
+        if (deployedAddress != address(0)) {
+            console2.log(
+                "    %s: %s (from deployment addresses)", key_, vm.toString(deployedAddress)
+            );
+            return deployedAddress;
+        }
+
+        return _envAddressNotZero(key_);
     }
 }

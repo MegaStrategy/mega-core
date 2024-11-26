@@ -13,7 +13,7 @@ abstract contract WithEnvironment is Script {
 
     function _loadEnv(
         string calldata chain_
-    ) internal {
+    ) internal virtual {
         chain = chain_;
         console2.log("Using chain:", chain);
 
