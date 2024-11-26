@@ -276,13 +276,19 @@ contract Deploy is Script, WithSalts {
     ) public returns (address) {
         // No additional arguments for Banker policy
 
-        // TODO consider generating the salt here
+        // Generate the salt
+        // This is not a vanity address, so the salt and derived address doesn't really matter
+        bytes32 salt_;
+        {
+            bytes memory args = abi.encode(kernel, auctionHouse, cdtFactory);
 
-        // Get the salt
-        bytes32 salt_ = _getSalt(
-            "Banker", type(Banker).creationCode, abi.encode(kernel, auctionHouse, cdtFactory)
-        );
-        console2.log("Salt", vm.toString(salt_));
+            bytes memory contractCode = type(Banker).creationCode;
+            (string memory bytecodePath, bytes32 bytecodeHash) =
+                _writeBytecode("Banker", contractCode, args);
+            _setSalt(bytecodePath, "E7", "Banker", bytecodeHash);
+            salt_ = _getSalt("Banker", type(Banker).creationCode, args);
+            console2.log("Salt", vm.toString(salt_));
+        }
 
         // Deploy Banker policy
         vm.broadcast();
