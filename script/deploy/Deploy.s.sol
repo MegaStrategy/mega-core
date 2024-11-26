@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {Script, console2} from "@forge-std/Script.sol";
 import {stdJson} from "@forge-std/StdJson.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {WithSalts} from "../salts/WithSalts.s.sol";
 
 // solhint-disable-next-line no-global-import
 import "src/Kernel.sol";
@@ -20,7 +21,7 @@ import {Issuer} from "src/policies/Issuer.sol";
 // solhint-disable max-states-count
 /// @notice Script to deploy the system
 /// @dev    The address that this script is broadcast from must have write access to the contracts being configured
-contract Deploy is Script {
+contract Deploy is Script, WithSalts {
     using stdJson for string;
 
     Kernel public kernel;
@@ -113,9 +114,9 @@ contract Deploy is Script {
             return;
         } else if (len == 1) {
             // Only one deployment
-            string memory name = abi.decode(data.parseRaw(".sequence..name"), (string));
+            string memory name = abi.decode(data.parseRaw(".sequence[0].name"), (string));
             deployments.push(name);
-            console2.log("Deploying", name);
+
             // Parse and store args if not kernel
             // Note: constructor args need to be provided in alphabetical order
             // due to changes with forge-std or a struct needs to be used
@@ -125,11 +126,10 @@ contract Deploy is Script {
             }
         } else {
             // More than one deployment
-            string[] memory names = abi.decode(data.parseRaw(".sequence..name"), (string[]));
+            string[] memory names = abi.decode(data.parseRaw(".sequence[*].name"), (string[]));
             for (uint256 i = 0; i < len; i++) {
                 string memory name = names[i];
                 deployments.push(name);
-                console2.log("Deploying", name);
 
                 // Parse and store args if not kernel
                 // Note: constructor args need to be provided in alphabetical order
@@ -159,9 +159,11 @@ contract Deploy is Script {
         // If kernel to be deployed, then it should be first (not included in contract -> selector mappings so it will error out if not first)
         bool deployKernel = keccak256(bytes(deployments[0])) == keccak256(bytes("Kernel"));
         if (deployKernel) {
+            console2.log("Deploying Kernel");
             vm.broadcast();
             kernel = new Kernel();
             console2.log("Kernel deployed at:", address(kernel));
+            console2.log("");
         }
 
         // Iterate through deployments
@@ -172,13 +174,17 @@ contract Deploy is Script {
             bytes memory args = argsMap[name];
 
             // Call the deploy function for the contract
+            console2.log("Deploying", name);
             (bool success, bytes memory data) =
                 address(this).call(abi.encodeWithSelector(selector, args));
             require(success, string.concat("Failed to deploy ", deployments[i]));
+            console2.log("");
 
             // Store the deployed contract address for logging
             deployedTo[name] = abi.decode(data, (address));
         }
+
+        // TODO make deployment addresses available to subsequent deployments
 
         // Save deployments to file
         _saveDeployment(chain_);
@@ -270,9 +276,17 @@ contract Deploy is Script {
     ) public returns (address) {
         // No additional arguments for Banker policy
 
+        // TODO consider generating the salt here
+
+        // Get the salt
+        bytes32 salt_ = _getSalt(
+            "Banker", type(Banker).creationCode, abi.encode(kernel, auctionHouse, cdtFactory)
+        );
+        console2.log("Salt", vm.toString(salt_));
+
         // Deploy Banker policy
         vm.broadcast();
-        banker = new Banker(kernel, auctionHouse, cdtFactory);
+        banker = new Banker{salt: salt_}(kernel, auctionHouse, cdtFactory);
         console2.log("Banker deployed at:", address(banker));
 
         return address(banker);
@@ -370,25 +384,60 @@ contract Deploy is Script {
     function _saveDeployment(
         string memory chain_
     ) internal {
+        // Create the deployments folder if it doesn't exist
+        if (!vm.isDir("./deployments")) {
+            console2.log("Creating deployments directory");
+
+            string[] memory inputs = new string[](2);
+            inputs[0] = "mkdir";
+            inputs[1] = "deployments";
+
+            vm.ffi(inputs);
+        }
+
         // Create file path
         string memory file =
             string.concat("./deployments/", ".", chain_, "-", vm.toString(block.timestamp), ".json");
+        console2.log("Writing deployments to", file);
 
         // Write deployment info to file in JSON format
         vm.writeLine(file, "{");
 
         // Iterate through the contracts that were deployed and write their addresses to the file
         uint256 len = deployments.length;
-        for (uint256 i; i < len; ++i) {
-            // solhint-disable quotes
+        // All except the last one
+        for (uint256 i; i < len - 1; ++i) {
             vm.writeLine(
                 file,
                 string.concat(
-                    '"', deployments[i], '": "', vm.toString(deployedTo[deployments[i]]), '",'
+                    "\"", deployments[i], "\": \"", vm.toString(deployedTo[deployments[i]]), "\","
                 )
             );
-            // solhint-enable quotes
         }
+
+        // Write the last deployment without a comma
+        vm.writeLine(
+            file,
+            string.concat(
+                "\"",
+                deployments[len - 1],
+                "\": \"",
+                vm.toString(deployedTo[deployments[len - 1]]),
+                "\""
+            )
+        );
         vm.writeLine(file, "}");
+
+        // Update the env.json file
+        console2.log("Updating env.json");
+        for (uint256 i; i < len; ++i) {
+            string[] memory inputs = new string[](3);
+            inputs[0] = "./script/deploy/write_deployment.sh";
+            inputs[1] = string.concat("current.", chain_, ".", deployments[i]);
+            inputs[2] = vm.toString(deployedTo[deployments[i]]);
+
+            vm.ffi(inputs);
+        }
+        console2.log("Done");
     }
 }

@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # Usage:
-# ./test_salts.sh --saltKey <salt key> --env <.env>
+# ./banker_salts.sh --env <.env>
+#
+# Expects the following environment variables:
+# CHAIN: The chain to deploy to, based on values from the ./script/env.json file.
 
 # Iterate through named arguments
 # Source: https://unix.stackexchange.com/a/388038
@@ -29,24 +32,6 @@ if [ -z "$CHAIN" ]; then
     exit 1
 fi
 
-# Check if saltKey is specified
-if [ -z "$saltKey" ]; then
-    echo "No salt key specified. Provide the salt key after the --saltKey flag."
-    exit 1
-fi
-
 echo "Using chain: $CHAIN"
-echo "Using RPC at URL: $RPC_URL"
-echo "Salt key: $saltKey"
 
-salt_file="./script/salts/salts.json"
-salt_tmp_file="./script/salts/salts.json.tmp"
-
-# Clear the salts for the specified salt key
-if [ -f $salt_file ]; then
-    echo "Clearing old values for salt key: $saltKey"
-    jq "del(.\"Test_$saltKey\")" $salt_file > $salt_tmp_file && mv $salt_tmp_file $salt_file
-fi
-
-# Generate bytecode
-forge script ./script/salts/test/TestSalts.s.sol:TestSalts --sig "generate(string,string)()" $CHAIN $saltKey
+forge script script/salts/banker/BankerSalts.s.sol:BankerSalts --sig "generate(string)()" $CHAIN

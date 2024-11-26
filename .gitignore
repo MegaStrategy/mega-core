@@ -16,6 +16,8 @@ docs/
 
 # Dotenv file
 .env
+.env.*
+!.env.example
 
 # Bytecode
 bytecode/

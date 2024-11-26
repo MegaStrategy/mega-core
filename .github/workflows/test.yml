@@ -1,54 +1,54 @@
 name: CI
 
 on:
-  push:
-  pull_request:
-  workflow_dispatch:
+    push:
+    pull_request:
+    workflow_dispatch:
 
 env:
-  FOUNDRY_PROFILE: ci
+    FOUNDRY_PROFILE: ci
 
 jobs:
-  check:
-    strategy:
-      fail-fast: true
+    check:
+        strategy:
+            fail-fast: true
 
-    name: Foundry project
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+        name: Foundry project
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: nightly
 
-      - name: Show Forge version
-        run: |
-          forge --version
+            - name: Show Forge version
+              run: |
+                  forge --version
 
-      - name: Install Dependencies
-        run: |
-          pnpm install
+            - name: Install Dependencies
+              run: |
+                  pnpm install
 
-      - name: Run Lint Check
-        run: |
-          pnpm run lint:check
-        id: lint
+            - name: Run Lint Check
+              run: |
+                  pnpm run lint:check
+              id: lint
 
-      - name: Run Forge build
-        run: |
-          forge build --sizes
-        id: build
+            - name: Run Forge build
+              run: |
+                  forge build --sizes
+              id: build
 
-      - name: Run Forge tests
-        run: |
-          forge test -vvv
-        id: test
+            - name: Run Forge tests
+              run: |
+                  forge test -vvv
+              id: test

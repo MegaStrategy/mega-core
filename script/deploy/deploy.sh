@@ -1,84 +1,108 @@
 #!/bin/bash
 
 # Usage:
-# ./deploy.sh <deploy-file> <broadcast=false> <verify=false> <resume=false>
+# ./deploy.sh --sequence <sequence-file> --broadcast <false> --verify <false> --resume <false> --env <.env>
+#
+# Environment variables:
+# CHAIN:              Chain name to deploy to. Corresponds to names in "./script/env.json".
+# ETHERSCAN_API_KEY:  API key for Etherscan verification. Should be specified in .env.
+# RPC_URL:            URL for the RPC node. Should be specified in .env.
+# VERIFIER_URL:       URL for the Etherscan API verifier. Should be specified when used on an unsupported chain.
+# PRIVATE_KEY:        Private key for the deployer account. Should be specified in .env.
 
-# Load environment variables, but respect overrides
-curenv=$(declare -p -x)
-source .env
-eval "$curenv"
+# Iterate through named arguments
+# Source: https://unix.stackexchange.com/a/388038
+while [ $# -gt 0 ]; do
+    if [[ $1 == *"--"* ]]; then
+        v="${1/--/}"
+        declare $v="$2"
+    fi
 
-# Get command-line arguments
-DEPLOY_FILE=$1
-BROADCAST=${2:-false}
-VERIFY=${3:-false}
-RESUME=${4:-false}
+    shift
+done
 
-# Check if DEPLOY_FILE is set
-if [ -z "$DEPLOY_FILE" ]
-then
-  echo "No deploy file specified. Provide the relative path after the command."
-  exit 1
+# Get the name of the .env file or use the default
+ENV_FILE=${env:-".env"}
+echo "Sourcing environment variables from $ENV_FILE"
+
+# Load environment file
+set -a # Automatically export all variables
+source $ENV_FILE
+set +a # Disable automatic export
+
+# Apply defaults to command-line arguments
+SEQUENCE_FILE=$sequence
+BROADCAST=${broadcast:-false}
+VERIFY=${verify:-false}
+RESUME=${resume:-false}
+
+# Check that the CHAIN environment variable is set
+if [ -z "$CHAIN" ]; then
+    echo "CHAIN environment variable is not set. Please set it in the .env file or provide it as an environment variable."
+    exit 1
 fi
 
-# Check if DEPLOY_FILE exists
-if [ ! -f "$DEPLOY_FILE" ]
-then
-  echo "Deploy file ($DEPLOY_FILE) not found. Provide the correct relative path after the command."
-  exit 1
+# Check if SEQUENCE_FILE is set
+if [ -z "$SEQUENCE_FILE" ]; then
+    echo "No sequence file specified. Provide the relative path after the command."
+    exit 1
 fi
 
-echo "Deploying $DEPLOY_FILE"
+# Check if SEQUENCE_FILE exists
+if [ ! -f "$SEQUENCE_FILE" ]; then
+    echo "Sequence file ($SEQUENCE_FILE) not found. Provide the correct relative path after the command."
+    exit 1
+fi
+
+echo "Sequence file: $SEQUENCE_FILE"
 echo "Chain: $CHAIN"
 echo "Using RPC at URL: $RPC_URL"
 
 # Set BROADCAST_FLAG based on BROADCAST
 BROADCAST_FLAG=""
 if [ "$BROADCAST" = "true" ] || [ "$BROADCAST" = "TRUE" ]; then
-  BROADCAST_FLAG="--broadcast"
-  echo "Broadcasting is enabled"
+    BROADCAST_FLAG="--broadcast"
+    echo "Broadcast: enabled"
 else
-  echo "Broadcasting is disabled"
+    echo "Broadcast: disabled"
 fi
 
 # Set VERIFY_FLAG based on VERIFY
 VERIFY_FLAG=""
 if [ "$VERIFY" = "true" ] || [ "$VERIFY" = "TRUE" ]; then
 
-  # Check if ETHERSCAN_KEY is set
-  if [ -z "$ETHERSCAN_KEY" ]
-  then
-    echo "No Etherscan API key found. Provide the key in .env or disable verification."
-    exit 1
-  fi
+    # Check if ETHERSCAN_KEY is set
+    if [ -z "$ETHERSCAN_KEY" ]; then
+        echo "No Etherscan API key found. Provide the key in .env or disable verification."
+        exit 1
+    fi
 
-  if [ -n "$VERIFIER_URL" ]; then
-    echo "Using verifier at URL: $VERIFIER_URL"
-    VERIFY_FLAG="--verify --etherscan-api-key $ETHERSCAN_KEY --verifier-url $VERIFIER_URL"
-  else
-    echo "Using standard verififer"
-    VERIFY_FLAG="--verify --etherscan-api-key $ETHERSCAN_KEY"
-  fi
+    if [ -n "$VERIFIER_URL" ]; then
+        echo "Using verifier at URL: $VERIFIER_URL"
+        VERIFY_FLAG="--verify --etherscan-api-key $ETHERSCAN_KEY --verifier-url $VERIFIER_URL"
+    else
+        echo "Using standard verififer"
+        VERIFY_FLAG="--verify --etherscan-api-key $ETHERSCAN_KEY"
+    fi
 
-  echo "Verification is enabled"
+    echo "Verification: enabled"
 else
-  echo "Verification is disabled"
+    echo "Verification: disabled"
 fi
 
 # Set RESUME_FLAG based on RESUME
 RESUME_FLAG=""
 if [ "$RESUME" = "true" ] || [ "$RESUME" = "TRUE" ]; then
-  RESUME_FLAG="--resume"
-  echo "Resuming is enabled"
+    RESUME_FLAG="--resume"
+    echo "Resume: enabled"
 else
-  echo "Resuming is disabled"
+    echo "Resume: disabled"
 fi
 
 # Deploy using script
 forge script ./script/deploy/Deploy.s.sol:Deploy \
---sig "deploy(string,string)()" $CHAIN $DEPLOY_FILE \
---rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv \
---with-gas-price $GAS_PRICE \
-$BROADCAST_FLAG \
-$VERIFY_FLAG \
-$RESUME_FLAG
+    --sig "deploy(string,string)()" $CHAIN $SEQUENCE_FILE \
+    --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv \
+    $BROADCAST_FLAG \
+    $VERIFY_FLAG \
+    $RESUME_FLAG
