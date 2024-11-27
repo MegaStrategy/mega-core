@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Usage:
-# ./deploy.sh --sequence <sequence-file> --broadcast <false> --verify <false> --resume <false> --env <.env>
+# ./deploy.sh --sequence <sequence-file> --account <account> --broadcast <false> --verify <false> --resume <false> --env <.env>
 #
 # Environment variables:
 # CHAIN:              Chain name to deploy to. Corresponds to names in "./script/env.json".
@@ -54,9 +54,16 @@ if [ ! -f "$SEQUENCE_FILE" ]; then
     exit 1
 fi
 
+# Check that the forge account is set
+if [ -z "$account" ]; then
+    echo "Error: account is not set"
+    exit 1
+fi
+
 echo "Sequence file: $SEQUENCE_FILE"
 echo "Chain: $CHAIN"
 echo "Using RPC at URL: $RPC_URL"
+echo "Using forge account: $account"
 
 # Set BROADCAST_FLAG based on BROADCAST
 BROADCAST_FLAG=""
@@ -71,18 +78,18 @@ fi
 VERIFY_FLAG=""
 if [ "$VERIFY" = "true" ] || [ "$VERIFY" = "TRUE" ]; then
 
-    # Check if ETHERSCAN_KEY is set
-    if [ -z "$ETHERSCAN_KEY" ]; then
+    # Check if ETHERSCAN_API_KEY is set
+    if [ -z "$ETHERSCAN_API_KEY" ]; then
         echo "No Etherscan API key found. Provide the key in .env or disable verification."
         exit 1
     fi
 
     if [ -n "$VERIFIER_URL" ]; then
         echo "Using verifier at URL: $VERIFIER_URL"
-        VERIFY_FLAG="--verify --etherscan-api-key $ETHERSCAN_KEY --verifier-url $VERIFIER_URL"
+        VERIFY_FLAG="--verify --etherscan-api-key $ETHERSCAN_API_KEY --verifier-url $VERIFIER_URL"
     else
         echo "Using standard verififer"
-        VERIFY_FLAG="--verify --etherscan-api-key $ETHERSCAN_KEY"
+        VERIFY_FLAG="--verify --etherscan-api-key $ETHERSCAN_API_KEY"
     fi
 
     echo "Verification: enabled"
@@ -102,7 +109,7 @@ fi
 # Deploy using script
 forge script ./script/deploy/Deploy.s.sol:Deploy \
     --sig "deploy(string,string)()" $CHAIN $SEQUENCE_FILE \
-    --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv \
+    --rpc-url $RPC_URL --account $account --slow -vvv \
     $BROADCAST_FLAG \
     $VERIFY_FLAG \
     $RESUME_FLAG
