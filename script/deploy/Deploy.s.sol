@@ -318,10 +318,14 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         vm.startBroadcast();
 
+        console2.log("Installing modules");
+
         // Install modules
         kernel.executeAction(Actions.InstallModule, address(ROLES));
         kernel.executeAction(Actions.InstallModule, address(TRSRY));
         kernel.executeAction(Actions.InstallModule, address(TOKEN));
+
+        console2.log("Activating policies");
 
         // Activate policies
         kernel.executeAction(Actions.ActivatePolicy, address(rolesAdmin));
@@ -329,6 +333,8 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         kernel.executeAction(Actions.ActivatePolicy, address(emergency));
         kernel.executeAction(Actions.ActivatePolicy, address(banker));
         kernel.executeAction(Actions.ActivatePolicy, address(issuer));
+
+        console2.log("Done");
 
         vm.stopBroadcast();
     }
