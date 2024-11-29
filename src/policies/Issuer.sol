@@ -29,6 +29,8 @@ contract Issuer is Policy, RolesConsumer {
 
     // solhint-disable-next-line event-name-camelcase
     event oTokenCreated(address indexed oToken);
+    // solhint-disable-next-line event-name-camelcase
+    event oTokenIssued(address indexed oToken, address indexed to, uint256 amount);
 
     // ========== STATE ========== //
 
@@ -170,6 +172,9 @@ contract Issuer is Policy, RolesConsumer {
 
         // Send the oTokens to the recipient
         ERC20(token_).safeTransfer(to_, amount_);
+
+        // Emit event
+        emit oTokenIssued(token_, to_, amount_);
     }
 
     /// @notice Set the oToken teller
