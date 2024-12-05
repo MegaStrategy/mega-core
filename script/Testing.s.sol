@@ -10,6 +10,7 @@ import {WETH as WETHToken} from "solmate-6.8.0/tokens/WETH.sol";
 
 import {RolesAdmin} from "../src/policies/RolesAdmin.sol";
 import {Banker} from "../src/policies/Banker.sol";
+import {Issuer} from "../src/policies/Issuer.sol";
 
 contract Testing is Script, WithEnvironment {
     address constant USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
@@ -154,5 +155,26 @@ contract Testing is Script, WithEnvironment {
         vm.startBroadcast();
         Banker(_envAddressNotZero("mega.policies.Banker")).redeem(debtToken_, amount_);
         vm.stopBroadcast();
+    }
+
+    function createOptionToken(string calldata chain_) external {
+        _loadEnv(chain_);
+
+        uint48 expiry = uint48(block.timestamp + 1 days);
+        vm.startBroadcast();
+        address optionToken = Issuer(_envAddressNotZero("mega.policies.Issuer")).createO(USDC, expiry, 2e18);
+        vm.stopBroadcast();
+        console2.log("optionToken", optionToken);
+    }
+
+    function issueOptionToken(string calldata chain_, address optionToken_, uint256 amount_) external {
+        _loadEnv(chain_);
+
+        // Issue the option token
+        vm.startBroadcast();
+        Issuer(_envAddressNotZero("mega.policies.Issuer")).issueO(optionToken_, msg.sender, amount_);
+        vm.stopBroadcast();
+
+        console2.log("Option token issued", amount_);
     }
 }
