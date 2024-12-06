@@ -102,7 +102,7 @@ contract Testing is Script, WithEnvironment {
         // Create the debt token
         uint48 maturity = uint48(block.timestamp + 1 days);
         vm.startBroadcast();
-        address debtToken = Banker(_envAddressNotZero("mega.policies.Banker")).createDebtToken(USDC, maturity, 1e18);
+        address debtToken = Banker(_envAddressNotZero("mega.policies.Banker")).createDebtToken(WETH, maturity, 1e18);
         vm.stopBroadcast();
         console2.log("debtToken", debtToken);
     }
