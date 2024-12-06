@@ -71,19 +71,13 @@ contract FixedStrikeOptionTeller is IFixedStrikeOptionTeller, Auth, ReentrancyGu
     /// @dev    If call is true, the payout token is transferred to the receiver.
     ///         If call is false, the quote token is transferred to the receiver.
     event OptionTokenExercised(
-        address indexed optionToken,
-        address indexed recipient,
-        bool call,
-        uint256 receivedAmount
+        address indexed optionToken, address indexed recipient, bool call, uint256 receivedAmount
     );
     /// @notice Emitted when an option token is reclaimed by the receiver
     /// @dev    If call is true, the payout token is transferred to the receiver.
     ///         If call is false, the quote token is transferred to the receiver.
     event OptionTokenReclaimed(
-        address indexed optionToken,
-        address indexed recipient,
-        bool call,
-        uint256 receivedAmount
+        address indexed optionToken, address indexed recipient, bool call, uint256 receivedAmount
     );
 
     /* ========== STATE VARIABLES ========== */

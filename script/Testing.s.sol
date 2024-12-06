@@ -29,7 +29,9 @@ contract Testing is Script, WithEnvironment {
         console2.log("ETH balance", address(to_).balance);
     }
 
-    function depositEth(uint256 amount_) public {
+    function depositEth(
+        uint256 amount_
+    ) public {
         console2.log("Depositing ETH", amount_);
 
         vm.startBroadcast();
@@ -71,43 +73,52 @@ contract Testing is Script, WithEnvironment {
         vm.ffi(endImpersonateInputs);
     }
 
-    function initialize(string calldata chain_) external {
+    function initialize(
+        string calldata chain_
+    ) external {
         _loadEnv(chain_);
 
         // Grant "admin" role to the script deployer
         vm.startBroadcast();
         console2.log("sender", msg.sender);
-        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(bytes32("admin"), msg.sender);
+        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
+            bytes32("admin"), msg.sender
+        );
         vm.stopBroadcast();
 
         // Grant "manager" role to the script deployer
         vm.startBroadcast();
-        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(bytes32("manager"), msg.sender);
+        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
+            bytes32("manager"), msg.sender
+        );
         vm.stopBroadcast();
 
         // Initialize the Banker
         vm.startBroadcast();
-        Banker(_envAddressNotZero("mega.policies.Banker")).initialize(
-            0,
-            0,
-            0,
-            1e18
-        );
+        Banker(_envAddressNotZero("mega.policies.Banker")).initialize(0, 0, 0, 1e18);
         vm.stopBroadcast();
     }
 
-    function createDebtToken(string calldata chain_) external {
+    function createDebtToken(
+        string calldata chain_
+    ) external {
         _loadEnv(chain_);
 
         // Create the debt token
         uint48 maturity = uint48(block.timestamp + 1 days);
         vm.startBroadcast();
-        address debtToken = Banker(_envAddressNotZero("mega.policies.Banker")).createDebtToken(WETH, maturity, 1e18);
+        address debtToken =
+            Banker(_envAddressNotZero("mega.policies.Banker")).createDebtToken(WETH, maturity, 1e18);
         vm.stopBroadcast();
         console2.log("debtToken", debtToken);
     }
 
-    function issueDebtToken(string calldata chain_, address debtToken_, address to_, uint256 amount_) external {
+    function issueDebtToken(
+        string calldata chain_,
+        address debtToken_,
+        address to_,
+        uint256 amount_
+    ) external {
         _loadEnv(chain_);
 
         // Deal the sender some ETH
@@ -124,7 +135,10 @@ contract Testing is Script, WithEnvironment {
         vm.stopBroadcast();
 
         // Verify the WETH is in the Treasury
-        console2.log("WETH in Treasury", ERC20(WETH).balanceOf(_envAddressNotZero("mega.modules.OlympusTreasury")));
+        console2.log(
+            "WETH in Treasury",
+            ERC20(WETH).balanceOf(_envAddressNotZero("mega.modules.OlympusTreasury"))
+        );
 
         // Issue the debt token
         vm.startBroadcast();
@@ -134,12 +148,18 @@ contract Testing is Script, WithEnvironment {
         console2.log("Debt token issued", amount_);
     }
 
-    function convertDebtToken(string calldata chain_, address debtToken_, uint256 amount_) external {
+    function convertDebtToken(
+        string calldata chain_,
+        address debtToken_,
+        uint256 amount_
+    ) external {
         _loadEnv(chain_);
 
         // Approve the Banker to spend the debt token
         vm.startBroadcast();
-        ERC20(debtToken_).approve(address(Banker(_envAddressNotZero("mega.policies.Banker"))), amount_);
+        ERC20(debtToken_).approve(
+            address(Banker(_envAddressNotZero("mega.policies.Banker"))), amount_
+        );
         vm.stopBroadcast();
 
         // Convert the debt token to TOKEN
@@ -148,7 +168,11 @@ contract Testing is Script, WithEnvironment {
         vm.stopBroadcast();
     }
 
-    function redeemDebtToken(string calldata chain_, address debtToken_, uint256 amount_) external {
+    function redeemDebtToken(
+        string calldata chain_,
+        address debtToken_,
+        uint256 amount_
+    ) external {
         _loadEnv(chain_);
 
         // Redeem the debt token
@@ -157,17 +181,24 @@ contract Testing is Script, WithEnvironment {
         vm.stopBroadcast();
     }
 
-    function createOptionToken(string calldata chain_) external {
+    function createOptionToken(
+        string calldata chain_
+    ) external {
         _loadEnv(chain_);
 
         uint48 expiry = uint48(block.timestamp + 1 days);
         vm.startBroadcast();
-        address optionToken = Issuer(_envAddressNotZero("mega.policies.Issuer")).createO(USDC, expiry, 2e18);
+        address optionToken =
+            Issuer(_envAddressNotZero("mega.policies.Issuer")).createO(USDC, expiry, 2e18);
         vm.stopBroadcast();
         console2.log("optionToken", optionToken);
     }
 
-    function issueOptionToken(string calldata chain_, address optionToken_, uint256 amount_) external {
+    function issueOptionToken(
+        string calldata chain_,
+        address optionToken_,
+        uint256 amount_
+    ) external {
         _loadEnv(chain_);
 
         // Issue the option token
