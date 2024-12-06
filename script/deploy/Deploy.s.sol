@@ -284,11 +284,11 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     function _deployFixedStrikeOptionTeller(
         bytes memory args_
     ) public returns (address, string memory) {
-        (address guardian_, address authority_) = abi.decode(args_, (address, address));
+        (address authority_, address guardian_) = abi.decode(args_, (address, address));
 
         // Ensure the args are set
+        // require(authority_ != address(0), "Authority must be set");
         require(guardian_ != address(0), "Guardian must be set");
-        require(authority_ != address(0), "Authority must be set");
 
         // Deploy FixedStrikeOptionTeller
         vm.broadcast();
