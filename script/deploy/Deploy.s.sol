@@ -51,7 +51,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Setup contract -> selector mappings
         selectorMap["OlympusTreasury"] = this._deployTreasury.selector;
         selectorMap["OlympusRoles"] = this._deployRoles.selector;
-        selectorMap["MSTR"] = this._deployToken.selector;
+        selectorMap["Token"] = this._deployToken.selector;
 
         selectorMap["RolesAdmin"] = this._deployRolesAdmin.selector;
         selectorMap["TreasuryCustodian"] = this._deployTreasuryCustodian.selector;
@@ -192,10 +192,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy Token module
         vm.broadcast();
-        MSTR TOKEN = new MSTR(kernel, name, symbol);
-        console2.log("Token deployed at:", address(TOKEN));
+        MSTR token = new MSTR(kernel, name, symbol);
+        console2.log("Token deployed at:", address(token));
 
-        return (address(TOKEN), "mega.modules.MSTR");
+        return (address(token), "mega.modules.Token");
     }
 
     function _deployRolesAdmin(
@@ -308,7 +308,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
         OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
-        MSTR TOKEN = MSTR(_getAddressNotZero("mega.modules.MSTR"));
+        MSTR token = MSTR(_getAddressNotZero("mega.modules.Token"));
         RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
         TreasuryCustodian treasuryCustodian =
             TreasuryCustodian(_getAddressNotZero("mega.policies.TreasuryCustodian"));
@@ -323,7 +323,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Install modules
         kernel.executeAction(Actions.InstallModule, address(ROLES));
         kernel.executeAction(Actions.InstallModule, address(TRSRY));
-        kernel.executeAction(Actions.InstallModule, address(TOKEN));
+        kernel.executeAction(Actions.InstallModule, address(token));
 
         console2.log("Activating policies");
 
@@ -347,7 +347,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         _loadEnv(chain_);
 
         OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
-        MSTR TOKEN = MSTR(_getAddressNotZero("mega.modules.MSTR"));
+        MSTR token = MSTR(_getAddressNotZero("mega.modules.Token"));
         OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
         RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
         TreasuryCustodian treasuryCustodian =
@@ -365,8 +365,8 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // TOKEN
         Module tokenModule = kernel.getModuleForKeycode(toKeycode("TOKEN"));
-        Keycode tokenKeycode = kernel.getKeycodeForModule(TOKEN);
-        require(tokenModule == TOKEN);
+        Keycode tokenKeycode = kernel.getKeycodeForModule(token);
+        require(tokenModule == token);
         require(fromKeycode(tokenKeycode) == "TOKEN");
 
         // ROLES

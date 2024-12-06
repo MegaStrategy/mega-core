@@ -8,7 +8,7 @@
       "args": {}
     },
     {
-      "name": "MSTR",
+      "name": "Token",
       "args": {
         "name": "MegaStrategy",
         "symbol": "MSTE"
