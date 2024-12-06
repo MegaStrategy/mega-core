@@ -1,0 +1,12 @@
+{
+    "axis.options.FixedStrikeOptionTeller": "0xf299A1A8015D16Ad3b82226667f71d91dDDFF00B",
+    "mega.Kernel": "0x033FA94f2b2E1A7B1a999305eA24378d6Ff47fb7",
+    "mega.modules.OlympusRoles": "0x6837fa8E3aF4C82f5EA7ac6ecBEcFE65dae8877f",
+    "mega.modules.OlympusTreasury": "0x4f21bE9436E226150494dc270876d37d42EBe3FE",
+    "mega.modules.Token": "0x43b0e09fA31611D945c07f3c02924ebd7EBf51Cb",
+    "mega.policies.Banker": "0xE7C25606Dfd883e1A1D1aB88c7678f4f9123fA4e",
+    "mega.policies.Emergency": "0xDcd0e02fc7BA236454f0135247C409280C5544Be",
+    "mega.policies.Issuer": "0xCA8C1163dC6aA7Ee376F00Cc77f1cbE01adfFC92",
+    "mega.policies.RolesAdmin": "0xE35078af106Ce3F02d6a1125427eb5a7C900b69e",
+    "mega.policies.TreasuryCustodian": "0x30b3FC61F808a165b5d36f21E96EAf0562B40CF6"
+}
