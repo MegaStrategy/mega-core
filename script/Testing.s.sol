@@ -53,7 +53,7 @@ contract Testing is Script, WithEnvironment {
         uint48 maturity = uint48(block.timestamp + 1 days);
         vm.startBroadcast();
         address debtToken = Banker(_envAddressNotZero("mega.policies.Banker")).createDebtToken(
-            address(_envAddressNotZero("external.tokens.WETH")), maturity, 1e18
+            address(_envAddressNotZero("external.tokens.USDC")), maturity, 1e18
         );
         vm.stopBroadcast();
         console2.log("debtToken", debtToken);
@@ -67,17 +67,17 @@ contract Testing is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        // Transfer the WETH amount to the Treasury
+        // Transfer the USDC amount to the Treasury
         vm.startBroadcast();
-        ERC20(address(_envAddressNotZero("external.tokens.WETH"))).transfer(
+        ERC20(address(_envAddressNotZero("external.tokens.USDC"))).transfer(
             address(_envAddressNotZero("mega.modules.OlympusTreasury")), amount_
         );
         vm.stopBroadcast();
 
-        // Verify the WETH is in the Treasury
+        // Verify the USDC is in the Treasury
         console2.log(
-            "WETH in Treasury",
-            ERC20(address(_envAddressNotZero("external.tokens.WETH"))).balanceOf(
+            "USDC in Treasury",
+            ERC20(address(_envAddressNotZero("external.tokens.USDC"))).balanceOf(
                 _envAddressNotZero("mega.modules.OlympusTreasury")
             )
         );
@@ -131,7 +131,7 @@ contract Testing is Script, WithEnvironment {
         uint48 expiry = uint48(block.timestamp + 1 days);
         vm.startBroadcast();
         address optionToken = Issuer(_envAddressNotZero("mega.policies.Issuer")).createO(
-            address(_envAddressNotZero("external.tokens.USDC")), expiry, 2e18
+            address(_envAddressNotZero("external.tokens.WETH")), expiry, 2e18
         );
         vm.stopBroadcast();
         console2.log("optionToken", optionToken);
