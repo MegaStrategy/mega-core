@@ -67,6 +67,24 @@ contract FixedStrikeOptionTeller is IFixedStrikeOptionTeller, Auth, ReentrancyGu
         bool call,
         uint256 strikePrice
     );
+    /// @notice Emitted when an option token is exercised
+    /// @dev    If call is true, the payout token is transferred to the receiver.
+    ///         If call is false, the quote token is transferred to the receiver.
+    event OptionTokenExercised(
+        address indexed optionToken,
+        address indexed recipient,
+        bool call,
+        uint256 receivedAmount
+    );
+    /// @notice Emitted when an option token is reclaimed by the receiver
+    /// @dev    If call is true, the payout token is transferred to the receiver.
+    ///         If call is false, the quote token is transferred to the receiver.
+    event OptionTokenReclaimed(
+        address indexed optionToken,
+        address indexed recipient,
+        bool call,
+        uint256 receivedAmount
+    );
 
     /* ========== STATE VARIABLES ========== */
 
@@ -379,9 +397,13 @@ contract FixedStrikeOptionTeller is IFixedStrikeOptionTeller, Auth, ReentrancyGu
         if (call) {
             // Transfer payout tokens to user
             payoutToken.safeTransfer(msg.sender, amount_);
+
+            emit OptionTokenExercised(address(optionToken), msg.sender, call, amount_);
         } else {
             // Transfer quote tokens to user
             quoteToken.safeTransfer(msg.sender, quoteAmount);
+
+            emit OptionTokenExercised(address(optionToken), msg.sender, call, quoteAmount);
         }
     }
 
@@ -425,10 +447,14 @@ contract FixedStrikeOptionTeller is IFixedStrikeOptionTeller, Auth, ReentrancyGu
         uint256 amount = optionToken.totalSupply();
         if (call) {
             payoutToken.safeTransfer(receiver, amount);
+
+            emit OptionTokenReclaimed(address(optionToken), receiver, call, amount);
         } else {
             // Calculate amount of quote tokens equivalent to amount at strike price
             uint256 quoteAmount = amount.mulDivUp(strikePrice, 10 ** decimals);
             quoteToken.safeTransfer(receiver, quoteAmount);
+
+            emit OptionTokenReclaimed(address(optionToken), receiver, call, quoteAmount);
         }
     }
 
