@@ -73,25 +73,32 @@ contract Testing is Script, WithEnvironment {
         vm.ffi(endImpersonateInputs);
     }
 
+    function addAdmin(string calldata chain_, address admin_) external {
+        _loadEnv(chain_);
+
+        vm.startBroadcast();
+        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
+            bytes32("admin"), admin_
+        );
+        vm.stopBroadcast();
+    }
+
+    function addManager(string calldata chain_, address manager_) external {
+        _loadEnv(chain_);
+
+        vm.startBroadcast();
+        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
+            bytes32("manager"), manager_
+        );
+        vm.stopBroadcast();
+    }
+
     function initialize(
         string calldata chain_
     ) external {
         _loadEnv(chain_);
 
-        // Grant "admin" role to the script deployer
-        vm.startBroadcast();
-        console2.log("sender", msg.sender);
-        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
-            bytes32("admin"), msg.sender
-        );
-        vm.stopBroadcast();
-
-        // Grant "manager" role to the script deployer
-        vm.startBroadcast();
-        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
-            bytes32("manager"), msg.sender
-        );
-        vm.stopBroadcast();
+        // Add as admin and manager first
 
         // Initialize the Banker
         vm.startBroadcast();
