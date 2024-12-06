@@ -128,23 +128,28 @@ contract Testing is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        // Deal the sender some ETH
-        vm.startBroadcast();
-        setEthBalance(msg.sender, 10 ether);
-        vm.stopBroadcast();
+        // Only used on a fork
+        // // Deal the sender some ETH
+        // vm.startBroadcast();
+        // setEthBalance(msg.sender, 10 ether);
+        // vm.stopBroadcast();
 
-        // Deposit ETH to obtain WETH
-        depositEth(amount_);
+        // // Deposit ETH to obtain WETH
+        // depositEth(amount_);
 
         // Transfer the WETH amount to the Treasury
         vm.startBroadcast();
-        ERC20(WETH).transfer(address(_envAddressNotZero("mega.modules.OlympusTreasury")), amount_);
+        ERC20(address(_envAddressNotZero("external.tokens.WETH"))).transfer(
+            address(_envAddressNotZero("mega.modules.OlympusTreasury")), amount_
+        );
         vm.stopBroadcast();
 
         // Verify the WETH is in the Treasury
         console2.log(
             "WETH in Treasury",
-            ERC20(WETH).balanceOf(_envAddressNotZero("mega.modules.OlympusTreasury"))
+            ERC20(address(_envAddressNotZero("external.tokens.WETH"))).balanceOf(
+                _envAddressNotZero("mega.modules.OlympusTreasury")
+            )
         );
 
         // Issue the debt token
@@ -195,8 +200,9 @@ contract Testing is Script, WithEnvironment {
 
         uint48 expiry = uint48(block.timestamp + 1 days);
         vm.startBroadcast();
-        address optionToken =
-            Issuer(_envAddressNotZero("mega.policies.Issuer")).createO(USDC, expiry, 2e18);
+        address optionToken = Issuer(_envAddressNotZero("mega.policies.Issuer")).createO(
+            address(_envAddressNotZero("external.tokens.USDC")), expiry, 2e18
+        );
         vm.stopBroadcast();
         console2.log("optionToken", optionToken);
     }
