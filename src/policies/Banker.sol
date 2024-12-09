@@ -490,6 +490,25 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         return (amount * 10 ** _tokenDecimals) / conversionPrice;
     }
 
+    /// @notice Get the converted amount of TOKEN for a given amount of debt tokens
+    /// @dev    This function will revert if:
+    ///         - The debt token was not created by this issuer
+    ///
+    /// @param  debtToken_      Address of the debt token
+    /// @param  amount_         Amount of debt tokens to convert
+    /// @return convertedAmount Amount of TOKEN that would be minted for the given amount of debt tokens
+    function getConvertedAmount(
+        address debtToken_,
+        uint256 amount_
+    ) external view returns (uint256 convertedAmount) {
+        // Validate that the debt token was created by this issuer
+        if (!createdBy[debtToken_]) revert InvalidDebtToken();
+
+        (,, uint256 conversionPrice) = ConvertibleDebtToken(debtToken_).getTokenData();
+        convertedAmount = _getConvertedAmount(amount_, conversionPrice);
+        return convertedAmount;
+    }
+
     // ========== ADMIN FUNCTIONS ========== //
 
     // Set auction parameters
