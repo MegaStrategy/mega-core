@@ -44,16 +44,14 @@ contract Testing is Script, WithEnvironment {
         vm.stopBroadcast();
     }
 
-    function createDebtToken(
-        string calldata chain_
-    ) external {
+    function createDebtToken(string calldata chain_, uint256 conversionPrice_) external {
         _loadEnv(chain_);
 
         // Create the debt token
         uint48 maturity = uint48(block.timestamp + 1 days);
         vm.startBroadcast();
         address debtToken = Banker(_envAddressNotZero("mega.policies.Banker")).createDebtToken(
-            address(_envAddressNotZero("external.tokens.USDC")), maturity, 1e18
+            address(_envAddressNotZero("external.tokens.USDC")), maturity, conversionPrice_
         );
         vm.stopBroadcast();
         console2.log("debtToken", debtToken);
