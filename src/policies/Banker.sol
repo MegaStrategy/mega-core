@@ -452,12 +452,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         if (amount_ == 0) revert InvalidParam("amount");
 
         // Get the particulars from the debt token
-        (ERC20 asset, uint48 maturity, uint256 conversionPrice) = debtToken.getTokenData();
-
-        // Validate that the maturity has not passed
-        // The conversion option is not allowed after we
-        // reach maturity
-        if (block.timestamp >= maturity) revert DebtTokenMatured();
+        (ERC20 asset,, uint256 conversionPrice) = debtToken.getTokenData();
 
         // Burn the debt tokens from the sender
         // Requires approval from the sender

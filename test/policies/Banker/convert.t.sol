@@ -14,11 +14,9 @@ contract BankerConvertTest is BankerTest {
     //    [X] it reverts
     // [X] when the debt token was not created by the policy
     //    [X] it reverts
-    // [X] when the debt token has matured
-    //    [X] it reverts
     // [X] when the amount is zero
     //    [X] it reverts
-    // [X] when the parameters are valid and the token has not matured
+    // [X] when the parameters are valid
     //    [X] it burns the given amount of debt tokens from the sender
     //    [X] it mints the amount divided by the conversion price of TOKEN to the sender
     //    [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
@@ -49,18 +47,6 @@ contract BankerConvertTest is BankerTest {
         vm.prank(buyer);
         vm.expectRevert(abi.encodeWithSelector(Banker.InvalidDebtToken.selector));
         banker.convert(_debtToken, 1e18);
-    }
-
-    function test_debtTokenMatured_reverts(
-        uint48 warp_
-    ) public givenPolicyIsActive givenDebtTokenCreated givenIssuedDebtTokens(buyer, 1e18) {
-        uint48 time = debtTokenParams.maturity
-            + uint48(bound(warp_, 0, type(uint48).max - debtTokenParams.maturity));
-
-        vm.warp(time);
-        vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(Banker.DebtTokenMatured.selector));
-        banker.convert(debtToken, 1e18);
     }
 
     function test_amountZero_reverts() public givenPolicyIsActive givenDebtTokenCreated {
