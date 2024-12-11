@@ -40,7 +40,8 @@ contract BankerRedeemTest is BankerTest {
             new ConvertibleDebtToken(
                 "Fake Debt Token",
                 "FDT",
-                debtTokenParams.asset,
+                debtTokenParams.underlying,
+                address(MSTR),
                 debtTokenParams.maturity,
                 debtTokenParams.conversionPrice,
                 OWNER
@@ -106,9 +107,11 @@ contract BankerRedeemTest is BankerTest {
 
         // Confirm beginning balances
         assertEq(ERC20(debtToken).balanceOf(buyer), amount_);
-        assertEq(ERC20(debtTokenParams.asset).balanceOf(buyer), 0);
-        assertEq(ERC20(debtTokenParams.asset).balanceOf(address(TRSRY)), treasuryFunds_);
-        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.asset)), amount_);
+        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), 0);
+        assertEq(ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), treasuryFunds_);
+        assertEq(
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount_
+        );
         assertEq(
             MSTR.mintApproval(address(banker)),
             amount_ * 10 ** MSTR.decimals() / debtTokenParams.conversionPrice
@@ -125,9 +128,11 @@ contract BankerRedeemTest is BankerTest {
 
         // Check ending balances
         assertEq(ERC20(debtToken).balanceOf(buyer), 0);
-        assertEq(ERC20(debtTokenParams.asset).balanceOf(buyer), amount_);
-        assertEq(ERC20(debtTokenParams.asset).balanceOf(address(TRSRY)), treasuryFunds_ - amount_);
-        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.asset)), 0);
+        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), amount_);
+        assertEq(
+            ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), treasuryFunds_ - amount_
+        );
+        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), 0);
         assertEq(MSTR.mintApproval(address(banker)), 0);
     }
 }

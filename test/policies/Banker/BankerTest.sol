@@ -132,7 +132,7 @@ abstract contract BankerTest is Test, WithSalts {
         stablecoin = new MockERC20("Stablecoin", "STBL", 18);
 
         // Set debt token defaults
-        debtTokenParams.asset = address(stablecoin);
+        debtTokenParams.underlying = address(stablecoin);
         debtTokenParams.maturity = debtTokenMaturity;
         debtTokenParams.conversionPrice = debtTokenConversionPrice;
 
@@ -162,7 +162,7 @@ abstract contract BankerTest is Test, WithSalts {
     modifier givenDebtTokenAsset(
         address asset_
     ) {
-        debtTokenParams.asset = asset_;
+        debtTokenParams.underlying = asset_;
         _;
     }
 
@@ -183,7 +183,7 @@ abstract contract BankerTest is Test, WithSalts {
     function _createDebtToken() internal {
         vm.prank(manager);
         debtToken = banker.createDebtToken(
-            debtTokenParams.asset, debtTokenParams.maturity, debtTokenParams.conversionPrice
+            debtTokenParams.underlying, debtTokenParams.maturity, debtTokenParams.conversionPrice
         );
     }
 
@@ -205,7 +205,7 @@ abstract contract BankerTest is Test, WithSalts {
     function _fundTreasury(
         uint256 amount_
     ) internal {
-        deal(debtTokenParams.asset, address(TRSRY), amount_);
+        deal(debtTokenParams.underlying, address(TRSRY), amount_);
     }
 
     modifier givenTreasuryFunded(

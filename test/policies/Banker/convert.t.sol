@@ -36,7 +36,8 @@ contract BankerConvertTest is BankerTest {
             new ConvertibleDebtToken(
                 "Fake Debt Token",
                 "FDT",
-                debtTokenParams.asset,
+                debtTokenParams.underlying,
+                address(MSTR),
                 debtTokenParams.maturity,
                 debtTokenParams.conversionPrice,
                 OWNER
@@ -60,7 +61,10 @@ contract BankerConvertTest is BankerTest {
     ) public givenPolicyIsActive givenDebtTokenCreated {
         vm.assume(
             amount_
-                >= (debtTokenParams.conversionPrice / (10 ** ERC20(debtTokenParams.asset).decimals()))
+                >= (
+                    debtTokenParams.conversionPrice
+                        / (10 ** ERC20(debtTokenParams.underlying).decimals())
+                )
         ); // can't round down to zero
 
         // Issue debt tokens to the buyer
@@ -70,7 +74,9 @@ contract BankerConvertTest is BankerTest {
         // Check beginning balances and withdraw approval
         assertEq(ERC20(debtToken).balanceOf(buyer), amount_);
         assertEq(MSTR.balanceOf(buyer), 0);
-        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.asset)), amount_);
+        assertEq(
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount_
+        );
 
         // Convert the tokens at the conversion price
         vm.startPrank(buyer);
@@ -83,6 +89,6 @@ contract BankerConvertTest is BankerTest {
         assertEq(
             MSTR.balanceOf(buyer), amount_ * 10 ** MSTR.decimals() / debtTokenParams.conversionPrice
         );
-        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.asset)), 0);
+        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), 0);
     }
 }

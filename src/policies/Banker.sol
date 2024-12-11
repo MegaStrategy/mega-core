@@ -47,7 +47,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     event DebtIssued(address debtToken, address to, uint256 amount);
     event DebtRepaid(address debtToken, address from, uint256 amount);
     event DebtConverted(address debtToken, address from, uint256 amount, uint256 mintAmount);
-    event AuctionSucceeded(address debtToken, uint256 refund, address asset, uint256 proceeds);
+    event AuctionSucceeded(address debtToken, uint256 refund, address underlying, uint256 proceeds);
     event MaxDiscountSet(uint256 maxDiscount);
     event MinFillPercentSet(uint24 minFillPercent);
     event MaxBidsSet(uint256 maxBids);
@@ -56,7 +56,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     // ========== DATA STRUCTURES ========== //
 
     struct DebtTokenParams {
-        address asset;
+        address underlying;
         uint48 maturity;
         uint256 conversionPrice;
     }
@@ -78,7 +78,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // Local state
     bool public active;
-    ConvertibleDebtTokenFactory internal _convertibleDebtTokenFactory;
+    ConvertibleDebtTokenFactory public cdtFactory;
 
     // Auction parameters
     uint48 internal constant ONE_HUNDRED_PERCENT = 100e2;
@@ -96,7 +96,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     constructor(
         Kernel kernel_,
         address auctionHouse_,
-        address convertibleDebtTokenFactory_
+        address cdtFactory_
     )
         Policy(kernel_)
         BaseCallback(
@@ -113,11 +113,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
             })
         )
     {
-        if (convertibleDebtTokenFactory_ == address(0)) {
-            revert InvalidParam("convertibleDebtTokenFactory");
+        if (cdtFactory_ == address(0)) {
+            revert InvalidParam("cdtFactory");
         }
 
-        _convertibleDebtTokenFactory = ConvertibleDebtTokenFactory(convertibleDebtTokenFactory_);
+        cdtFactory = ConvertibleDebtTokenFactory(cdtFactory_);
     }
 
     function configureDependencies() external override returns (Keycode[] memory dependencies) {
@@ -182,15 +182,15 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         DebtTokenParams calldata dtParams_,
         AuctionParams calldata aParams_
     ) external onlyRole("manager") onlyWhileActive {
-        // TODO should we restrict the asset to a predefined list?
+        // TODO should we restrict the underlying asset to a predefined list?
 
         // Inputs are validated when creating the debt token and launching the auction
 
         // Create debt token
         address debtToken = _createDebtToken(dtParams_);
 
-        // Get the number of decimals for the asset and calculate the min price
-        uint8 decimals = ERC20(dtParams_.asset).decimals();
+        // Get the number of decimals for the underlying asset and calculate the min price
+        uint8 decimals = ERC20(dtParams_.underlying).decimals();
         // Calculate the min price for the debt token
         // Round up to be conservative
         uint256 minPrice =
@@ -221,7 +221,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         IAuctionHouse.RoutingParams memory routingParams = IAuctionHouse.RoutingParams({
             auctionType: toAxisKeycode("EMPA"),
             baseToken: debtToken,
-            quoteToken: dtParams_.asset,
+            quoteToken: dtParams_.underlying,
             curator: address(this),
             referrerFee: referrerFee,
             callbacks: this,
@@ -342,8 +342,8 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         // so we ensure it is set initially
         if (dtParams_.conversionPrice == 0) revert InvalidParam("conversionPrice");
 
-        debtToken = _convertibleDebtTokenFactory.create(
-            dtParams_.asset, dtParams_.maturity, dtParams_.conversionPrice
+        debtToken = cdtFactory.create(
+            dtParams_.underlying, address(TOKEN), dtParams_.maturity, dtParams_.conversionPrice
         );
 
         // Mark the debt token as created by this contract
@@ -371,14 +371,14 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         if (amount == 0) revert InvalidParam("amount");
 
         // Get the particulars from the debt token
-        (ERC20 asset, uint48 maturity, uint256 conversionPrice) = debtToken.getTokenData();
+        (ERC20 underlying,, uint48 maturity, uint256 conversionPrice) = debtToken.getTokenData();
 
         // Validate that the debt token has not matured
         if (block.timestamp >= maturity) revert DebtTokenMatured();
 
-        // Increase this contract's withdrawal approval for the asset by the amount issued
+        // Increase this contract's withdrawal approval for the underlying asset by the amount issued
         // This is to ensure that the debt token can be redeemed
-        TRSRY.increaseWithdrawApproval(address(this), asset, amount);
+        TRSRY.increaseWithdrawApproval(address(this), underlying, amount);
 
         // Increase this contract's mint approval for the amount divided by the conversion rate
         // This is to ensure that the debt token can be converted
@@ -417,7 +417,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
 
         // Get the particulars from the debt token
-        (ERC20 asset, uint48 maturity, uint256 conversionPrice) = debtToken.getTokenData();
+        (ERC20 underlying,, uint48 maturity, uint256 conversionPrice) = debtToken.getTokenData();
 
         // Check that the debt token has matured, otherwise revert
         if (block.timestamp < maturity) revert DebtTokenNotMatured();
@@ -430,7 +430,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         debtToken.burnFrom(msg.sender, amount_);
 
         // Transfer the underlying asset to the sender from the TRSRY
-        TRSRY.withdrawReserves(msg.sender, asset, amount_);
+        TRSRY.withdrawReserves(msg.sender, underlying, amount_);
 
         // Calculate the amount of tokens that could have been minted against the debt tokens
         uint256 mintAmount = _getConvertedAmount(amount_, conversionPrice);
@@ -452,7 +452,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         if (amount_ == 0) revert InvalidParam("amount");
 
         // Get the particulars from the debt token
-        (ERC20 asset,, uint256 conversionPrice) = debtToken.getTokenData();
+        (ERC20 underlying,,, uint256 conversionPrice) = debtToken.getTokenData();
 
         // Burn the debt tokens from the sender
         // Requires approval from the sender
@@ -464,9 +464,9 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         // Mint the TOKEN to the sender
         TOKEN.mint(msg.sender, mintAmount);
 
-        // Reduce this contract's withdrawal approval for the asset by the amount converted
+        // Reduce this contract's withdrawal approval for the underlying asset by the amount converted
         // We do this since the debt token has been burned to avoid an extra dangling allowance
-        TRSRY.decreaseWithdrawApproval(address(this), asset, amount_);
+        TRSRY.decreaseWithdrawApproval(address(this), underlying, amount_);
 
         // Emit an event
         emit DebtConverted(debtToken_, msg.sender, amount_, mintAmount);
@@ -474,9 +474,9 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // ========== HELPERS =========== //
 
-    /// @notice Convert an amount of asset to TOKEN at the conversion price
-    /// @dev The conversion rate is the price of TOKEN in the asset that the tokens can be converted at
-    ///      e.g. if the asset has 18 decimals, the conversion rate is 15e18, and the amount is 75e18,
+    /// @notice Convert an amount of underlying asset to TOKEN at the conversion price
+    /// @dev The conversion rate is the price of TOKEN in the underlying asset that the tokens can be converted at
+    ///      e.g. if the underlying asset has 18 decimals, the conversion rate is 15e18, and the amount is 75e18,
     ///      then they will receive 5e18 TOKEN.
     function _getConvertedAmount(
         uint256 amount,
@@ -499,7 +499,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         // Validate that the debt token was created by this issuer
         if (!createdBy[debtToken_]) revert InvalidDebtToken();
 
-        (,, uint256 conversionPrice) = ConvertibleDebtToken(debtToken_).getTokenData();
+        (,,, uint256 conversionPrice) = ConvertibleDebtToken(debtToken_).getTokenData();
         convertedAmount = _getConvertedAmount(amount_, conversionPrice);
         return convertedAmount;
     }

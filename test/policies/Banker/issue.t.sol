@@ -91,7 +91,9 @@ contract BankerIssueTest is BankerTest {
         assertEq(ERC20(debtToken).balanceOf(to_), amount_);
 
         // Check that the banker contract's withdrawal allowance for the debt token's underlying asset was increased
-        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.asset)), amount_);
+        assertEq(
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount_
+        );
 
         // Check that the banker contract's mint allowance for the debt token's underlying asset was increased
         assertEq(

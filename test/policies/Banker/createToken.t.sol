@@ -29,14 +29,14 @@ contract BankerCreateTokenTest is BankerTest {
     // [X] when the parameters are valid
     //     [X] it creates a ConvertibleDebtToken with the given parameters
     //     [X] it stores the debt token address in the createdBy mapping
-    //     [X] the token name is the asset name plus the maturity date
-    //     [X] the token symbol is the asset symbol plus the maturity date
+    //     [X] the token name is Convertible + underlying name + Series N
+    //     [X] the token symbol is cv + the underlying symbol + -N
 
     function test_policyNotActive_reverts() public {
         vm.prank(manager);
         vm.expectRevert(abi.encodeWithSelector(Banker.Inactive.selector));
         banker.createDebtToken(
-            debtTokenParams.asset, debtTokenParams.maturity, debtTokenParams.conversionPrice
+            debtTokenParams.underlying, debtTokenParams.maturity, debtTokenParams.conversionPrice
         );
     }
 
@@ -50,7 +50,7 @@ contract BankerCreateTokenTest is BankerTest {
             abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("manager"))
         );
         banker.createDebtToken(
-            debtTokenParams.asset, debtTokenParams.maturity, debtTokenParams.conversionPrice
+            debtTokenParams.underlying, debtTokenParams.maturity, debtTokenParams.conversionPrice
         );
     }
 
@@ -79,7 +79,9 @@ contract BankerCreateTokenTest is BankerTest {
         vm.expectRevert(
             abi.encodeWithSelector(ConvertibleDebtToken.InvalidParam.selector, "maturity")
         );
-        banker.createDebtToken(debtTokenParams.asset, maturity, debtTokenParams.conversionPrice);
+        banker.createDebtToken(
+            debtTokenParams.underlying, maturity, debtTokenParams.conversionPrice
+        );
     }
 
     function test_conversionPrice_zero_reverts() public givenPolicyIsActive {
@@ -87,7 +89,7 @@ contract BankerCreateTokenTest is BankerTest {
         vm.expectRevert(
             abi.encodeWithSelector(ConvertibleDebtToken.InvalidParam.selector, "conversionPrice")
         );
-        banker.createDebtToken(debtTokenParams.asset, debtTokenParams.maturity, 0);
+        banker.createDebtToken(debtTokenParams.underlying, debtTokenParams.maturity, 0);
     }
 
     function test_success(uint256 maturity_, uint256 conversionPrice_) public givenPolicyIsActive {
@@ -95,23 +97,22 @@ contract BankerCreateTokenTest is BankerTest {
         uint256 conversionPrice = bound(conversionPrice_, 1, type(uint256).max);
 
         vm.prank(manager);
-        address debtToken = banker.createDebtToken(debtTokenParams.asset, maturity, conversionPrice);
+        address debtToken =
+            banker.createDebtToken(debtTokenParams.underlying, maturity, conversionPrice);
 
         // Confirm the debt token's parameters are correct
         ConvertibleDebtToken cdt = ConvertibleDebtToken(debtToken);
-        assertEq(address(cdt.asset()), debtTokenParams.asset);
+        assertEq(address(cdt.underlying()), debtTokenParams.underlying);
         assertEq(cdt.maturity(), maturity);
         assertEq(cdt.conversionPrice(), conversionPrice);
 
         // Check the name and symbol of the debt token
-        (string memory year, string memory month, string memory day) = maturity.toPaddedString();
         string memory expectedName = string(
-            abi.encodePacked(ERC20(debtTokenParams.asset).name(), " ", year, "-", month, "-", day)
+            abi.encodePacked("Convertible ", ERC20(debtTokenParams.underlying).name(), " - Series 1")
         );
 
-        string memory expectedSymbol = string(
-            abi.encodePacked(ERC20(debtTokenParams.asset).symbol(), " ", year, "-", month, "-", day)
-        );
+        string memory expectedSymbol =
+            string(abi.encodePacked("cv", ERC20(debtTokenParams.underlying).symbol(), "-1"));
 
         assertEq(cdt.name(), expectedName);
         assertEq(cdt.symbol(), expectedSymbol);

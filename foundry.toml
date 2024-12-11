@@ -34,4 +34,4 @@ axis-core = "1.0.1"
 axis-periphery = "1.0.0"
 "@openzeppelin-contracts" = "4.9.6"
 solmate = "6.8.0"
-derivatives = { version = "0.1.0", git = "https://github.com/Axis-Fi/derivatives.git", rev = "165bc234c2f092ae586cbc292f6130f25990221d" }
+derivatives = { version = "0.1.0", git = "https://github.com/Axis-Fi/derivatives.git", rev = "ec51f90578298737b2df7172298858bd02d9e031" }
