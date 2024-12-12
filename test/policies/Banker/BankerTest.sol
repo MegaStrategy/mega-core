@@ -17,8 +17,6 @@ import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
 import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/auctions/batch/EMP.sol";
 import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
 import {Point, ECIES} from "axis-core-1.0.1/lib/ECIES.sol";
-import {ConvertibleDebtTokenFactory} from
-    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtTokenFactory.sol";
 
 // solhint-disable max-states-count
 
@@ -41,7 +39,6 @@ abstract contract BankerTest is Test, WithSalts {
 
     BatchAuctionHouse public auctionHouse;
     EncryptedMarginalPrice public empa;
-    ConvertibleDebtTokenFactory public convertibleDebtTokenFactory;
 
     // Permissioned addresses
     address public manager = address(0x4);

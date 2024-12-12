@@ -3,8 +3,7 @@ pragma solidity 0.8.19;
 
 import {Banker} from "src/policies/Banker.sol";
 import {BaseCallback} from "axis-core-1.0.1/bases/BaseCallback.sol";
-import {ConvertibleDebtToken} from
-    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtToken.sol";
+import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 import {BankerTest} from "../BankerTest.sol";
