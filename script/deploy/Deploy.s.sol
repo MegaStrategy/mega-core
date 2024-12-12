@@ -243,13 +243,12 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // No additional arguments for Banker policy
 
         address auctionHouse = _getAddressNotZero("axis.BatchAuctionHouse");
-        address cdtFactory = _getAddressNotZero("axis.derivatives.ConvertibleDebtTokenFactory");
 
         // Generate the salt
         // This is not a vanity address, so the salt and derived address doesn't really matter
         bytes32 salt_;
         {
-            bytes memory args = abi.encode(kernel, auctionHouse, cdtFactory);
+            bytes memory args = abi.encode(kernel, auctionHouse);
 
             bytes memory contractCode = type(Banker).creationCode;
             (string memory bytecodePath, bytes32 bytecodeHash) =
@@ -261,7 +260,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy Banker policy
         vm.broadcast();
-        Banker banker = new Banker{salt: salt_}(kernel, auctionHouse, cdtFactory);
+        Banker banker = new Banker{salt: salt_}(kernel, auctionHouse);
         console2.log("Banker deployed at:", address(banker));
 
         return (address(banker), "mega.policies.Banker");

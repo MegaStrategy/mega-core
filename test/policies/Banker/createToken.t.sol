@@ -108,7 +108,9 @@ contract BankerCreateTokenTest is BankerTest {
 
         // Check the name and symbol of the debt token
         string memory expectedName = string(
-            abi.encodePacked("Convertible ", ERC20(debtTokenParams.underlying).name(), " - Series 1")
+            abi.encodePacked(
+                "Convertible ", ERC20(debtTokenParams.underlying).name(), " - Series 1"
+            )
         );
 
         string memory expectedSymbol =

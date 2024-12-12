@@ -10,7 +10,6 @@ import {Banker} from "../../../src/policies/Banker.sol";
 contract BankerSalts is Script, WithSalts, WithEnvironment {
     address internal _envKernel;
     address internal _envAuctionHouse;
-    address internal _envCdtFactory;
 
     function _setUp(
         string calldata chain_
@@ -21,7 +20,6 @@ contract BankerSalts is Script, WithSalts, WithEnvironment {
         // Cache required variables
         _envKernel = _envAddress("mega.Kernel");
         _envAuctionHouse = _envAddress("axis.BatchAuctionHouse");
-        _envCdtFactory = _envAddress("axis.derivatives.ConvertibleDebtTokenFactory");
     }
 
     function generate(
@@ -29,7 +27,7 @@ contract BankerSalts is Script, WithSalts, WithEnvironment {
     ) public {
         _setUp(chain_);
 
-        bytes memory args = abi.encode(_envKernel, _envAuctionHouse, _envCdtFactory);
+        bytes memory args = abi.encode(_envKernel, _envAuctionHouse);
 
         bytes memory contractCode = type(Banker).creationCode;
         (string memory bytecodePath, bytes32 bytecodeHash) =

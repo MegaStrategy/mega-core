@@ -101,21 +101,12 @@ abstract contract BankerTest is Test, WithSalts {
         TRSRY = new OlympusTreasury(kernel);
         MSTR = new MasterStrategy(kernel, "Master Strategy", "MSTR");
 
-        // Create the factory at a deterministic address
-        ConvertibleDebtTokenFactory _convertibleDebtTokenFactory = new ConvertibleDebtTokenFactory();
-        convertibleDebtTokenFactory =
-            ConvertibleDebtTokenFactory(address(0x00000000000000000000000000000000000000ff));
-        vm.etch(address(convertibleDebtTokenFactory), address(_convertibleDebtTokenFactory).code);
-
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
-        bytes memory args =
-            abi.encode(kernel, address(auctionHouse), address(convertibleDebtTokenFactory));
+        bytes memory args = abi.encode(kernel, address(auctionHouse));
         bytes32 salt = _getTestSalt("Banker", type(Banker).creationCode, args);
         vm.broadcast();
-        banker = new Banker{salt: salt}(
-            kernel, address(auctionHouse), address(convertibleDebtTokenFactory)
-        );
+        banker = new Banker{salt: salt}(kernel, address(auctionHouse));
 
         // Install the modules and policies in the Kernel
         kernel.executeAction(Actions.InstallModule, address(ROLES));

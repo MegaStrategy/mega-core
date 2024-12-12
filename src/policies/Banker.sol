@@ -18,10 +18,8 @@ import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
 import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
 
 // Other Local
-import {ConvertibleDebtTokenFactory} from
-    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtTokenFactory.sol";
-import {ConvertibleDebtToken} from
-    "@derivatives-0.1.0/ConvertibleDebtToken/ConvertibleDebtToken.sol";
+import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
+import {uint2str} from "src/lib/Uint2Str.sol";
 
 // External
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
@@ -53,6 +51,15 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     event MaxBidsSet(uint256 maxBids);
     event ReferrerFeeSet(uint48 referrerFee);
 
+    /// @notice Emitted when a new convertible debt token is created
+    event ConvertibleDebtTokenCreated(
+        address indexed cdt,
+        address indexed underlying,
+        address indexed convertsTo,
+        uint48 maturity,
+        uint256 conversionPrice
+    );
+
     // ========== DATA STRUCTURES ========== //
 
     struct DebtTokenParams {
@@ -78,7 +85,6 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // Local state
     bool public active;
-    ConvertibleDebtTokenFactory public cdtFactory;
 
     // Auction parameters
     uint48 internal constant ONE_HUNDRED_PERCENT = 100e2;
@@ -90,13 +96,18 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     /// @notice Mapping of CDTs created by this contract
     mapping(address cdt => bool) public createdBy;
 
+    /// @notice Series counter for each underlying asset
+    mapping(address underlying => uint256 series) public seriesCounter;
+
+    /// @notice CDT address lookup using underlying asset and series number
+    mapping(address underlying => mapping(uint256 series => address cdt)) public cdts;
+
     // ========== SETUP ========== //
 
     // Uses callback permissions 11100111, so must be prefixed with 0xE7
     constructor(
         Kernel kernel_,
-        address auctionHouse_,
-        address cdtFactory_
+        address auctionHouse_
     )
         Policy(kernel_)
         BaseCallback(
@@ -112,13 +123,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
                 sendBaseTokens: true
             })
         )
-    {
-        if (cdtFactory_ == address(0)) {
-            revert InvalidParam("cdtFactory");
-        }
-
-        cdtFactory = ConvertibleDebtTokenFactory(cdtFactory_);
-    }
+    {}
 
     function configureDependencies() external override returns (Keycode[] memory dependencies) {
         dependencies = new Keycode[](3);
@@ -342,12 +347,40 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         // so we ensure it is set initially
         if (dtParams_.conversionPrice == 0) revert InvalidParam("conversionPrice");
 
-        debtToken = cdtFactory.create(
-            dtParams_.underlying, address(TOKEN), dtParams_.maturity, dtParams_.conversionPrice
+        // Get the series for the debt token
+        // Increment first to start at 1
+        uint256 series = ++seriesCounter[dtParams_.underlying];
+
+        // Get the name and symbol for the debt token
+        // This is based on the series for the underlying asset
+        (string memory name, string memory symbol) =
+            _computeNameAndSymbol(dtParams_.underlying, series);
+
+        // Create the debt token
+        debtToken = address(
+            new ConvertibleDebtToken(
+                name,
+                symbol,
+                dtParams_.underlying,
+                address(TOKEN),
+                dtParams_.maturity,
+                dtParams_.conversionPrice,
+                address(this) // issuer is this contract
+            )
         );
 
-        // Mark the debt token as created by this contract
+        // Mark the debt token as created by this contract and store the address
         createdBy[debtToken] = true;
+        cdts[dtParams_.underlying][series] = debtToken;
+
+        // Emit an event
+        emit ConvertibleDebtTokenCreated(
+            debtToken,
+            dtParams_.underlying,
+            address(TOKEN),
+            dtParams_.maturity,
+            dtParams_.conversionPrice
+        );
 
         return debtToken;
     }
@@ -502,6 +535,25 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         (,,, uint256 conversionPrice) = ConvertibleDebtToken(debtToken_).getTokenData();
         convertedAmount = _getConvertedAmount(amount_, conversionPrice);
         return convertedAmount;
+    }
+
+    /// @notice     Computes the name and symbol of a vesting token
+    ///
+    /// @param      underlying_ The address of the underlying token
+    /// @param      series_     The series of token for the underlying
+    /// @return     string      The name of the vesting token
+    /// @return     string      The symbol of the vesting token
+    function _computeNameAndSymbol(
+        address underlying_,
+        uint256 series_
+    ) internal view returns (string memory, string memory) {
+        // Convert the series number to a string
+        string memory ss = uint2str(series_);
+
+        return (
+            string(abi.encodePacked("Convertible ", ERC20(underlying_).name(), " - Series ", ss)),
+            string(abi.encodePacked("cv", ERC20(underlying_).symbol(), "-", ss))
+        );
     }
 
     // ========== ADMIN FUNCTIONS ========== //
