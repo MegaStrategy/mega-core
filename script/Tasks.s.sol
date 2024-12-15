@@ -9,8 +9,10 @@ import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {RolesAdmin} from "../src/policies/RolesAdmin.sol";
 import {Banker} from "../src/policies/Banker.sol";
 import {Issuer} from "../src/policies/Issuer.sol";
+import {Point} from "axis-core-1.0.1/lib/ECIES.sol";
+import {ECIES} from "axis-core-1.0.1/lib/ECIES.sol";
 
-contract Testing is Script, WithEnvironment {
+contract TasksScript is Script, WithEnvironment {
     function addAdmin(string calldata chain_, address admin_) external {
         _loadEnv(chain_);
 
@@ -42,6 +44,36 @@ contract Testing is Script, WithEnvironment {
         vm.startBroadcast();
         Banker(_envAddressNotZero("mega.policies.Banker")).initialize(0, 0, 0, 1e18);
         vm.stopBroadcast();
+    }
+
+    function createBankerAuction(string calldata chain_, uint256 auctionPrivateKey_) external {
+        // TODO specify start date, maturity, conversion price, capacity
+        _loadEnv(chain_);
+
+        // Set up debt token params
+        Banker.DebtTokenParams memory dtParams = Banker.DebtTokenParams({
+            underlying: address(_envAddressNotZero("external.tokens.USDC")),
+            maturity: uint48(block.timestamp + 30 days),
+            conversionPrice: 30e6
+        });
+
+        // Set up auction params
+        Banker.AuctionParams memory auctionParams = Banker.AuctionParams({
+            start: uint48(block.timestamp + 1 minutes),
+            duration: uint48(1 days),
+            capacity: 1000e6,
+            auctionPublicKey: ECIES.calcPubKey(Point(1, 2), auctionPrivateKey_),
+            infoHash: ""
+        });
+
+        // Create the auction
+        vm.startBroadcast();
+        Banker(_envAddressNotZero("mega.policies.Banker")).auction(
+            dtParams, auctionParams
+        );
+        vm.stopBroadcast();
+
+        console2.log("Auction created");
     }
 
     function createDebtToken(string calldata chain_, uint256 conversionPrice_) external {
@@ -138,13 +170,14 @@ contract Testing is Script, WithEnvironment {
     function issueOptionToken(
         string calldata chain_,
         address optionToken_,
+        address to_,
         uint256 amount_
     ) external {
         _loadEnv(chain_);
 
         // Issue the option token
         vm.startBroadcast();
-        Issuer(_envAddressNotZero("mega.policies.Issuer")).issueO(optionToken_, msg.sender, amount_);
+        Issuer(_envAddressNotZero("mega.policies.Issuer")).issueO(optionToken_, to_, amount_);
         vm.stopBroadcast();
 
         console2.log("Option token issued", amount_);
