@@ -68,9 +68,7 @@ contract TasksScript is Script, WithEnvironment {
 
         // Create the auction
         vm.startBroadcast();
-        Banker(_envAddressNotZero("mega.policies.Banker")).auction(
-            dtParams, auctionParams
-        );
+        Banker(_envAddressNotZero("mega.policies.Banker")).auction(dtParams, auctionParams);
         vm.stopBroadcast();
 
         console2.log("Auction created");
