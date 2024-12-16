@@ -39,3 +39,9 @@ version = "6.8.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/solmate/6_8_0_29-10-2024_19:01:45_solmate.zip"
 checksum = "e3ec0f0182cb3bbedecf8a0bcc39897266534a795ec732b2b03dafa285d78a5b"
 integrity = "a22e5a352de0231f671ee8adf5667bbe83c50012670083987bd1099a69feb429"
+
+[[dependencies]]
+name = "surl"
+version = "1.0.0"
+git = "https://github.com/memester-xyz/surl.git"
+rev = "034c912ae9b5e707a5afd21f145b452ad8e800df"
