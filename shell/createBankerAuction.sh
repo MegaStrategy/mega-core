@@ -1,12 +1,11 @@
 #!/bin/bash
 
 # Creates an auction through the Banker policy
-# Usage: ./createBankerAuction.sh --input <auctionFilePath> --account <cast account> --broadcast <true|false>
+# Usage: ./createBankerAuction.sh --input <auctionFilePath> --account <cast account> --testnet <true|false> --broadcast <true|false>
 #
 # Environment variables:
 # RPC_URL
 # CHAIN
-# CLOAK_API_URL
 
 # Exit if any error occurs
 set -e
@@ -33,6 +32,7 @@ set +a # Disable automatic export
 
 # Set sane defaults
 BROADCAST=${broadcast:-false}
+TESTNET=${testnet:-false}
 
 # Check if the input argument exists
 if [ -z "$input" ]; then
@@ -58,10 +58,11 @@ if [ -z "$RPC_URL" ]; then
     exit 1
 fi
 
-# Check if CLOAK_API_URL is set
-if [ -z "$CLOAK_API_URL" ]; then
-    echo "Error: CLOAK_API_URL environment variable is not set"
-    exit 1
+# Set the CLOAK_API_URL to the testnet version if TESTNET is true
+if [ "$TESTNET" = "true" ]; then
+    CLOAK_API_URL="https://api-testnet-v3.up.railway.app/"
+else
+    CLOAK_API_URL="https://api-production-8b39.up.railway.app/"
 fi
 
 # Check if the CLOAK_API_URL ends with a slash
@@ -84,6 +85,8 @@ echo ""
 echo "Auction input file: $input"
 echo "Chain: $CHAIN"
 echo "RPC URL: $RPC_URL"
+echo "Testnet: $TESTNET"
+echo "Cloak API URL: $CLOAK_API_URL"
 echo "Sender: $CAST_ADDRESS"
 
 # Set BROADCAST_FLAG based on BROADCAST
@@ -159,4 +162,15 @@ fi
 # Run
 echo ""
 echo "Running the auction creation script"
-forge script script/BankerAuction.s.sol --sig "create(string,string,string)()" $CHAIN $input $IPFS_HASH --rpc-url $RPC_URL --account $account --froms $CAST_ADDRESS $BROADCAST_FLAG -vvv
+CLOAK_API_URL=$CLOAK_API_URL forge script script/BankerAuction.s.sol --sig "create(string,string,string)()" $CHAIN $input $IPFS_HASH --rpc-url $RPC_URL --account $account --froms $CAST_ADDRESS $BROADCAST_FLAG -vvv
+
+# Determine the dApp URL
+DAPP_URL="https://app.axis.finance/"
+if [ "$TESTNET" = "true" ]; then
+    DAPP_URL="https://testnet.axis.finance/"
+fi
+
+# Output the auction ID
+echo ""
+echo "Auction created"
+echo "You can view the auction at $DAPP_URL"

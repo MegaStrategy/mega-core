@@ -34,9 +34,8 @@ This script has additional requirements that need to be manually configured:
 -   The fleek CLI tool must be authenticated using `npx fleek login`
 -   The fleek CLI tool must be configured to use the correct project using `npx fleek projects select`
 -   Populating an environment file with the required values
-    -   A value for the `CLOAK_API_URL` environment variable can be found in the [cloak-servers.ts](https://github.com/Axis-Fi/ui-libs/blob/main/packages/env/src/cloak-servers.ts)
 
 To create the auction:
 
 1. Create a JSON file with the auction details. See [script/auctions/IMG.json](script/auctions/IMG.json) for an example.
-2. Run the `createBankerAuction.sh` script: `./shell/createBankerAuction.sh --account <CAST_ACCOUNT> --auctionFilePath <PATH_TO_AUCTION_FILE> --broadcast <true|false>`
+2. Run the `createBankerAuction.sh` script: `./shell/createBankerAuction.sh --account <CAST_ACCOUNT> --auctionFilePath <PATH_TO_AUCTION_FILE> --testnet <true|false> --broadcast <true|false>`
