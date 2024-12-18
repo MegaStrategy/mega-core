@@ -26,6 +26,7 @@ contract BankerAuctionScript is Script, WithEnvironment {
 
     function _getPublicKey() internal returns (Point memory publicKey) {
         // Get the URL for the Cloak API
+        // It is assumed that the URL ends with a slash and was checked by the shell script
         string memory cloakUrl = vm.envString("CLOAK_API_URL");
 
         // Prepare headers
@@ -33,14 +34,13 @@ contract BankerAuctionScript is Script, WithEnvironment {
         headers[0] = "Accept: application/json";
         headers[1] = "Content-Type: application/json";
 
-        string memory url = string.concat(cloakUrl, "public-key");
+        string memory url = string.concat(cloakUrl, "new_key_pair");
 
         // Execute the API call
         console2.log("Requesting public key from ", url);
         (uint256 status, bytes memory response) = url.post(headers, "");
 
         string memory responseString = string(response);
-        console2.log("Response: ", responseString);
 
         // Check the response status
         if (status >= 400) {
@@ -48,8 +48,8 @@ contract BankerAuctionScript is Script, WithEnvironment {
         }
 
         // Extract the x and y values
-        uint256 x = vm.parseJsonUint(responseString, "x");
-        uint256 y = vm.parseJsonUint(responseString, "y");
+        uint256 x = vm.parseJsonUint(responseString, ".x");
+        uint256 y = vm.parseJsonUint(responseString, ".y");
 
         return Point(x, y);
     }
@@ -75,18 +75,18 @@ contract BankerAuctionScript is Script, WithEnvironment {
             dtParams = Banker.DebtTokenParams({
                 underlying: address(_envAddressNotZero("external.tokens.USDC")),
                 maturity: uint48(
-                    block.timestamp + uint48(vm.parseJsonUint(auctionData, "auctionParams.maturity"))
+                    block.timestamp + uint48(vm.parseJsonUint(auctionData, ".auctionParams.maturity"))
                 ),
-                conversionPrice: vm.parseJsonUint(auctionData, "auctionParams.conversionPrice")
+                conversionPrice: vm.parseJsonUint(auctionData, ".auctionParams.conversionPrice")
             });
 
             // Set up auction params
             auctionParams = Banker.AuctionParams({
                 start: uint48(
-                    block.timestamp + uint48(vm.parseJsonUint(auctionData, "auctionParams.startDelay"))
+                    block.timestamp + uint48(vm.parseJsonUint(auctionData, ".auctionParams.startDelay"))
                 ),
-                duration: uint48(vm.parseJsonUint(auctionData, "auctionParams.duration")),
-                capacity: uint96(vm.parseJsonUint(auctionData, "auctionParams.capacity")),
+                duration: uint48(vm.parseJsonUint(auctionData, ".auctionParams.duration")),
+                capacity: uint96(vm.parseJsonUint(auctionData, ".auctionParams.capacity")),
                 auctionPublicKey: publicKey,
                 infoHash: ipfsHash_
             });
