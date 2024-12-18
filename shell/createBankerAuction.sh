@@ -95,6 +95,44 @@ else
     echo "Broadcast: false"
 fi
 
+# Validate that the auction info has the required fields
+echo ""
+echo "Validating auction info"
+if ! jq -e '.auctionInfo.name' $input > /dev/null 2>&1; then
+    echo "Error: auctionInfo.name is required"
+    exit 1
+fi
+
+if ! jq -e '.auctionInfo.description' $input > /dev/null 2>&1; then
+    echo "Error: auctionInfo.description is required"
+    exit 1
+fi
+
+if ! jq -e '.auctionInfo.tagline' $input > /dev/null 2>&1; then
+    echo "Error: auctionInfo.tagline is required"
+    exit 1
+fi
+
+if ! jq -e '.auctionInfo.links.projectBanner' $input > /dev/null 2>&1; then
+    echo "Error: auctionInfo.links.projectBanner is required"
+    exit 1
+fi
+
+if ! jq -e '.auctionInfo.links.projectLogo' $input > /dev/null 2>&1; then
+    echo "Error: auctionInfo.links.projectLogo is required"
+    exit 1
+fi
+
+if ! jq -e '.auctionInfo.links.payoutTokenLogo' $input > /dev/null 2>&1; then
+    echo "Error: auctionInfo.links.payoutTokenLogo is required"
+    exit 1
+fi
+
+if ! jq -e '.auctionInfo.links.website' $input > /dev/null 2>&1; then
+    echo "Error: auctionInfo.links.website is required"
+    exit 1
+fi
+
 # Extract the "auctionInfo" key from the input file and store it in the tmp directory
 echo ""
 echo "Extracting auction info from $input for upload to IPFS"
