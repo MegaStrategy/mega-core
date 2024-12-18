@@ -34,3 +34,4 @@ axis-core = "1.0.1"
 axis-periphery = "1.0.0"
 "@openzeppelin-contracts" = "4.9.6"
 solmate = "6.8.0"
+morpho-blue = { version = "1.0.0", git = "https://github.com/morpho-org/morpho-blue.git", rev = "4844569ce51f2a01a46e27a5a22f54e9a388adcc" }
