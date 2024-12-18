@@ -124,6 +124,9 @@ contract cvStrategy is Ownable {
         uint256 total = totalAssets();
         if (amount_ > total) revert InvalidParam("amount");
 
+        // TODO allow the vault to send in protocol tokens to offset the payback needed to withdraw?
+        // This would require users to provide the protocol token when doing a negative withdraw
+
         // TODO maybe abstract the below logic into a "source" function
         // Potentially, combine in someway with the need to payback the loan to remove collateral
         // proportionately to the amount that is being withdrawn
