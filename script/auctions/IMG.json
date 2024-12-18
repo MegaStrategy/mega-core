@@ -12,7 +12,7 @@
     "auctionParams": {
         "capacity": 1000000000000000000000000,
         "conversionPrice": 3000000000000000000,
-        "duration": 172800,
+        "duration": 86400,
         "maturity": 2592000,
         "startDelay": 60
     }
