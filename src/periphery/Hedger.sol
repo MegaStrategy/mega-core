@@ -35,7 +35,12 @@ contract Hedger is Ownable {
     // with the user's address as the owner.
     // It supports managing positions for any cvToken<>MGST morpho market.
 
-    // =========== STATE VARIABLES =========== //
+    // ========== ERRORS ========== //
+
+    error InvalidParam(string name);
+    error NotAuthorized();
+
+    // ========== STATE VARIABLES ========== //
 
     // Tokens
     IERC20 public immutable mgst;
@@ -57,6 +62,7 @@ contract Hedger is Ownable {
 
     constructor(
         address mgst_,
+        address weth_,
         address reserve_,
         bytes32 mgstMarket_,
         address morpho_,
@@ -64,6 +70,7 @@ contract Hedger is Ownable {
     ) {
         // Ensure the addresses are not zero
         if (mgst_ == address(0)) revert InvalidParam("mgst");
+        if (weth_ == address(0)) revert InvalidParam("weth");
         if (reserve_ == address(0)) revert InvalidParam("reserve");
         if (morpho_ == address(0)) revert InvalidParam("morpho");
         if (swapRouter_ == address(0)) revert InvalidParam("swapRouter");
@@ -73,23 +80,26 @@ contract Hedger is Ownable {
 
         // Get the morpho market params for the mgstMarket ID
         // Confirm that the tokens match
-        MorphoParams memory marketParams = morpho.idToMarketParams(mgstMarket_);
+        MorphoParams memory marketParams = morpho.idToMarketParams(MorphoId.wrap(mgstMarket_));
         if (marketParams.collateralToken != mgst_) revert InvalidParam("mgstMarket");
         if (marketParams.loanToken != reserve_) revert InvalidParam("mgstMarket");
 
         // Store variables
-        mgst = ERC20(mgst_);
-        reserve = ERC20(reserve_);
-        mgstMarket = mgstMarket_;
+        mgst = IERC20(mgst_);
+        weth = IERC20(weth_);
+        reserve = IERC20(reserve_);
+        mgstMarket = MorphoId.wrap(mgstMarket_);
         morpho = IMorpho(morpho_);
-        swapRouter = IUniversalRouter(swapRouter_);
+        swapRouter = ISwapRouter(swapRouter_);
     }
 
-    // ========== VALIDATION ========== // 
+    // ========== VALIDATION ========== //
 
-    function getMarketId(address cvToken_) internal view returns (MorphoId) {
+    function getMarketId(
+        address cvToken_
+    ) internal view returns (MorphoId) {
         MorphoId cvMarket = cvMarkets[cvToken_];
-        if (bytes32(cvMarket) == bytes32(0)) revert InvalidParam("cvToken");
+        if (MorphoId.unwrap(cvMarket) == bytes32(0)) revert InvalidParam("cvToken");
         return cvMarket;
     }
 
@@ -100,7 +110,6 @@ contract Hedger is Ownable {
 
     // ========== USER ACTIONS ========== //
 
-
     /// @dev User must approve this contract to spend the amount of cvToken
     function deposit(address cvToken_, uint256 amount_) external {
         MorphoId cvMarket = getMarketId(cvToken_);
@@ -109,17 +118,6 @@ contract Hedger is Ownable {
         _supplyCollateral(cvMarket, amount_, msg.sender);
     }
 
-    function deposit(
-        address cvToken_, 
-        uint256 amount_,
-        address onBehalfOf_
-    ) external {
-        MorphoId cvMarket = getMarketId(cvToken_);
-
-        // Supply the collateral to the morpho market
-        _supplyCollateral(cvMarket, amount_, onBehalfOf_);
-    }
-    
     function depositAndHedge(
         address cvToken_,
         uint256 amount_,
@@ -155,7 +153,9 @@ contract Hedger is Ownable {
         MorphoId cvMarket = getMarketId(cvToken_);
 
         // Transfer the external amount of reserves to this contract, if necessary
-        if (reserveToSupply_ > 0) reserve.safeTransferFrom(msg.sender, address(this), reserveToSupply_);
+        if (reserveToSupply_ > 0) {
+            reserve.safeTransferFrom(msg.sender, address(this), reserveToSupply_);
+        }
 
         // Decrease the hedge position
         _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, minMgstOut_);
@@ -171,7 +171,9 @@ contract Hedger is Ownable {
         MorphoId cvMarket = getMarketId(cvToken_);
 
         // Transfer the external amount of reserves to this contract, if necessary
-        if (reserveToSupply_ > 0) reserve.safeTransferFrom(msg.sender, address(this), reserveToSupply_);
+        if (reserveToSupply_ > 0) {
+            reserve.safeTransferFrom(msg.sender, address(this), reserveToSupply_);
+        }
 
         // Decrease the hedge position, if necessary
         _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, minMgstOut_);
@@ -190,22 +192,21 @@ contract Hedger is Ownable {
         MorphoId cvMarket = getMarketId(cvToken_);
 
         // Transfer the external amount of reserves to this contract, if necessary
-        if (reserveToSupply_ > 0) reserve.safeTransferFrom(msg.sender, address(this), reserveToSupply_);
+        if (reserveToSupply_ > 0) {
+            reserve.safeTransferFrom(msg.sender, address(this), reserveToSupply_);
+        }
 
         // Decrease the hedge position, if necessary
-        _decreaseHedge(cvMarket, reserveAmount_, msg.sender, minMgstOut_);
+        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, minMgstOut_);
 
         // Get the user's deposited balance of cvToken in the morpho market
-        MorphoPosition memory position = morpho.getPosition(cvMarket, msg.sender);
+        MorphoPosition memory position = morpho.position(cvMarket, msg.sender);
 
         // Withdraw all the collateral from the morpho market
         _withdrawCollateral(cvMarket, position.collateral, msg.sender);
     }
 
-    function withdraw(
-        address cvToken_,
-        uint256 amount_
-    ) external {
+    function withdraw(address cvToken_, uint256 amount_) external {
         MorphoId cvMarket = getMarketId(cvToken_);
 
         // Withdraw the collateral from the morpho market
@@ -218,7 +219,7 @@ contract Hedger is Ownable {
         MorphoId cvMarket = getMarketId(cvToken_);
 
         // Get the user's deposited balance of cvToken in the morpho market
-        MorphoPosition memory position = morpho.getPosition(cvMarket, msg.sender);
+        MorphoPosition memory position = morpho.position(cvMarket, msg.sender);
 
         // Withdraw all the collateral from the morpho market
         _withdrawCollateral(cvMarket, position.collateral, msg.sender);
@@ -238,11 +239,8 @@ contract Hedger is Ownable {
 
     // ========== DELEGATED ACTIONS ========== //
 
-    function deposit(
-        address cvToken_, 
-        uint256 amount_,
-        address onBehalfOf_
-    ) external { // doesn't require only approved operator to donate tokens to user
+    function deposit(address cvToken_, uint256 amount_, address onBehalfOf_) external {
+        // doesn't require only approved operator to donate tokens to user
         MorphoId cvMarket = getMarketId(cvToken_);
 
         // Supply the collateral to the morpho market
@@ -287,7 +285,9 @@ contract Hedger is Ownable {
         MorphoId cvMarket = getMarketId(cvToken_);
 
         // Transfer the external amount of reserves to this contract, if necessary
-        if (reserveToSupply_ > 0) reserve.safeTransferFrom(onBehalfOf_, address(this), reserveToSupply_);
+        if (reserveToSupply_ > 0) {
+            reserve.safeTransferFrom(onBehalfOf_, address(this), reserveToSupply_);
+        }
 
         // Decrease the hedge position
         _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, minMgstOut_);
@@ -324,7 +324,7 @@ contract Hedger is Ownable {
         _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, minMgstOut_);
 
         // Get the user's deposited balance of cvToken in the morpho market
-        MorphoPosition memory position = morpho.getPosition(cvMarket, onBehalfOf_);
+        MorphoPosition memory position = morpho.position(cvMarket, onBehalfOf_);
 
         // Withdraw all the collateral from the morpho market
         _withdrawCollateral(cvMarket, position.collateral, onBehalfOf_);
@@ -348,7 +348,7 @@ contract Hedger is Ownable {
         MorphoId cvMarket = getMarketId(cvToken_);
 
         // Get the user's deposited balance of cvToken in the morpho market
-        MorphoPosition memory position = morpho.getPosition(cvMarket, onBehalfOf_);
+        MorphoPosition memory position = morpho.position(cvMarket, onBehalfOf_);
 
         // Withdraw all the collateral from the morpho market
         _withdrawCollateral(cvMarket, position.collateral, onBehalfOf_);
@@ -361,22 +361,20 @@ contract Hedger is Ownable {
         _withdrawReserves(amount_, onBehalfOf_);
     }
 
-
     // ========== INTERNAL OPERATIONS ========== //
-
 
     function _supplyCollateral(MorphoId cvMarket_, uint256 amount_, address onBehalfOf_) internal {
         // Validate the amount is not zero
         if (amount_ == 0) revert InvalidParam("amount");
 
-        // Transfer the cvToken to this contract
-        cvToken.safeTransferFrom(msg.sender, address(this), amount_);
-
         // Get the morpho market params
         MorphoParams memory marketParams = morpho.idToMarketParams(cvMarket_);
 
+        // Transfer the cvToken to this contract
+        IERC20(marketParams.collateralToken).safeTransferFrom(msg.sender, address(this), amount_);
+
         // Approve the morpho market to spend the cvToken
-        cvToken.safeApprove(address(morpho), amount_);
+        IERC20(marketParams.collateralToken).safeApprove(address(morpho), amount_);
 
         // Deposit the cvToken into the morpho market
         morpho.supplyCollateral(
@@ -387,7 +385,11 @@ contract Hedger is Ownable {
         );
     }
 
-    function _withdrawCollateral(MorphoId cvMarket_, uint256 amount_, address onBehalfOf_) internal {
+    function _withdrawCollateral(
+        MorphoId cvMarket_,
+        uint256 amount_,
+        address onBehalfOf_
+    ) internal {
         // Validate the amount is not zero
         if (amount_ == 0) revert InvalidParam("amount");
 
@@ -399,11 +401,16 @@ contract Hedger is Ownable {
             marketParams, // marketParams
             amount_, // assets
             onBehalfOf_, // onBehalfOf
-            onBehalfOf_, // receiver
+            onBehalfOf_ // receiver
         );
     }
 
-    function _increaseHedge(MorphoId cvMarket_, uint256 hedgeAmount_, address onBehalfOf_, uint256 minReserveOut_) internal {
+    function _increaseHedge(
+        MorphoId cvMarket_,
+        uint256 hedgeAmount_,
+        address onBehalfOf_,
+        uint256 minReserveOut_
+    ) internal {
         // Increasing a hedge means borrowing more MGST and swapping it for the reserve token
 
         // Validate the hedge amount is not zero
@@ -413,7 +420,7 @@ contract Hedger is Ownable {
         MorphoParams memory marketParams = morpho.idToMarketParams(cvMarket_);
 
         // Try to borrow the hedge amount on behalf of the user
-        (uint256 mgstBorrowed, ) = morpho.borrow(
+        (uint256 mgstBorrowed,) = morpho.borrow(
             marketParams, // marketParams
             hedgeAmount_, // assets
             0, // shares (not used)
@@ -429,14 +436,13 @@ contract Hedger is Ownable {
         // Specify a two-hop path for the swap: MGST -> WETH -> RESERVE
         // The router expects the path in reverse order
         // TODO how to handle the fees that are hard-coded here?
-        ISwapRouter.ExactInputParams memory params =
-            ISwapRouter.ExactInputParams({
-                path: abi.encodePacked(reserve, uint24(500), weth, uint24(3000), mgst),
-                recipient: msg.sender,
-                deadline: block.timestamp,
-                amountIn: mgstBorrowed,
-                amountOutMinimum: minReserveOut_
-            });
+        ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
+            path: abi.encodePacked(reserve, uint24(500), weth, uint24(3000), mgst),
+            recipient: msg.sender,
+            deadline: block.timestamp,
+            amountIn: mgstBorrowed,
+            amountOutMinimum: minReserveOut_
+        });
 
         // Execute the swap
         uint256 reserveReceived = swapRouter.exactInput(params);
@@ -454,7 +460,13 @@ contract Hedger is Ownable {
         );
     }
 
-    function _decreaseHedge(MorphoId cvMarket_, uint256 externalReserves_, uint256 reservesToWithdraw_, address onBehalfOf_, uint256 minMgstOut_) internal {
+    function _decreaseHedge(
+        MorphoId cvMarket_,
+        uint256 externalReserves_,
+        uint256 reservesToWithdraw_,
+        address onBehalfOf_,
+        uint256 minMgstOut_
+    ) internal {
         // Decreasing a hedge means swapping the reserve token for MGST and repaying the loan
         // 1. if necessary, withdraw reserves from the MGST<>RESERVE morpho market
         // 2. swap the reserve token for MGST
@@ -468,12 +480,12 @@ contract Hedger is Ownable {
             marketParams = morpho.idToMarketParams(mgstMarket);
 
             // Withdraw the reserves from the MGST<>RESERVE morpho market
-            (reservesWithdrawn, ) = morpho.withdraw(
+            (reservesWithdrawn,) = morpho.withdraw(
                 marketParams, // marketParams
-                reserveAmount_, // assets
+                reservesToWithdraw_, // assets
                 0, // shares (not used)
                 onBehalfOf_, // onBehalfOf
-                bytes("") // data (not used)
+                address(this) // receiver (this contract receives this intermediate balance)
             );
         }
 
@@ -485,18 +497,17 @@ contract Hedger is Ownable {
         // Specify a two-hop path for the swap: RESERVE -> WETH -> MGST
         // The router expects the path in reverse order
         // TODO how to handle the fees that are hard-coded here?
-        ISwapRouter.ExactInputParams memory params =
-            ISwapRouter.ExactInputParams({
-                path: abi.encodePacked(mgst, uint24(3000), weth, uint24(500), reserve),
-                recipient: msg.sender,
-                deadline: block.timestamp,
-                amountIn: externalReserves_ + reservesWithdrawn,
-                amountOutMinimum: minMgstOut_
-            });
+        ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
+            path: abi.encodePacked(mgst, uint24(3000), weth, uint24(500), reserve),
+            recipient: msg.sender,
+            deadline: block.timestamp,
+            amountIn: externalReserves_ + reservesWithdrawn,
+            amountOutMinimum: minMgstOut_
+        });
 
         // Execute the swap
         uint256 mgstReceived = swapRouter.exactInput(params);
-    
+
         // Repay the MGST to the morpho market
         marketParams = morpho.idToMarketParams(cvMarket_);
 
@@ -526,24 +537,19 @@ contract Hedger is Ownable {
         MorphoParams memory marketParams = morpho.idToMarketParams(mgstMarket);
 
         // Withdraw the reserves from the MGST<>RESERVE morpho market
-        (uint256 reservesWithdrawn, ) = morpho.withdraw(
+        // Send them directly to the user
+        morpho.withdraw(
             marketParams, // marketParams
             amount_, // assets
             0, // shares (not used)
             onBehalfOf_, // onBehalfOf
-            bytes("") // data (not used)
+            onBehalfOf_ // receiver
         );
-
-        // Transfer the reserves to the user
-        reserve.safeTransfer(onBehalfOf_, reservesWithdrawn);
     }
 
     // ========== ADMIN ========== //
 
-    function addCvToken(
-        address cvToken_,
-        bytes32 cvMarket_
-    ) external onlyOwner {
+    function addCvToken(address cvToken_, bytes32 cvMarket_) external onlyOwner {
         // Ensure the cvToken is not zero
         if (cvToken_ == address(0)) revert InvalidParam("cvToken");
 
@@ -552,11 +558,12 @@ contract Hedger is Ownable {
 
         // Get the morpho market params for the cvMarket ID
         // Confirm that the tokens match
-        MorphoParams memory marketParams = morpho.idToMarketParams(cvMarket_);
+        MorphoId cvMarket = MorphoId.wrap(cvMarket_);
+        MorphoParams memory marketParams = morpho.idToMarketParams(cvMarket);
         if (marketParams.collateralToken != cvToken_) revert InvalidParam("cvMarket");
-        if (marketParams.loanToken != reserve_) revert InvalidParam("cvMarket");
+        if (marketParams.loanToken != address(mgst)) revert InvalidParam("cvMarket");
 
         // Store the cvMarket ID
-        cvMarkets[cvToken_] = cvMarket_;
+        cvMarkets[cvToken_] = cvMarket;
     }
 }
