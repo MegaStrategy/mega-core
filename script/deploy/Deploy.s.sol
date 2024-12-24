@@ -29,10 +29,16 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
     Kernel public kernel;
 
-    // Deploy system storage
+    /// @notice Maps deployment names to their corresponding deploy function selectors
     mapping(string => bytes4) public selectorMap;
-    mapping(string => bytes) public argsMap;
+
+    // Deploy system storage
+    /// @notice Names of the deployments to be performed
     string[] public deployments;
+
+    /// @notice Stores the contents of the deployment JSON file as a string
+    /// @dev    Individual deployment args can be accessed using the _readDeploymentArgString and _readDeploymentArgAddress functions
+    string public deploymentFileJson;
 
     // Post-deployment storage
     string[] public deploymentKeys;
@@ -64,10 +70,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         _loadEnv(chain_);
 
         // Load deployment data
-        string memory data = vm.readFile(deployFilePath_);
+        deploymentFileJson = vm.readFile(deployFilePath_);
 
         // Parse deployment sequence and names
-        bytes memory sequence = abi.decode(data.parseRaw(".sequence"), (bytes));
+        bytes memory sequence = abi.decode(deploymentFileJson.parseRaw(".sequence"), (bytes));
         uint256 len = sequence.length;
         console2.log("Contracts to be deployed:", len);
 
@@ -75,30 +81,16 @@ contract Deploy is Script, WithSalts, WithEnvironment {
             return;
         } else if (len == 1) {
             // Only one deployment
-            string memory name = abi.decode(data.parseRaw(".sequence[0].name"), (string));
+            string memory name =
+                abi.decode(deploymentFileJson.parseRaw(".sequence[0].name"), (string));
             deployments.push(name);
-
-            // Parse and store args if not kernel
-            // Note: constructor args need to be provided in alphabetical order
-            // due to changes with forge-std or a struct needs to be used
-            if (keccak256(bytes(name)) != keccak256(bytes("Kernel"))) {
-                argsMap[name] =
-                    data.parseRaw(string.concat(".sequence[?(@.name == '", name, "')].args"));
-            }
         } else {
             // More than one deployment
-            string[] memory names = abi.decode(data.parseRaw(".sequence[*].name"), (string[]));
+            string[] memory names =
+                abi.decode(deploymentFileJson.parseRaw(".sequence[*].name"), (string[]));
             for (uint256 i = 0; i < len; i++) {
                 string memory name = names[i];
                 deployments.push(name);
-
-                // Parse and store args if not kernel
-                // Note: constructor args need to be provided in alphabetical order
-                // due to changes with forge-std or a struct needs to be used
-                if (keccak256(bytes(name)) != keccak256(bytes("Kernel"))) {
-                    argsMap[name] =
-                        data.parseRaw(string.concat(".sequence[?(@.name == '", name, "')].args"));
-                }
             }
         }
     }
@@ -134,15 +126,14 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Iterate through deployments
         for (uint256 i = deployKernel ? 1 : 0; i < len; i++) {
-            // Get deploy script selector and deploy args from contract name
+            // Get deploy script selector
             string memory name = deployments[i];
             bytes4 selector = selectorMap[name];
-            bytes memory args = argsMap[name];
 
             // Call the deploy function for the contract
             console2.log("Deploying", name);
             (bool success, bytes memory data) =
-                address(this).call(abi.encodeWithSelector(selector, args));
+                address(this).call(abi.encodeWithSelector(selector, name));
             require(success, string.concat("Failed to deploy ", deployments[i]));
             (address deployedAddress, string memory deployKey) = abi.decode(data, (address, string));
             console2.log("");
@@ -156,11 +147,29 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         _saveDeployment(chain_);
     }
 
+    function _readDeploymentArgString(
+        string memory deploymentName_,
+        string memory key_
+    ) internal view returns (string memory) {
+        return deploymentFileJson.readString(
+            string.concat(".sequence[?(@.name == '", deploymentName_, "')].args.", key_)
+        );
+    }
+
+    function _readDeploymentArgAddress(
+        string memory deploymentName_,
+        string memory key_
+    ) internal view returns (address) {
+        return deploymentFileJson.readAddress(
+            string.concat(".sequence[?(@.name == '", deploymentName_, "')].args.", key_)
+        );
+    }
+
     // ========== DEPLOYMENT FUNCTIONS ========== //
 
     // Module deployment functions
     function _deployTreasury(
-        bytes memory
+        string memory
     ) public returns (address, string memory) {
         // No additional arguments for Treasury module
 
@@ -173,7 +182,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     }
 
     function _deployRoles(
-        bytes memory
+        string memory
     ) public returns (address, string memory) {
         // No additional arguments for Roles module
 
@@ -186,9 +195,13 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     }
 
     function _deployToken(
-        bytes memory args
+        string memory name_
     ) public returns (address, string memory) {
-        (string memory name, string memory symbol) = abi.decode(args, (string, string));
+        string memory name = _readDeploymentArgString(name_, "name");
+        string memory symbol = _readDeploymentArgString(name_, "symbol");
+
+        console2.log("    Token name:", name);
+        console2.log("    Token symbol:", symbol);
 
         // Deploy Token module
         vm.broadcast();
@@ -199,7 +212,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     }
 
     function _deployRolesAdmin(
-        bytes memory
+        string memory
     ) public returns (address, string memory) {
         // No additional arguments for RolesAdmin policy
 
@@ -212,7 +225,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     }
 
     function _deployTreasuryCustodian(
-        bytes memory
+        string memory
     ) public returns (address, string memory) {
         // No additional arguments for TreasuryCustodian policy
 
@@ -225,7 +238,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     }
 
     function _deployEmergency(
-        bytes memory
+        string memory
     ) public returns (address, string memory) {
         // No additional arguments for Emergency policy
 
@@ -238,7 +251,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     }
 
     function _deployBanker(
-        bytes memory
+        string memory
     ) public returns (address, string memory) {
         // No additional arguments for Banker policy
 
@@ -267,7 +280,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     }
 
     function _deployIssuer(
-        bytes memory
+        string memory
     ) public returns (address, string memory) {
         // No additional arguments for Issuer policy
 
@@ -281,18 +294,21 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     }
 
     function _deployFixedStrikeOptionTeller(
-        bytes memory args_
+        string memory name_
     ) public returns (address, string memory) {
-        (address authority_, address guardian_) = abi.decode(args_, (address, address));
+        address authority = _readDeploymentArgAddress(name_, "authority");
+        address guardian = _readDeploymentArgAddress(name_, "guardian");
 
         // Ensure the args are set
-        // require(authority_ != address(0), "Authority must be set");
-        require(guardian_ != address(0), "Guardian must be set");
+        // require(authority != address(0), "Authority must be set");
+        require(guardian != address(0), "Guardian must be set");
+
+        console2.log("    Authority:", authority);
+        console2.log("    Guardian:", guardian);
 
         // Deploy FixedStrikeOptionTeller
         vm.broadcast();
-        FixedStrikeOptionTeller teller =
-            new FixedStrikeOptionTeller(guardian_, Authority(authority_));
+        FixedStrikeOptionTeller teller = new FixedStrikeOptionTeller(guardian, Authority(authority));
         console2.log("FixedStrikeOptionTeller deployed at:", address(teller));
 
         return (address(teller), "axis.options.FixedStrikeOptionTeller");
