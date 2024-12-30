@@ -16,6 +16,8 @@ contract LaunchAuction is WithEnvironment, CloakConsumer {
     function launch(string calldata chain_, string calldata ipfsHash_) public {
         _loadEnv(chain_);
 
+        // TODO: instead of a custom callback, use the Uniswap V3 DTL and have the auction owner mint the tokens manually.
+
         // Prepare the routing parameters
         IAuctionHouse.RoutingParams memory routing = IAuctionHouse.RoutingParams({
             auctionType: toKeycode("EMPA"),
