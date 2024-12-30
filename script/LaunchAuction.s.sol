@@ -25,19 +25,28 @@ import {Issuer} from "src/policies/Issuer.sol";
 contract LaunchAuction is WithEnvironment, CloakConsumer {
     using TransferHelper for ERC20;
 
-    function launch(string calldata chain_, string calldata ipfsHash_) public {
+    function launch(
+        string calldata chain_,
+        string calldata auctionFilePath_,
+        string calldata ipfsHash_
+    ) public {
         _loadEnv(chain_);
 
-        uint256 capacity = 100_000e18; // 100,000 TOKEN
+        console2.log("Loading auction data from ", auctionFilePath_);
+        string memory auctionData = vm.readFile(auctionFilePath_);
+
+        uint256 capacity = vm.parseJsonUint(auctionData, ".auctionParams.capacity");
 
         // Mint tokens to the caller
         // This requires the caller to have the "admin" role
         vm.startBroadcast();
+        console2.log("Minting tokens to the caller", msg.sender);
         Issuer(_envAddressNotZero("mega.policies.Issuer")).mint(msg.sender, capacity);
         vm.stopBroadcast();
 
         // Approve the AuctionHouse to transfer the tokens
         vm.startBroadcast();
+        console2.log("Approving the AuctionHouse to transfer the tokens");
         ERC20(_envAddressNotZero("mega.modules.Token")).safeApprove(
             _envAddressNotZero("axis.BatchAuctionHouse"), capacity
         );
@@ -46,16 +55,16 @@ contract LaunchAuction is WithEnvironment, CloakConsumer {
         // Prepare Uniswap V3 DTL callback parameters
         IUniswapV3DirectToLiquidity.UniswapV3OnCreateParams memory uniswapV3Params =
         IUniswapV3DirectToLiquidity.UniswapV3OnCreateParams({
-            poolFee: 3000, // 3%
-            maxSlippage: 1000 // 0.1%
+            poolFee: uint24(vm.parseJsonUint(auctionData, ".callbackParams.poolFee")),
+            maxSlippage: uint24(vm.parseJsonUint(auctionData, ".callbackParams.maxSlippage"))
         });
 
         // Prepare BaseDTL callback parameters
         IBaseDirectToLiquidity.OnCreateParams memory dtlParams = IBaseDirectToLiquidity
             .OnCreateParams({
-            poolPercent: 10e2, // 10% to the pool
-            vestingStart: 0,
-            vestingExpiry: 0,
+            poolPercent: uint24(vm.parseJsonUint(auctionData, ".callbackParams.poolPercent")),
+            vestingStart: uint48(vm.parseJsonUint(auctionData, ".callbackParams.vestingStart")),
+            vestingExpiry: uint48(vm.parseJsonUint(auctionData, ".callbackParams.vestingExpiry")),
             recipient: _envAddressNotZero("mega.modules.OlympusTreasury"),
             implParams: abi.encode(uniswapV3Params)
         });
@@ -77,23 +86,26 @@ contract LaunchAuction is WithEnvironment, CloakConsumer {
         // Prepare the EMP parameters
         IEncryptedMarginalPrice.AuctionDataParams memory empParams = IEncryptedMarginalPrice
             .AuctionDataParams({
-            minPrice: 1e16, // 0.01 WETH
-            minFillPercent: 50e2, // 50%
-            minBidSize: 1e16, // 0.01 WETH
+            minPrice: vm.parseJsonUint(auctionData, ".auctionParams.minPrice"),
+            minFillPercent: uint24(vm.parseJsonUint(auctionData, ".auctionParams.minFillPercent")),
+            minBidSize: vm.parseJsonUint(auctionData, ".auctionParams.minBidSize"),
             publicKey: _getPublicKey()
         });
 
         // Prepare the auction parameters
         IAuction.AuctionParams memory auction = IAuction.AuctionParams({
-            start: 0,
-            duration: 7 days,
-            capacityInQuote: true,
+            start: uint48(
+                block.timestamp + uint48(vm.parseJsonUint(auctionData, ".auctionParams.startDelay"))
+            ),
+            duration: uint48(vm.parseJsonUint(auctionData, ".auctionParams.duration")),
+            capacityInQuote: false,
             capacity: capacity,
             implParams: abi.encode(empParams)
         });
 
         // Create the auction
         vm.startBroadcast();
+        console2.log("Creating the auction");
         uint96 lotId = IAuctionHouse(_envAddressNotZero("axis.BatchAuctionHouse")).auction(
             routing, auction, ipfsHash_
         );

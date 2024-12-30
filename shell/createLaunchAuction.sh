@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Creates an auction through the Banker policy
-# Usage: ./createBankerAuction.sh --input <auctionFilePath> --account <cast account> --testnet <true|false> --broadcast <true|false> --env <env file>
+# Creates an auction through the LaunchAuction script
+# Usage: ./createLaunchAuction.sh --account <cast account> --testnet <true|false> --broadcast <true|false> --env <env file>
 #
 # Environment variables:
 # RPC_URL
@@ -33,18 +33,6 @@ set +a # Disable automatic export
 # Set sane defaults
 BROADCAST=${broadcast:-false}
 TESTNET=${testnet:-false}
-
-# Check if the input argument exists
-if [ -z "$input" ]; then
-    echo "Error: --input argument is required to specify the auction input file"
-    exit 1
-fi
-
-# Check if the input file exists
-if [ ! -f "$input" ]; then
-    echo "Error: auction input file $input does not exist"
-    exit 1
-fi
 
 # Check if CHAIN is set
 if [ -z "$CHAIN" ]; then
@@ -82,7 +70,6 @@ echo "Getting address for cast account $account"
 CAST_ADDRESS=$(cast wallet address --account $account)
 echo ""
 
-echo "Auction input file: $input"
 echo "Chain: $CHAIN"
 echo "RPC URL: $RPC_URL"
 echo "Testnet: $TESTNET"
@@ -98,49 +85,51 @@ else
     echo "Broadcast: false"
 fi
 
+LAUNCH_FILE="script/auctions/launch.json"
+
 # Validate that the auction info has the required fields
 echo ""
 echo "Validating auction info"
-if ! jq -e '.auctionInfo.name' $input > /dev/null 2>&1; then
+if ! jq -e '.auctionInfo.name' $LAUNCH_FILE > /dev/null 2>&1; then
     echo "Error: auctionInfo.name is required"
     exit 1
 fi
 
-if ! jq -e '.auctionInfo.description' $input > /dev/null 2>&1; then
+if ! jq -e '.auctionInfo.description' $LAUNCH_FILE > /dev/null 2>&1; then
     echo "Error: auctionInfo.description is required"
     exit 1
 fi
 
-if ! jq -e '.auctionInfo.tagline' $input > /dev/null 2>&1; then
+if ! jq -e '.auctionInfo.tagline' $LAUNCH_FILE > /dev/null 2>&1; then
     echo "Error: auctionInfo.tagline is required"
     exit 1
 fi
 
-if ! jq -e '.auctionInfo.links.projectBanner' $input > /dev/null 2>&1; then
+if ! jq -e '.auctionInfo.links.projectBanner' $LAUNCH_FILE > /dev/null 2>&1; then
     echo "Error: auctionInfo.links.projectBanner is required"
     exit 1
 fi
 
-if ! jq -e '.auctionInfo.links.projectLogo' $input > /dev/null 2>&1; then
+if ! jq -e '.auctionInfo.links.projectLogo' $LAUNCH_FILE > /dev/null 2>&1; then
     echo "Error: auctionInfo.links.projectLogo is required"
     exit 1
 fi
 
-if ! jq -e '.auctionInfo.links.payoutTokenLogo' $input > /dev/null 2>&1; then
+if ! jq -e '.auctionInfo.links.payoutTokenLogo' $LAUNCH_FILE > /dev/null 2>&1; then
     echo "Error: auctionInfo.links.payoutTokenLogo is required"
     exit 1
 fi
 
-if ! jq -e '.auctionInfo.links.website' $input > /dev/null 2>&1; then
+if ! jq -e '.auctionInfo.links.website' $LAUNCH_FILE > /dev/null 2>&1; then
     echo "Error: auctionInfo.links.website is required"
     exit 1
 fi
 
 # Extract the "auctionInfo" key from the input file and store it in the tmp directory
 echo ""
-echo "Extracting auction info from $input for upload to IPFS"
+echo "Extracting auction info from $LAUNCH_FILE for upload to IPFS"
 mkdir -p tmp
-AUCTION_INFO=$(jq -r '.auctionInfo' $input)
+AUCTION_INFO=$(jq -r '.auctionInfo' $LAUNCH_FILE)
 echo "$AUCTION_INFO" > tmp/auctionInfo.json
 
 # Upload the data to IPFS
@@ -162,7 +151,7 @@ fi
 # Run
 echo ""
 echo "Running the auction creation script"
-CLOAK_API_URL=$CLOAK_API_URL forge script script/BankerAuction.s.sol --sig "create(string,string,string)()" $CHAIN $input $IPFS_HASH --rpc-url $RPC_URL --account $account --sender $CAST_ADDRESS $BROADCAST_FLAG -vvv
+CLOAK_API_URL=$CLOAK_API_URL forge script script/LaunchAuction.s.sol --sig "launch(string,string,string)()" $CHAIN $LAUNCH_FILE $IPFS_HASH --rpc-url $RPC_URL --account $account --sender $CAST_ADDRESS $BROADCAST_FLAG -vvv
 
 # Determine the dApp URL
 DAPP_URL="https://app.axis.finance/"
