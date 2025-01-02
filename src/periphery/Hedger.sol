@@ -75,13 +75,13 @@ contract Hedger is Ownable {
         if (swapRouter_ == address(0)) revert InvalidParam("swapRouter");
 
         // Ensure the mgstMarket ID is not zero
-        if (mgstMarket_ == bytes32(0)) revert InvalidParam("mgstMarket");
+        if (mgstMarket_ == bytes32(0)) revert InvalidParam("mgstMarket id");
 
         // Get the morpho market params for the mgstMarket ID
         // Confirm that the tokens match
         MorphoParams memory marketParams = morpho.idToMarketParams(MorphoId.wrap(mgstMarket_));
-        if (marketParams.collateralToken != mgst_) revert InvalidParam("mgstMarket");
-        if (marketParams.loanToken != reserve_) revert InvalidParam("mgstMarket");
+        if (marketParams.collateralToken != mgst_) revert InvalidParam("mgstMarket collateral");
+        if (marketParams.loanToken != reserve_) revert InvalidParam("mgstMarket loan");
 
         // Store variables
         mgst = IERC20(mgst_);
