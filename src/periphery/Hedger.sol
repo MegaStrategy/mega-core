@@ -16,6 +16,8 @@ import {
 // Uniswap
 import {ISwapRouter} from "src/lib/Uniswap/ISwapRouter.sol";
 
+/// @title  Hedger
+/// @notice The Hedger is a contract that allows users to hedge a cvToken against the protocol token using a morpho market and a swap router.
 contract Hedger is Ownable {
     using SafeERC20 for IERC20;
 
@@ -109,7 +111,19 @@ contract Hedger is Ownable {
 
     // ========== USER ACTIONS ========== //
 
-    /// @dev User must approve this contract to spend the amount of cvToken
+    /// @notice Deposits a user's cvToken into the Morpho market
+    /// @dev    This function performs the following:
+    ///         - Performs validation checks
+    ///         - Transfers the cvToken from the user to this contract
+    ///         - Deposits the cvToken into the Morpho market
+    ///
+    ///         This function reverts if:
+    ///         - `amount_` is zero
+    ///         - `amount_` of `cvToken_` is not approved for spending by this contract
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_ The address of the cvToken to deposit
+    /// @param  amount_  The amount of cvToken to deposit
     function deposit(address cvToken_, uint256 amount_) external {
         MorphoId cvMarket = _getMarketId(cvToken_);
 
@@ -117,6 +131,13 @@ contract Hedger is Ownable {
         _supplyCollateral(cvMarket, amount_, msg.sender);
     }
 
+    /// @notice Deposits a user's cvToken into the Morpho market and hedges it
+    /// @dev    This function is a combination of `deposit()` and `increaseHedge()`, and performs the same validation and operations.
+    ///
+    /// @param  cvToken_       The address of the cvToken to deposit
+    /// @param  amount_        The amount of cvToken to deposit
+    /// @param  hedgeAmount_   The amount of MGST to borrow
+    /// @param  minReserveOut_ The minimum amount of reserve token to receive
     function depositAndHedge(
         address cvToken_,
         uint256 amount_,
@@ -132,6 +153,20 @@ contract Hedger is Ownable {
         _increaseHedge(cvMarket, hedgeAmount_, msg.sender, minReserveOut_);
     }
 
+    /// @notice Increases a user's hedge position
+    /// @dev    This function performs the following:
+    ///         - Performs validation checks
+    ///         - Borrows the hedge amount of MGST on behalf of the user
+    ///         - Swaps the borrowed MGST for the reserve token
+    ///         - Supplies the reserve token into the Morpho market
+    ///
+    ///         This function reverts if:
+    ///         - `hedgeAmount_` is zero
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_       The address of the cvToken to hedge
+    /// @param  hedgeAmount_  The amount of MGST to borrow
+    /// @param  minReserveOut_ The minimum amount of reserve token to receive
     function increaseHedge(
         address cvToken_,
         uint256 hedgeAmount_,
@@ -143,6 +178,22 @@ contract Hedger is Ownable {
         _increaseHedge(cvMarket, hedgeAmount_, msg.sender, minReserveOut_);
     }
 
+    /// @notice Decreases a user's hedge position, utilising reserves from the user or the Morpho market
+    /// @dev    This function performs the following:
+    ///         - Performs validation checks
+    ///         - Transfers the reserve token to this contract, if `reserveToSupply_` is greater than zero
+    ///         - Withdraws the reserve token from the Morpho market, if `reserveFromMorpho_` is greater than zero
+    ///         - Swaps the reserve token for MGST
+    ///         - Repays the MGST to the Morpho market
+    ///
+    ///         This function reverts if:
+    ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_           The address of the cvToken to hedge
+    /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
+    /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
+    /// @param  minMgstOut_        The minimum amount of MGST to receive
     function decreaseHedge(
         address cvToken_,
         uint256 reserveToSupply_,
