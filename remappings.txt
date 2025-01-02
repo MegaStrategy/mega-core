@@ -1,13 +1,11 @@
-@derivatives-0.1.0/=dependencies/derivatives-0.1.0/src/
 @forge-std/=dependencies/forge-std-1.9.4/src/
-forge-std/=dependencies/forge-std-1.9.4/src/
 @openzeppelin-contracts-4.9.6/=dependencies/@openzeppelin-contracts-4.9.6/
 @solady-0.0.124/=dependencies/solady-0.0.261/src/
 @solmate-6.7.0/=dependencies/solmate-6.8.0/src/
 @solmate-6.8.0/=dependencies/solmate-6.8.0/src/
 axis-core-1.0.1/=dependencies/axis-core-1.0.1/src/
 axis-periphery-1.0.0/=dependencies/axis-periphery-1.0.0/src/
-bp-options-1.0.0/=dependencies/bp-options-1.0.0/src/
+forge-std/=dependencies/forge-std-1.9.4/src/
 solady-0.0.261/=dependencies/solady-0.0.261/src/
 solmate-6.8.0/=dependencies/solmate-6.8.0/src/
 surl-1.0.0/=dependencies/surl-1.0.0/src/
