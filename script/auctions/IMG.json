@@ -1,0 +1,20 @@
+{
+    "auctionInfo": {
+        "description": "Infinite Money Glitch cdUSDC",
+        "links": {
+            "payoutTokenLogo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUiN1hMlq20MDSDyCbT0IsVCGYyyQTzYk7uw&s",
+            "projectBanner": "https://w7.pngwing.com/pngs/1004/223/png-transparent-logo-business-organization-corporation-security-token-blue-text-trademark.png",
+            "projectLogo": "https://preview.redd.it/is-glitch-x-happening-again-this-year-v0-meml536j2bvc1.jpeg?auto=webp&s=fa00e5d8b0f4b8dac8b288cf832d6cc19718271e",
+            "website": "https://www.infinite-money-glitch.com"
+        },
+        "name": "Infinite Money Glitch cdUSDC",
+        "tagline": "Here is a tagline"
+    },
+    "auctionParams": {
+        "capacity": 1000000000000000000000000,
+        "conversionPrice": 3000000000000000000,
+        "duration": 86400,
+        "maturity": 2592000,
+        "startDelay": 60
+    }
+}

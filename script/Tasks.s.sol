@@ -10,7 +10,7 @@ import {RolesAdmin} from "../src/policies/RolesAdmin.sol";
 import {Banker} from "../src/policies/Banker.sol";
 import {Issuer} from "../src/policies/Issuer.sol";
 
-contract Testing is Script, WithEnvironment {
+contract TasksScript is Script, WithEnvironment {
     function addAdmin(string calldata chain_, address admin_) external {
         _loadEnv(chain_);
 
@@ -138,13 +138,14 @@ contract Testing is Script, WithEnvironment {
     function issueOptionToken(
         string calldata chain_,
         address optionToken_,
+        address to_,
         uint256 amount_
     ) external {
         _loadEnv(chain_);
 
         // Issue the option token
         vm.startBroadcast();
-        Issuer(_envAddressNotZero("mega.policies.Issuer")).issueO(optionToken_, msg.sender, amount_);
+        Issuer(_envAddressNotZero("mega.policies.Issuer")).issueO(optionToken_, to_, amount_);
         vm.stopBroadcast();
 
         console2.log("Option token issued", amount_);
