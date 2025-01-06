@@ -358,12 +358,12 @@ contract Hedger is Ownable {
     // ========== DELEGATED ACTIONS ========== //
 
     /// @notice Deposits a user's cvToken into the Morpho market
-    /// @dev    This function performs the same operations as `deposit()`, but for a specific user (`onBehalfOf_`)
+    /// @dev    This function performs the same operations as `deposit()`, but for a specific user (`onBehalfOf_`).
+    ///         This function does not require the caller to be an approved operator for the user (`onBehalfOf_`), so that tokens can be donated to the user.
     ///
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
-    ///         - The user (`onBehalfOf_`) has not approved this contract to spend `cvToken_`
-    ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///         - The caller has not approved this contract to spend `cvToken_`
     ///
     /// @param  cvToken_   The address of the cvToken to deposit
     /// @param  amount_    The amount of cvToken to deposit
@@ -372,7 +372,7 @@ contract Hedger is Ownable {
         address cvToken_,
         uint256 amount_,
         address onBehalfOf_
-    ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
+    ) external {
         // doesn't require only approved operator to donate tokens to user
         MorphoId cvMarket = _getMarketId(cvToken_);
 
