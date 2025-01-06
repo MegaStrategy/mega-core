@@ -104,6 +104,10 @@ contract Hedger is Ownable {
         return cvMarket;
     }
 
+    // ========== MODIFIERS ========== //
+
+    /// @notice Ensures that the caller is an approved operator for the user
+    /// @dev    If the caller is the user, the modifier does nothing
     modifier onlyApprovedOperator(address user_, address operator_) {
         if (user_ != operator_ && !isAuthorized[user_][operator_]) revert NotAuthorized();
         _;
@@ -119,8 +123,8 @@ contract Hedger is Ownable {
     ///
     ///         This function reverts if:
     ///         - `amount_` is zero
-    ///         - `amount_` of `cvToken_` is not approved for spending by this contract
     ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The caller has not approved this contract to spend `cvToken_`
     ///
     /// @param  cvToken_ The address of the cvToken to deposit
     /// @param  amount_  The amount of cvToken to deposit
@@ -137,7 +141,7 @@ contract Hedger is Ownable {
     /// @param  cvToken_       The address of the cvToken to deposit
     /// @param  amount_        The amount of cvToken to deposit
     /// @param  hedgeAmount_   The amount of MGST to borrow
-    /// @param  minReserveOut_ The minimum amount of reserve token to receive
+    /// @param  minReserveOut_ The minimum amount of reserve token to receive (akin to a slippage parameter)
     function depositAndHedge(
         address cvToken_,
         uint256 amount_,
@@ -166,7 +170,7 @@ contract Hedger is Ownable {
     ///
     /// @param  cvToken_       The address of the cvToken to hedge
     /// @param  hedgeAmount_  The amount of MGST to borrow
-    /// @param  minReserveOut_ The minimum amount of reserve token to receive
+    /// @param  minReserveOut_ The minimum amount of reserve token to receive (akin to a slippage parameter)
     function increaseHedge(
         address cvToken_,
         uint256 hedgeAmount_,
@@ -187,13 +191,14 @@ contract Hedger is Ownable {
     ///         - Repays the MGST to the Morpho market
     ///
     ///         This function reverts if:
-    ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
     ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The caller has not approved this contract to spend the reserve token
+    ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
     /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
     /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
-    /// @param  minMgstOut_        The minimum amount of MGST to receive
+    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
     function decreaseHedge(
         address cvToken_,
         uint256 reserveToSupply_,
@@ -211,6 +216,25 @@ contract Hedger is Ownable {
         _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, minMgstOut_);
     }
 
+    /// @notice Unwinds the caller's hedge position and withdraws the collateral to the caller
+    /// @dev    This function performs the following:
+    ///         - Performs validation checks
+    ///         - Transfers the reserve token to this contract, if `reserveToSupply_` is greater than zero
+    ///         - Withdraws the reserve token from the Morpho market, if `reserveFromMorpho_` is greater than zero
+    ///         - Swaps the reserve token for MGST
+    ///         - Repays the MGST to the Morpho market
+    ///         - Withdraws the collateral from the morpho market
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The caller has not approved this contract to spend the reserve token
+    ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
+    ///
+    /// @param  cvToken_           The address of the cvToken to hedge
+    /// @param  amount_            The amount of cvToken to withdraw
+    /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
+    /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
+    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
     function unwindAndWithdraw(
         address cvToken_,
         uint256 amount_,
@@ -232,7 +256,18 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, amount_, msg.sender);
     }
 
-    // TODO can we assume the reserve amounts that are needed based on the user's position? (need to use the balance lib)
+    /// @notice Unwinds the caller's hedge position and withdraws all of the collateral to the caller
+    /// @dev    This function performs the same operations as `unwindAndWithdraw()`, but for all of the user's collateral
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The caller has not approved this contract to spend the reserve token
+    ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
+    ///
+    /// @param  cvToken_           The address of the cvToken to hedge
+    /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
+    /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
+    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
     function unwindAndWithdrawAll(
         address cvToken_,
         uint256 reserveToSupply_,
@@ -256,6 +291,17 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, position.collateral, msg.sender);
     }
 
+    /// @notice Withdraws the caller's collateral from the Morpho market
+    /// @dev    This function performs the following:
+    ///         - Performs validation checks
+    ///         - Withdraws the collateral from the Morpho market
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - `amount_` is zero
+    ///
+    /// @param  cvToken_ The address of the cvToken to withdraw
+    /// @param  amount_  The amount of cvToken to withdraw
     function withdraw(address cvToken_, uint256 amount_) external {
         MorphoId cvMarket = _getMarketId(cvToken_);
 
@@ -263,6 +309,15 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, amount_, msg.sender);
     }
 
+    /// @notice Withdraws all of the caller's collateral from the Morpho market
+    /// @dev    This function performs the following:
+    ///         - Performs validation checks
+    ///         - Withdraws all of the collateral from the Morpho market
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_ The address of the cvToken to withdraw
     function withdrawAll(
         address cvToken_
     ) external {
@@ -275,6 +330,15 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, position.collateral, msg.sender);
     }
 
+    /// @notice Withdraws the caller's reserves from the MGST<>RESERVE market
+    /// @dev    This function performs the following:
+    ///         - Performs validation checks
+    ///         - Withdraws the reserves from the MGST<>RESERVE market
+    ///
+    ///         This function reverts if:
+    ///         - `amount_` is zero
+    ///
+    /// @param  amount_ The amount of reserves to withdraw
     function withdrawReserves(
         uint256 amount_
     ) external {
@@ -283,13 +347,32 @@ contract Hedger is Ownable {
 
     // ========== DELEGATION ========== //
 
+    /// @notice Allows the caller to enable or disable an operator's ability to perform actions on behalf of the caller
+    ///
+    /// @param  operator_ The address of the operator
+    /// @param  status_   True if enabled
     function setOperatorStatus(address operator_, bool status_) external {
         isAuthorized[msg.sender][operator_] = status_;
     }
 
     // ========== DELEGATED ACTIONS ========== //
 
-    function deposit(address cvToken_, uint256 amount_, address onBehalfOf_) external {
+    /// @notice Deposits a user's cvToken into the Morpho market
+    /// @dev    This function performs the same operations as `deposit()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The user (`onBehalfOf_`) has not approved this contract to spend `cvToken_`
+    ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///
+    /// @param  cvToken_   The address of the cvToken to deposit
+    /// @param  amount_    The amount of cvToken to deposit
+    /// @param  onBehalfOf_ The address of the user to perform the operation for
+    function depositFor(
+        address cvToken_,
+        uint256 amount_,
+        address onBehalfOf_
+    ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
         // doesn't require only approved operator to donate tokens to user
         MorphoId cvMarket = _getMarketId(cvToken_);
 
@@ -297,7 +380,20 @@ contract Hedger is Ownable {
         _supplyCollateral(cvMarket, amount_, onBehalfOf_);
     }
 
-    function depositAndHedge(
+    /// @notice Deposits a user's cvToken into the Morpho market and hedges it
+    /// @dev    This function performs the same operations as `depositAndHedge()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The user (`onBehalfOf_`) has not approved this contract to spend `cvToken_`
+    ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///
+    /// @param  cvToken_       The address of the cvToken to deposit
+    /// @param  amount_        The amount of cvToken to deposit
+    /// @param  mgstAmount_    The amount of MGST to borrow
+    /// @param  minReserveOut_ The minimum amount of reserve token to receive (akin to a slippage parameter)
+    /// @param  onBehalfOf_    The address of the user to perform the operation for
+    function depositAndHedgeFor(
         address cvToken_,
         uint256 amount_,
         uint256 mgstAmount_,
@@ -313,7 +409,17 @@ contract Hedger is Ownable {
         _increaseHedge(cvMarket, mgstAmount_, onBehalfOf_, minReserveOut_);
     }
 
-    function increaseHedge(
+    /// @notice Increases a user's hedge position
+    /// @dev    This function performs the same operations as `increaseHedge()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_       The address of the cvToken to hedge
+    /// @param  mgstAmount_    The amount of MGST to borrow
+    /// @param  minReserveOut_ The minimum amount of reserve token to receive (akin to a slippage parameter)
+    /// @param  onBehalfOf_    The address of the user to perform the operation for
+    function increaseHedgeFor(
         address cvToken_,
         uint256 mgstAmount_,
         uint256 minReserveOut_,
@@ -325,7 +431,20 @@ contract Hedger is Ownable {
         _increaseHedge(cvMarket, mgstAmount_, onBehalfOf_, minReserveOut_);
     }
 
-    function decreaseHedge(
+    /// @notice Decreases a user's hedge position, utilising reserves from the user or the Morpho market
+    /// @dev    This function performs the same operations as `decreaseHedge()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The user (`onBehalfOf_`) has not approved this contract to spend the reserve token
+    ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
+    ///
+    /// @param  cvToken_           The address of the cvToken to hedge
+    /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
+    /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
+    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
+    /// @param  onBehalfOf_        The address of the user to perform the operation on behalf of
+    function decreaseHedgeFor(
         address cvToken_,
         uint256 reserveToSupply_,
         uint256 reserveFromMorpho_,
@@ -343,7 +462,21 @@ contract Hedger is Ownable {
         _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, minMgstOut_);
     }
 
-    function unwindAndWithdraw(
+    /// @notice Unwinds a user's hedge position and withdraws the collateral to the user
+    /// @dev    This function performs the same operations as `unwindAndWithdraw()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The user (`onBehalfOf_`) has not approved this contract to spend the reserve token
+    ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///
+    /// @param  cvToken_           The address of the cvToken to hedge
+    /// @param  amount_            The amount of cvToken to withdraw
+    /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
+    /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
+    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
+    /// @param  onBehalfOf_        The address of the user to perform the operation for
+    function unwindAndWithdrawFor(
         address cvToken_,
         uint256 amount_,
         uint256 reserveToSupply_,
@@ -361,7 +494,21 @@ contract Hedger is Ownable {
     }
 
     // TODO can we assume the reserve amounts that are needed based on the user's position? (need to use the balance lib)
-    function unwindAndWithdrawAll(
+
+    /// @notice Unwinds a user's hedge position and withdraws all of the collateral to the user
+    /// @dev    This function performs the same operations as `unwindAndWithdrawAll()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The user (`onBehalfOf_`) has not approved this contract to spend the reserve token
+    ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///
+    /// @param  cvToken_           The address of the cvToken to hedge
+    /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
+    /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
+    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
+    /// @param  onBehalfOf_        The address of the user to perform the operation for
+    function unwindAndWithdrawAllFor(
         address cvToken_,
         uint256 reserveToSupply_,
         uint256 reserveFromMorpho_,
@@ -380,7 +527,17 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, position.collateral, onBehalfOf_);
     }
 
-    function withdraw(
+    /// @notice Withdraws a user's collateral from the Morpho market
+    /// @dev    This function performs the same operations as `withdraw()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///
+    /// @param  cvToken_   The address of the cvToken to withdraw
+    /// @param  amount_    The amount of cvToken to withdraw
+    /// @param  onBehalfOf_ The address of the user to perform the operation for
+    function withdrawFor(
         address cvToken_,
         uint256 amount_,
         address onBehalfOf_
@@ -391,7 +548,16 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, amount_, onBehalfOf_);
     }
 
-    function withdrawAll(
+    /// @notice Withdraws all of a user's collateral from the Morpho market
+    /// @dev    This function performs the same operations as `withdrawAll()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///
+    /// @param  cvToken_   The address of the cvToken to withdraw
+    /// @param  onBehalfOf_ The address of the user to perform the operation for
+    function withdrawAllFor(
         address cvToken_,
         address onBehalfOf_
     ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
@@ -404,7 +570,15 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, position.collateral, onBehalfOf_);
     }
 
-    function withdrawReserves(
+    /// @notice Withdraws a user's reserves from the MGST<>RESERVE market
+    /// @dev    This function performs the same operations as `withdrawReserves()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///
+    /// @param  amount_      The amount of reserves to withdraw
+    /// @param  onBehalfOf_  The address of the user to perform the operation for
+    function withdrawReservesFor(
         uint256 amount_,
         address onBehalfOf_
     ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
@@ -486,6 +660,7 @@ contract Hedger is Ownable {
         // Specify a two-hop path for the swap: MGST -> WETH -> RESERVE
         // The router expects the path in reverse order
         // TODO how to handle the fees that are hard-coded here?
+        // state variables for the fees
         ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
             path: abi.encodePacked(reserve, uint24(500), weth, uint24(3000), mgst),
             recipient: msg.sender,
@@ -599,6 +774,16 @@ contract Hedger is Ownable {
 
     // ========== ADMIN ========== //
 
+    /// @notice Adds a cvToken and its corresponding Morpho market ID to the whitelist
+    /// @dev    This function reverts if:
+    ///         - The caller is not the owner
+    ///         - The cvToken is zero
+    ///         - The cvMarket ID is zero
+    ///         - The cvMarket ID does not correspond to the cvToken
+    ///         - The cvMarket ID does not correspond to the MGST<>RESERVE morpho market
+    ///
+    /// @param  cvToken_   The address of the cvToken to add
+    /// @param  cvMarket_  The Morpho market ID of the cvToken
     function addCvToken(address cvToken_, bytes32 cvMarket_) external onlyOwner {
         // Ensure the cvToken is not zero
         if (cvToken_ == address(0)) revert InvalidParam("cvToken");
