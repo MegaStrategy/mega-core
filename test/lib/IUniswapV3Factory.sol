@@ -7,4 +7,8 @@ interface IUniswapV3Factory {
         address token1,
         uint24 fee
     ) external returns (address pool);
+
+    function feeAmountTickSpacing(
+        uint24 fee
+    ) external view returns (int24);
 }

@@ -144,9 +144,9 @@ contract HedgerTest is Test, WithSalts {
         vm.stopPrank();
 
         // Mint tokens for WETH/RESERVE
-        vm.startPrank(ADMIN);
         weth.mint(OWNER, WETH_RESERVE_WETH_AMOUNT);
         reserve.mint(OWNER, WETH_RESERVE_RESERVE_AMOUNT);
+        vm.startPrank(OWNER);
         ERC20(address(weth)).safeApprove(UNISWAP_V3_POSITION_MANAGER, WETH_RESERVE_WETH_AMOUNT);
         ERC20(address(reserve)).safeApprove(
             UNISWAP_V3_POSITION_MANAGER, WETH_RESERVE_RESERVE_AMOUNT
@@ -166,6 +166,9 @@ contract HedgerTest is Test, WithSalts {
         vm.startPrank(ADMIN);
         issuer.mint(OWNER, MGST_WETH_MGST_AMOUNT);
         weth.mint(OWNER, MGST_WETH_WETH_AMOUNT);
+        vm.stopPrank();
+
+        vm.startPrank(OWNER);
         ERC20(address(mstr)).safeApprove(UNISWAP_V3_POSITION_MANAGER, MGST_WETH_MGST_AMOUNT);
         ERC20(address(weth)).safeApprove(UNISWAP_V3_POSITION_MANAGER, MGST_WETH_WETH_AMOUNT);
         vm.stopPrank();
@@ -224,19 +227,25 @@ contract HedgerTest is Test, WithSalts {
         uint256 amount0 = tokenA_ < tokenB_ ? amountA_ : amountB_;
         uint256 amount1 = tokenA_ < tokenB_ ? amountB_ : amountA_;
 
+        int24 tickSpacing = IUniswapV3Factory(UNISWAP_V3_FACTORY).feeAmountTickSpacing(fee_);
+
+        // Determine the tick lower and upper
+        int24 tickLower = (-887_272 / tickSpacing) * tickSpacing;
+        int24 tickUpper = (887_272 / tickSpacing) * tickSpacing;
+
         vm.startPrank(OWNER);
         IUniswapV3NonfungiblePositionManager(UNISWAP_V3_POSITION_MANAGER).mint(
             IUniswapV3NonfungiblePositionManager.MintParams({
                 token0: token0,
                 token1: token1,
                 fee: fee_,
-                tickLower: -887_272,
-                tickUpper: 887_272,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
                 amount0Desired: amount0,
                 amount1Desired: amount1,
                 amount0Min: 0,
                 amount1Min: 0,
-                recipient: address(this),
+                recipient: OWNER,
                 deadline: block.timestamp
             })
         );
