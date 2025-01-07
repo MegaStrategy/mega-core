@@ -368,11 +368,7 @@ contract Hedger is Ownable {
     /// @param  cvToken_   The address of the cvToken to deposit
     /// @param  amount_    The amount of cvToken to deposit
     /// @param  onBehalfOf_ The address of the user to perform the operation for
-    function depositFor(
-        address cvToken_,
-        uint256 amount_,
-        address onBehalfOf_
-    ) external {
+    function depositFor(address cvToken_, uint256 amount_, address onBehalfOf_) external {
         // doesn't require only approved operator to donate tokens to user
         MorphoId cvMarket = _getMarketId(cvToken_);
 

@@ -3,9 +3,14 @@ pragma solidity 0.8.19;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MockERC20} from "test/lib/MockERC20.sol";
+import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 
-import {IMorpho, Id as MorphoId} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {
+    IMorpho,
+    Id as MorphoId,
+    MarketParams as MorphoMarketParams
+} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {MarketParamsLib} from "morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
 
 import {Kernel, Actions} from "src/Kernel.sol";
 import {MSTR} from "src/modules/TOKEN/MSTR.sol";
@@ -31,7 +36,7 @@ contract HedgerTest is Test {
 
     function setUp() public {
         // Use a Base fork
-        vm.createSelectFork(vm.envAddress("FORK_RPC_URL"), 24698617);
+        vm.createSelectFork(vm.envString("FORK_RPC_URL"), 24_698_617);
 
         vm.prank(OWNER);
         kernel = new Kernel();
@@ -49,20 +54,26 @@ contract HedgerTest is Test {
         vm.stopPrank();
 
         // Create a morpho market
-        IMorpho.MarketParams memory mgstMarketParams = IMorpho.MarketParams({
+        MorphoMarketParams memory mgstMarketParams = MorphoMarketParams({
             loanToken: address(reserve),
             collateralToken: address(mstr),
-            oracle: address(0),
-            irm: address(0),
-            lltv: 0
+            oracle: address(mstr), // ConvertibleDebtToken implements IOracle, given that it has a fixed conversion price
+            irm: address(0), // Disabled
+            lltv: 0 // Disabled
         });
-        // TODO fill in remaining params
-        mgstMarket = mgstMarketParams.id();
+        mgstMarket = MarketParamsLib.id(mgstMarketParams);
 
         morpho = IMorpho(MORPHO);
         morpho.createMarket(mgstMarketParams);
 
         // Create a hedger
-        hedger = new Hedger(address(mstr), address(weth), address(reserve), mgstMarket, MORPHO, SWAP_ROUTER);
+        hedger = new Hedger(
+            address(mstr),
+            address(weth),
+            address(reserve),
+            MorphoId.unwrap(mgstMarket),
+            MORPHO,
+            SWAP_ROUTER
+        );
     }
 }
