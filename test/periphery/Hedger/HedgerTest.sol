@@ -5,11 +5,13 @@ import {Test} from "forge-std/Test.sol";
 
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
+import {WithSalts} from "../../lib/WithSalts.sol";
 
 import {
     IMorpho,
     Id as MorphoId,
-    MarketParams as MorphoMarketParams
+    MarketParams as MorphoMarketParams,
+    Position as MorphoPosition
 } from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
 import {MarketParamsLib} from "morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
 
@@ -23,23 +25,33 @@ import {SafeTransferLib} from "solmate-6.8.0/utils/SafeTransferLib.sol";
 
 import {Kernel, Actions} from "src/Kernel.sol";
 import {MSTR} from "src/modules/TOKEN/MSTR.sol";
+import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
+import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
 import {Banker} from "src/policies/Banker.sol";
 import {Hedger} from "src/periphery/Hedger.sol";
 import {Issuer} from "src/policies/Issuer.sol";
+import {RolesAdmin} from "src/policies/RolesAdmin.sol";
 
-contract HedgerTest is Test {
+contract HedgerTest is Test, WithSalts {
     using SafeTransferLib for ERC20;
 
     Kernel public kernel;
     MSTR public mstr;
+    OlympusRoles public roles;
+    OlympusTreasury public treasury;
     Banker public banker;
     Issuer public issuer;
+    RolesAdmin public rolesAdmin;
+
+    address public debtToken;
+
     MockERC20 public weth;
     MockERC20 public reserve;
     Hedger public hedger;
     IMorpho public morpho;
     MorphoId public mgstMarket;
 
+    address public constant KERNEL = address(0xBB);
     address public constant MORPHO = address(0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb);
     address public constant AUCTION_HOUSE = address(0xBA0000c59d144f2a9aEa064dcb2f963e1a0B3212);
     address public constant SWAP_ROUTER = address(0x2626664c2603336E57B271c5C0b26F421741e481);
@@ -49,6 +61,8 @@ contract HedgerTest is Test {
 
     address public constant OWNER = address(1);
     address public constant USER = address(2);
+    address public constant MANAGER = address(3);
+    address public constant ADMIN = address(4);
 
     uint24 public constant RESERVE_WETH_SWAP_FEE = 500;
     uint24 public constant MGST_WETH_SWAP_FEE = 3000;
@@ -58,24 +72,49 @@ contract HedgerTest is Test {
     uint256 public constant MGST_WETH_MGST_AMOUNT = 1000e18;
     uint256 public constant MGST_WETH_WETH_AMOUNT = 100e18;
 
+    uint256 public constant DEBT_TOKEN_AMOUNT = 20e18;
+    uint256 public constant DEBT_TOKEN_CONVERSION_PRICE = 2e18;
+
     function setUp() public {
         // Use a Base fork
         vm.createSelectFork(vm.envString("FORK_RPC_URL"), 24_698_617);
 
-        vm.prank(OWNER);
-        kernel = new Kernel();
+        Kernel _kernel = new Kernel();
+        kernel = Kernel(KERNEL);
+        vm.etch(KERNEL, address(_kernel).code);
+        vm.store(KERNEL, bytes32(uint256(0)), bytes32(abi.encode(OWNER)));
 
+        vm.startPrank(OWNER);
         mstr = new MSTR(kernel, "MSTR", "MSTR");
-        banker = new Banker(kernel, AUCTION_HOUSE);
+        roles = new OlympusRoles(kernel);
+        treasury = new OlympusTreasury(kernel);
         issuer = new Issuer(kernel, address(0)); // No oToken teller needed
+        rolesAdmin = new RolesAdmin(kernel);
+        vm.stopPrank();
+
+        // Deploy Banker with salt
+        bytes memory args = abi.encode(kernel, AUCTION_HOUSE);
+        bytes32 salt = _getTestSalt("Banker", type(Banker).creationCode, args);
+        vm.broadcast();
+        banker = new Banker{salt: salt}(kernel, AUCTION_HOUSE);
 
         weth = new MockERC20("WETH", "WETH", 18);
         reserve = new MockERC20("RESERVE", "RESERVE", 18);
 
         // Install modules and policies
         vm.startPrank(OWNER);
+        kernel.executeAction(Actions.InstallModule, address(roles));
         kernel.executeAction(Actions.InstallModule, address(mstr));
+        kernel.executeAction(Actions.InstallModule, address(treasury));
+        kernel.executeAction(Actions.ActivatePolicy, address(rolesAdmin));
         kernel.executeAction(Actions.ActivatePolicy, address(banker));
+        kernel.executeAction(Actions.ActivatePolicy, address(issuer));
+        vm.stopPrank();
+
+        // Assign roles
+        vm.startPrank(OWNER);
+        rolesAdmin.grantRole("manager", MANAGER);
+        rolesAdmin.grantRole("admin", ADMIN);
         vm.stopPrank();
 
         // Create a Uniswap V3 pool for WETH/RESERVE
@@ -104,55 +143,41 @@ contract HedgerTest is Test {
         IUniswapV3Pool(mgstWethPool).initialize(mgstWethSqrtPriceX96);
         vm.stopPrank();
 
-        // Deploy liquidity into the WETH/RESERVE pool
-        vm.startPrank(OWNER);
+        // Mint tokens for WETH/RESERVE
+        vm.startPrank(ADMIN);
         weth.mint(OWNER, WETH_RESERVE_WETH_AMOUNT);
         reserve.mint(OWNER, WETH_RESERVE_RESERVE_AMOUNT);
         ERC20(address(weth)).safeApprove(UNISWAP_V3_POSITION_MANAGER, WETH_RESERVE_WETH_AMOUNT);
         ERC20(address(reserve)).safeApprove(
             UNISWAP_V3_POSITION_MANAGER, WETH_RESERVE_RESERVE_AMOUNT
         );
-
-        IUniswapV3NonfungiblePositionManager(UNISWAP_V3_POSITION_MANAGER).mint(
-            IUniswapV3NonfungiblePositionManager.MintParams({
-                token0: address(weth),
-                token1: address(reserve),
-                fee: RESERVE_WETH_SWAP_FEE,
-                tickLower: -887_272,
-                tickUpper: 887_272,
-                amount0Desired: WETH_RESERVE_WETH_AMOUNT,
-                amount1Desired: WETH_RESERVE_RESERVE_AMOUNT,
-                amount0Min: 0,
-                amount1Min: 0,
-                recipient: address(this),
-                deadline: block.timestamp
-            })
-        );
         vm.stopPrank();
 
-        // Deploy liquidity into the MGST/WETH pool
-        vm.startPrank(OWNER);
+        // Deploy liquidity into the WETH/RESERVE pool
+        _mint(
+            address(weth),
+            address(reserve),
+            WETH_RESERVE_WETH_AMOUNT,
+            WETH_RESERVE_RESERVE_AMOUNT,
+            RESERVE_WETH_SWAP_FEE
+        );
+
+        // Mint tokens for MGST/WETH
+        vm.startPrank(ADMIN);
         issuer.mint(OWNER, MGST_WETH_MGST_AMOUNT);
         weth.mint(OWNER, MGST_WETH_WETH_AMOUNT);
         ERC20(address(mstr)).safeApprove(UNISWAP_V3_POSITION_MANAGER, MGST_WETH_MGST_AMOUNT);
         ERC20(address(weth)).safeApprove(UNISWAP_V3_POSITION_MANAGER, MGST_WETH_WETH_AMOUNT);
-
-        IUniswapV3NonfungiblePositionManager(UNISWAP_V3_POSITION_MANAGER).mint(
-            IUniswapV3NonfungiblePositionManager.MintParams({
-                token0: address(mstr),
-                token1: address(weth),
-                fee: MGST_WETH_SWAP_FEE,
-                tickLower: -887_272,
-                tickUpper: 887_272,
-                amount0Desired: MGST_WETH_MGST_AMOUNT,
-                amount1Desired: MGST_WETH_WETH_AMOUNT,
-                amount0Min: 0,
-                amount1Min: 0,
-                recipient: address(this),
-                deadline: block.timestamp
-            })
-        );
         vm.stopPrank();
+
+        // Deploy liquidity into the MGST/WETH pool
+        _mint(
+            address(mstr),
+            address(weth),
+            MGST_WETH_MGST_AMOUNT,
+            MGST_WETH_WETH_AMOUNT,
+            MGST_WETH_SWAP_FEE
+        );
 
         // Create a morpho market
         MorphoMarketParams memory mgstMarketParams = MorphoMarketParams({
@@ -178,5 +203,104 @@ contract HedgerTest is Test {
             RESERVE_WETH_SWAP_FEE,
             MGST_WETH_SWAP_FEE
         );
+
+        // Create the debt token
+        vm.prank(MANAGER);
+        debtToken = banker.createDebtToken(address(reserve), 1 days, DEBT_TOKEN_CONVERSION_PRICE);
+    }
+
+    // ========== HELPERS ========== //
+
+    function _mint(
+        address tokenA_,
+        address tokenB_,
+        uint256 amountA_,
+        uint256 amountB_,
+        uint24 fee_
+    ) internal {
+        // Get correct orientation of tokens
+        address token0 = tokenA_ < tokenB_ ? tokenA_ : tokenB_;
+        address token1 = tokenA_ < tokenB_ ? tokenB_ : tokenA_;
+        uint256 amount0 = tokenA_ < tokenB_ ? amountA_ : amountB_;
+        uint256 amount1 = tokenA_ < tokenB_ ? amountB_ : amountA_;
+
+        vm.startPrank(OWNER);
+        IUniswapV3NonfungiblePositionManager(UNISWAP_V3_POSITION_MANAGER).mint(
+            IUniswapV3NonfungiblePositionManager.MintParams({
+                token0: token0,
+                token1: token1,
+                fee: fee_,
+                tickLower: -887_272,
+                tickUpper: 887_272,
+                amount0Desired: amount0,
+                amount1Desired: amount1,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: address(this),
+                deadline: block.timestamp
+            })
+        );
+        vm.stopPrank();
+    }
+
+    // ========== MODIFIERS ========== //
+
+    modifier givenDebtTokenIsIssued(
+        uint256 amount_
+    ) {
+        vm.prank(MANAGER);
+        banker.issue(debtToken, USER, amount_);
+        _;
+    }
+
+    modifier givenDebtTokenIsWhitelisted() {
+        vm.prank(MANAGER);
+        hedger.addCvToken(debtToken, MorphoId.unwrap(mgstMarket));
+        _;
+    }
+
+    modifier givenUserHasReserve(
+        uint256 amount_
+    ) {
+        reserve.mint(USER, amount_);
+        _;
+    }
+
+    modifier givenReserveSpendingIsApproved(
+        uint256 amount_
+    ) {
+        vm.prank(USER);
+        reserve.approve(address(hedger), amount_);
+        _;
+    }
+
+    modifier givenDebtTokenSpendingIsApproved(
+        uint256 amount_
+    ) {
+        vm.prank(USER);
+        mstr.approve(address(morpho), amount_);
+        _;
+    }
+
+    // ========== ASSERTIONS ========== //
+
+    function _expectInvalidDebtToken() internal {
+        vm.expectRevert(abi.encodeWithSelector(Hedger.InvalidParam.selector, "cvToken"));
+    }
+
+    function _assertUserBalances(
+        uint256 reserveBalance_,
+        uint256 debtTokenBalance_
+    ) internal view {
+        assertEq(reserve.balanceOf(USER), reserveBalance_, "user: reserve balance");
+        assertEq(ERC20(debtToken).balanceOf(USER), debtTokenBalance_, "user: debt token balance");
+    }
+
+    function _assertMorphoCollateral(
+        uint256 amount_
+    ) internal view {
+        MorphoPosition memory position = morpho.position(mgstMarket, USER);
+
+        assertEq(position.collateral, amount_, "morpho: collateral");
     }
 }
