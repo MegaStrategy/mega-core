@@ -34,6 +34,9 @@ contract HedgerTest is Test {
     address public constant OWNER = address(1);
     address public constant USER = address(2);
 
+    uint24 public constant RESERVE_WETH_SWAP_FEE = 500;
+    uint24 public constant MGST_WETH_SWAP_FEE = 3000;
+
     function setUp() public {
         // Use a Base fork
         vm.createSelectFork(vm.envString("FORK_RPC_URL"), 24_698_617);
@@ -52,6 +55,9 @@ contract HedgerTest is Test {
         kernel.executeAction(Actions.InstallModule, address(mstr));
         kernel.executeAction(Actions.ActivatePolicy, address(banker));
         vm.stopPrank();
+
+        // Create a Uniswap V3 pool for MGST/WETH
+        // TODO
 
         // Create a morpho market
         MorphoMarketParams memory mgstMarketParams = MorphoMarketParams({
@@ -73,7 +79,9 @@ contract HedgerTest is Test {
             address(reserve),
             MorphoId.unwrap(mgstMarket),
             MORPHO,
-            SWAP_ROUTER
+            SWAP_ROUTER,
+            RESERVE_WETH_SWAP_FEE,
+            MGST_WETH_SWAP_FEE
         );
     }
 }

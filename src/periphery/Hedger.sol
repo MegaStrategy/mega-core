@@ -55,6 +55,8 @@ contract Hedger is Ownable {
 
     // Uniswap
     ISwapRouter public swapRouter;
+    uint24 public reserveWethSwapFee;
+    uint24 public mgstWethSwapFee;
 
     // Operator approvals
     mapping(address user => mapping(address operator => bool)) public isAuthorized;
@@ -67,7 +69,9 @@ contract Hedger is Ownable {
         address reserve_,
         bytes32 mgstMarket_,
         address morpho_,
-        address swapRouter_
+        address swapRouter_,
+        uint24 reserveWethSwapFee_,
+        uint24 mgstWethSwapFee_
     ) {
         // Ensure the addresses are not zero
         if (mgst_ == address(0)) revert InvalidParam("mgst");
@@ -78,6 +82,10 @@ contract Hedger is Ownable {
 
         // Ensure the mgstMarket ID is not zero
         if (mgstMarket_ == bytes32(0)) revert InvalidParam("mgstMarket id");
+
+        // Ensure the swap fees are not zero
+        if (reserveWethSwapFee_ == 0) revert InvalidParam("reserveWethSwapFee");
+        if (mgstWethSwapFee_ == 0) revert InvalidParam("mgstWethSwapFee");
 
         // Get the morpho market params for the mgstMarket ID
         // Confirm that the tokens match
@@ -92,6 +100,8 @@ contract Hedger is Ownable {
         mgstMarket = MorphoId.wrap(mgstMarket_);
         morpho = IMorpho(morpho_);
         swapRouter = ISwapRouter(swapRouter_);
+        reserveWethSwapFee = reserveWethSwapFee_;
+        mgstWethSwapFee = mgstWethSwapFee_;
     }
 
     // ========== VALIDATION ========== //
@@ -655,11 +665,9 @@ contract Hedger is Ownable {
 
         // Specify a two-hop path for the swap: MGST -> WETH -> RESERVE
         // The router expects the path in reverse order
-        // TODO how to handle the fees that are hard-coded here?
-        // state variables for the fees
         ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
-            path: abi.encodePacked(reserve, uint24(500), weth, uint24(3000), mgst),
-            recipient: msg.sender,
+            path: abi.encodePacked(reserve, reserveWethSwapFee, weth, mgstWethSwapFee, mgst),
+            recipient: msg.sender, // TODO correct?
             deadline: block.timestamp,
             amountIn: mgstBorrowed,
             amountOutMinimum: minReserveOut_
@@ -717,10 +725,9 @@ contract Hedger is Ownable {
 
         // Specify a two-hop path for the swap: RESERVE -> WETH -> MGST
         // The router expects the path in reverse order
-        // TODO how to handle the fees that are hard-coded here?
         ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
-            path: abi.encodePacked(mgst, uint24(3000), weth, uint24(500), reserve),
-            recipient: msg.sender,
+            path: abi.encodePacked(mgst, mgstWethSwapFee, weth, reserveWethSwapFee, reserve),
+            recipient: msg.sender, // TODO correct?
             deadline: block.timestamp,
             amountIn: externalReserves_ + reservesWithdrawn,
             amountOutMinimum: minMgstOut_
@@ -796,5 +803,21 @@ contract Hedger is Ownable {
 
         // Store the cvMarket ID
         cvMarkets[cvToken_] = cvMarket;
+    }
+
+    function setReserveWethSwapFee(
+        uint24 reserveWethSwapFee_
+    ) external onlyOwner {
+        if (reserveWethSwapFee_ == 0) revert InvalidParam("reserveWethSwapFee");
+
+        reserveWethSwapFee = reserveWethSwapFee_;
+    }
+
+    function setMgstWethSwapFee(
+        uint24 mgstWethSwapFee_
+    ) external onlyOwner {
+        if (mgstWethSwapFee_ == 0) revert InvalidParam("mgstWethSwapFee");
+
+        mgstWethSwapFee = mgstWethSwapFee_;
     }
 }
