@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {HedgerTest} from "./HedgerTest.sol";
+import {stdError} from "forge-std/Test.sol";
 
 contract HedgerDepositTest is HedgerTest {
     // given the cvToken is not whitelisted
@@ -22,9 +23,13 @@ contract HedgerDepositTest is HedgerTest {
         hedger.deposit(debtToken, DEBT_TOKEN_AMOUNT);
     }
 
-    function test_debtTokenSpendingNotApproved_reverts() public givenDebtTokenIsWhitelisted {
+    function test_debtTokenSpendingNotApproved_reverts()
+        public
+        givenDebtTokenMorphoMarketIsCreated
+        givenDebtTokenIsWhitelisted
+    {
         // Expect revert
-        vm.expectRevert("TRANSFER_FROM_FAILED");
+        vm.expectRevert(stdError.arithmeticError);
 
         // Call
         vm.prank(USER);
@@ -33,11 +38,12 @@ contract HedgerDepositTest is HedgerTest {
 
     function test_debtTokenInsufficientBalance_reverts()
         public
+        givenDebtTokenMorphoMarketIsCreated
         givenDebtTokenIsWhitelisted
         givenDebtTokenSpendingIsApproved(DEBT_TOKEN_AMOUNT)
     {
         // Expect revert
-        vm.expectRevert("TRANSFER_FROM_FAILED");
+        vm.expectRevert(stdError.arithmeticError);
 
         // Call
         vm.prank(USER);
@@ -46,6 +52,7 @@ contract HedgerDepositTest is HedgerTest {
 
     function test_deposit()
         public
+        givenDebtTokenMorphoMarketIsCreated
         givenDebtTokenIsWhitelisted
         givenDebtTokenSpendingIsApproved(DEBT_TOKEN_AMOUNT)
         givenDebtTokenIsIssued(DEBT_TOKEN_AMOUNT)
@@ -56,6 +63,6 @@ contract HedgerDepositTest is HedgerTest {
 
         // Assertions
         _assertUserBalances(0, 0);
-        _assertMorphoCollateral(DEBT_TOKEN_AMOUNT);
+        _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
     }
 }

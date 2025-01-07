@@ -50,6 +50,7 @@ contract HedgerTest is Test, WithSalts {
     Hedger public hedger;
     IMorpho public morpho;
     MorphoId public mgstMarket;
+    MorphoId public debtTokenMarket;
 
     address public constant KERNEL = address(0xBB);
     address public constant MORPHO = address(0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb);
@@ -117,6 +118,11 @@ contract HedgerTest is Test, WithSalts {
         rolesAdmin.grantRole("admin", ADMIN);
         vm.stopPrank();
 
+        // Activate policies
+        vm.startPrank(ADMIN);
+        banker.initialize(0, 0, 0, 1e18);
+        vm.stopPrank();
+
         // Create a Uniswap V3 pool for WETH/RESERVE
         vm.startPrank(OWNER);
         address wethReservePool = IUniswapV3Factory(UNISWAP_V3_FACTORY).createPool(
@@ -182,11 +188,11 @@ contract HedgerTest is Test, WithSalts {
             MGST_WETH_SWAP_FEE
         );
 
-        // Create a morpho market
+        // Create a morpho market for MGST<>RESERVE
         MorphoMarketParams memory mgstMarketParams = MorphoMarketParams({
             loanToken: address(reserve),
             collateralToken: address(mstr),
-            oracle: address(mstr), // ConvertibleDebtToken implements IOracle, given that it has a fixed conversion price
+            oracle: address(0), // TODO add oracle for MGST
             irm: address(0), // Disabled
             lltv: 0 // Disabled
         });
@@ -196,6 +202,7 @@ contract HedgerTest is Test, WithSalts {
         morpho.createMarket(mgstMarketParams);
 
         // Create a hedger
+        vm.startPrank(OWNER);
         hedger = new Hedger(
             address(mstr),
             address(weth),
@@ -206,10 +213,13 @@ contract HedgerTest is Test, WithSalts {
             RESERVE_WETH_SWAP_FEE,
             MGST_WETH_SWAP_FEE
         );
+        vm.stopPrank();
 
         // Create the debt token
         vm.prank(MANAGER);
-        debtToken = banker.createDebtToken(address(reserve), 1 days, DEBT_TOKEN_CONVERSION_PRICE);
+        debtToken = banker.createDebtToken(
+            address(reserve), uint48(block.timestamp + 30 days), DEBT_TOKEN_CONVERSION_PRICE
+        );
     }
 
     // ========== HELPERS ========== //
@@ -254,6 +264,19 @@ contract HedgerTest is Test, WithSalts {
 
     // ========== MODIFIERS ========== //
 
+    modifier givenDebtTokenMorphoMarketIsCreated() {
+        MorphoMarketParams memory debtTokenMarketParams = MorphoMarketParams({
+            loanToken: address(mstr),
+            collateralToken: debtToken,
+            oracle: debtToken, // Debt token implements IOracle, given that it has a fixed conversion price
+            irm: address(0), // Disabled
+            lltv: 0 // Disabled
+        });
+        debtTokenMarket = MarketParamsLib.id(debtTokenMarketParams);
+        morpho.createMarket(debtTokenMarketParams);
+        _;
+    }
+
     modifier givenDebtTokenIsIssued(
         uint256 amount_
     ) {
@@ -263,8 +286,8 @@ contract HedgerTest is Test, WithSalts {
     }
 
     modifier givenDebtTokenIsWhitelisted() {
-        vm.prank(MANAGER);
-        hedger.addCvToken(debtToken, MorphoId.unwrap(mgstMarket));
+        vm.prank(OWNER);
+        hedger.addCvToken(debtToken, MorphoId.unwrap(debtTokenMarket));
         _;
     }
 
@@ -287,7 +310,7 @@ contract HedgerTest is Test, WithSalts {
         uint256 amount_
     ) {
         vm.prank(USER);
-        mstr.approve(address(morpho), amount_);
+        ERC20(debtToken).safeApprove(address(hedger), amount_);
         _;
     }
 
@@ -305,10 +328,10 @@ contract HedgerTest is Test, WithSalts {
         assertEq(ERC20(debtToken).balanceOf(USER), debtTokenBalance_, "user: debt token balance");
     }
 
-    function _assertMorphoCollateral(
+    function _assertMorphoDebtTokenCollateral(
         uint256 amount_
     ) internal view {
-        MorphoPosition memory position = morpho.position(mgstMarket, USER);
+        MorphoPosition memory position = morpho.position(debtTokenMarket, USER);
 
         assertEq(position.collateral, amount_, "morpho: collateral");
     }

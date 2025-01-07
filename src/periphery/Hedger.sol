@@ -87,12 +87,6 @@ contract Hedger is Ownable {
         if (reserveWethSwapFee_ == 0) revert InvalidParam("reserveWethSwapFee");
         if (mgstWethSwapFee_ == 0) revert InvalidParam("mgstWethSwapFee");
 
-        // Get the morpho market params for the mgstMarket ID
-        // Confirm that the tokens match
-        MorphoParams memory marketParams = morpho.idToMarketParams(MorphoId.wrap(mgstMarket_));
-        if (marketParams.collateralToken != mgst_) revert InvalidParam("mgstMarket collateral");
-        if (marketParams.loanToken != reserve_) revert InvalidParam("mgstMarket loan");
-
         // Store variables
         mgst = IERC20(mgst_);
         weth = IERC20(weth_);
@@ -102,6 +96,12 @@ contract Hedger is Ownable {
         swapRouter = ISwapRouter(swapRouter_);
         reserveWethSwapFee = reserveWethSwapFee_;
         mgstWethSwapFee = mgstWethSwapFee_;
+
+        // Get the morpho market params for the mgstMarket ID
+        // Confirm that the tokens match
+        MorphoParams memory marketParams = morpho.idToMarketParams(MorphoId.wrap(mgstMarket_));
+        if (marketParams.collateralToken != mgst_) revert InvalidParam("mgstMarket collateral");
+        if (marketParams.loanToken != reserve_) revert InvalidParam("mgstMarket loan");
     }
 
     // ========== VALIDATION ========== //
@@ -798,8 +798,8 @@ contract Hedger is Ownable {
         // Confirm that the tokens match
         MorphoId cvMarket = MorphoId.wrap(cvMarket_);
         MorphoParams memory marketParams = morpho.idToMarketParams(cvMarket);
-        if (marketParams.collateralToken != cvToken_) revert InvalidParam("cvMarket");
-        if (marketParams.loanToken != address(mgst)) revert InvalidParam("cvMarket");
+        if (marketParams.collateralToken != cvToken_) revert InvalidParam("collateral");
+        if (marketParams.loanToken != address(mgst)) revert InvalidParam("loan");
 
         // Store the cvMarket ID
         cvMarkets[cvToken_] = cvMarket;
