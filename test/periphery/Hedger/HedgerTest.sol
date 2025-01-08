@@ -265,16 +265,37 @@ contract HedgerTest is Test, WithSalts {
 
     // ========== MODIFIERS ========== //
 
-    modifier givenDebtTokenMorphoMarketIsCreated() {
-        MorphoMarketParams memory debtTokenMarketParams = MorphoMarketParams({
-            loanToken: address(mstr),
-            collateralToken: debtToken,
-            oracle: debtToken, // Debt token implements IOracle, given that it has a fixed conversion price
+    function _getMorphoMarketId(
+        address loanToken_,
+        address collateralToken_,
+        address oracle_
+    ) internal pure returns (MorphoMarketParams memory marketParams, MorphoId marketId) {
+        marketParams = MorphoMarketParams({
+            loanToken: loanToken_,
+            collateralToken: collateralToken_,
+            oracle: oracle_,
             irm: address(0), // Disabled
             lltv: 0 // Disabled
         });
-        debtTokenMarket = MarketParamsLib.id(debtTokenMarketParams);
-        morpho.createMarket(debtTokenMarketParams);
+        marketId = MarketParamsLib.id(marketParams);
+
+        return (marketParams, marketId);
+    }
+
+    function _createMorphoMarket(
+        address loanToken_,
+        address collateralToken_,
+        address oracle_
+    ) internal returns (MorphoId) {
+        (MorphoMarketParams memory marketParams, MorphoId marketId) =
+            _getMorphoMarketId(loanToken_, collateralToken_, oracle_);
+
+        morpho.createMarket(marketParams);
+        return marketId;
+    }
+
+    modifier givenDebtTokenMorphoMarketIsCreated() {
+        debtTokenMarket = _createMorphoMarket(address(mstr), debtToken, debtToken);
         _;
     }
 
@@ -358,8 +379,18 @@ contract HedgerTest is Test, WithSalts {
         vm.expectRevert(abi.encodeWithSelector(Hedger.InvalidParam.selector, "cvToken"));
     }
 
+    function _expectInvalidParam(
+        string memory reason_
+    ) internal {
+        vm.expectRevert(abi.encodeWithSelector(Hedger.InvalidParam.selector, reason_));
+    }
+
     function _expectInvalidOperator() internal {
         vm.expectRevert(abi.encodeWithSelector(Hedger.NotAuthorized.selector));
+    }
+
+    function _expectNotOwner() internal {
+        vm.expectRevert("Ownable: caller is not the owner");
     }
 
     function _assertUserBalances(
