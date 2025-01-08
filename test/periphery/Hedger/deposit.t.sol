@@ -63,6 +63,7 @@ contract HedgerDepositTest is HedgerTest {
 
         // Assertions
         _assertUserBalances(0, 0);
+        _assertOperatorBalances(0, 0);
         _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
     }
 }

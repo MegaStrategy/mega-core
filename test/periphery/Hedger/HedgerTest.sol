@@ -64,6 +64,7 @@ contract HedgerTest is Test, WithSalts {
     address public constant USER = address(2);
     address public constant MANAGER = address(3);
     address public constant ADMIN = address(4);
+    address public constant OPERATOR = address(5);
 
     uint24 public constant RESERVE_WETH_SWAP_FEE = 500;
     uint24 public constant MGST_WETH_SWAP_FEE = 3000;
@@ -285,6 +286,14 @@ contract HedgerTest is Test, WithSalts {
         _;
     }
 
+    modifier givenOperatorDebtTokenIsIssued(
+        uint256 amount_
+    ) {
+        vm.prank(MANAGER);
+        banker.issue(debtToken, OPERATOR, amount_);
+        _;
+    }
+
     modifier givenDebtTokenIsWhitelisted() {
         vm.prank(OWNER);
         hedger.addCvToken(debtToken, MorphoId.unwrap(debtTokenMarket));
@@ -298,10 +307,25 @@ contract HedgerTest is Test, WithSalts {
         _;
     }
 
+    modifier givenOperatorHasReserve(
+        uint256 amount_
+    ) {
+        reserve.mint(OPERATOR, amount_);
+        _;
+    }
+
     modifier givenReserveSpendingIsApproved(
         uint256 amount_
     ) {
         vm.prank(USER);
+        reserve.approve(address(hedger), amount_);
+        _;
+    }
+
+    modifier givenOperatorReserveSpendingIsApproved(
+        uint256 amount_
+    ) {
+        vm.prank(OPERATOR);
         reserve.approve(address(hedger), amount_);
         _;
     }
@@ -314,10 +338,28 @@ contract HedgerTest is Test, WithSalts {
         _;
     }
 
+    modifier givenOperatorDebtTokenSpendingIsApproved(
+        uint256 amount_
+    ) {
+        vm.prank(OPERATOR);
+        ERC20(debtToken).safeApprove(address(hedger), amount_);
+        _;
+    }
+
+    modifier givenUserHasApprovedOperator() {
+        vm.prank(USER);
+        hedger.setOperatorStatus(OPERATOR, true);
+        _;
+    }
+
     // ========== ASSERTIONS ========== //
 
     function _expectInvalidDebtToken() internal {
         vm.expectRevert(abi.encodeWithSelector(Hedger.InvalidParam.selector, "cvToken"));
+    }
+
+    function _expectInvalidOperator() internal {
+        vm.expectRevert(abi.encodeWithSelector(Hedger.NotAuthorized.selector));
     }
 
     function _assertUserBalances(
@@ -326,6 +368,16 @@ contract HedgerTest is Test, WithSalts {
     ) internal view {
         assertEq(reserve.balanceOf(USER), reserveBalance_, "user: reserve balance");
         assertEq(ERC20(debtToken).balanceOf(USER), debtTokenBalance_, "user: debt token balance");
+    }
+
+    function _assertOperatorBalances(
+        uint256 reserveBalance_,
+        uint256 debtTokenBalance_
+    ) internal view {
+        assertEq(reserve.balanceOf(OPERATOR), reserveBalance_, "operator: reserve balance");
+        assertEq(
+            ERC20(debtToken).balanceOf(OPERATOR), debtTokenBalance_, "operator: debt token balance"
+        );
     }
 
     function _assertMorphoDebtTokenCollateral(
