@@ -11,6 +11,9 @@ contract HedgerDepositForTest is HedgerTest {
     //  [X] it reverts
     // given the caller does not have sufficient balance of the cvToken
     //  [X] it reverts
+    // given the user has not approved Hedger to operate the Morpho position
+    //  [X] it transfers the cvToken to the Hedger from the caller
+    //  [X] it deposits the cvToken into the Morpho market on behalf of the caller
     // given the caller is not an approved operator for the user
     //  [X] it transfers the cvToken to the Hedger from the caller
     //  [X] it deposits the cvToken into the Morpho market on behalf of the user
@@ -54,7 +57,7 @@ contract HedgerDepositForTest is HedgerTest {
         hedger.depositFor(debtToken, DEBT_TOKEN_AMOUNT, USER);
     }
 
-    function test_callerIsNotApprovedOperator()
+    function test_userHasNotAuthorizedHedger()
         public
         givenDebtTokenMorphoMarketIsCreated
         givenDebtTokenIsWhitelisted
@@ -71,13 +74,32 @@ contract HedgerDepositForTest is HedgerTest {
         _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
     }
 
-    function test_depositFor()
+    function test_callerIsNotApprovedOperator()
         public
-        givenUserHasApprovedOperator
         givenDebtTokenMorphoMarketIsCreated
         givenDebtTokenIsWhitelisted
         givenOperatorDebtTokenSpendingIsApproved(DEBT_TOKEN_AMOUNT)
         givenOperatorDebtTokenIsIssued(DEBT_TOKEN_AMOUNT)
+        givenUserHasAuthorizedHedger
+    {
+        // Call
+        vm.prank(OPERATOR);
+        hedger.depositFor(debtToken, DEBT_TOKEN_AMOUNT, USER);
+
+        // Assertions
+        _assertUserBalances(0, 0);
+        _assertOperatorBalances(0, 0);
+        _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
+    }
+
+    function test_depositFor()
+        public
+        givenDebtTokenMorphoMarketIsCreated
+        givenDebtTokenIsWhitelisted
+        givenOperatorDebtTokenSpendingIsApproved(DEBT_TOKEN_AMOUNT)
+        givenOperatorDebtTokenIsIssued(DEBT_TOKEN_AMOUNT)
+        givenUserHasAuthorizedHedger
+        givenUserHasApprovedOperator
     {
         // Call
         vm.prank(OPERATOR);

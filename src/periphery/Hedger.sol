@@ -177,6 +177,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `hedgeAmount_` is zero
     ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  cvToken_       The address of the cvToken to hedge
     /// @param  hedgeAmount_  The amount of MGST to borrow
@@ -203,6 +204,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The caller has not approved this contract to spend the reserve token
+    ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
@@ -238,6 +240,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The caller has not approved this contract to spend the reserve token
+    ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
@@ -272,6 +275,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The caller has not approved this contract to spend the reserve token
+    ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
@@ -309,6 +313,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - `amount_` is zero
+    ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  cvToken_ The address of the cvToken to withdraw
     /// @param  amount_  The amount of cvToken to withdraw
@@ -326,6 +331,7 @@ contract Hedger is Ownable {
     ///
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  cvToken_ The address of the cvToken to withdraw
     function withdrawAll(
@@ -347,6 +353,7 @@ contract Hedger is Ownable {
     ///
     ///         This function reverts if:
     ///         - `amount_` is zero
+    ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  amount_ The amount of reserves to withdraw
     function withdrawReserves(
@@ -393,6 +400,7 @@ contract Hedger is Ownable {
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The user (`onBehalfOf_`) has not approved this contract to spend `cvToken_`
     ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  cvToken_       The address of the cvToken to deposit
     /// @param  amount_        The amount of cvToken to deposit
@@ -420,6 +428,7 @@ contract Hedger is Ownable {
     ///
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  cvToken_       The address of the cvToken to hedge
     /// @param  mgstAmount_    The amount of MGST to borrow
@@ -443,6 +452,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The user (`onBehalfOf_`) has not approved this contract to spend the reserve token
+    ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
@@ -474,6 +484,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The user (`onBehalfOf_`) has not approved this contract to spend the reserve token
+    ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
@@ -507,6 +518,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The user (`onBehalfOf_`) has not approved this contract to spend the reserve token
+    ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
@@ -539,6 +551,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  cvToken_   The address of the cvToken to withdraw
     /// @param  amount_    The amount of cvToken to withdraw
@@ -560,6 +573,7 @@ contract Hedger is Ownable {
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  cvToken_   The address of the cvToken to withdraw
     /// @param  onBehalfOf_ The address of the user to perform the operation for
@@ -581,6 +595,7 @@ contract Hedger is Ownable {
     ///
     ///         This function reverts if:
     ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  amount_      The amount of reserves to withdraw
     /// @param  onBehalfOf_  The address of the user to perform the operation for

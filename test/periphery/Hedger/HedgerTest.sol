@@ -74,6 +74,8 @@ contract HedgerTest is Test, WithSalts {
     uint256 public constant MGST_WETH_MGST_AMOUNT = 1000e18;
     uint256 public constant MGST_WETH_WETH_AMOUNT = 100e18;
 
+    uint256 public constant LLTV = 945e15; // 94.5%
+
     uint256 public constant DEBT_TOKEN_AMOUNT = 20e18;
     uint256 public constant DEBT_TOKEN_CONVERSION_PRICE = 2e18;
 
@@ -195,7 +197,7 @@ contract HedgerTest is Test, WithSalts {
             collateralToken: address(mstr),
             oracle: address(0), // TODO add oracle for MGST
             irm: address(0), // Disabled
-            lltv: 0 // Disabled
+            lltv: LLTV
         });
         mgstMarket = MarketParamsLib.id(mgstMarketParams);
 
@@ -275,7 +277,7 @@ contract HedgerTest is Test, WithSalts {
             collateralToken: collateralToken_,
             oracle: oracle_,
             irm: address(0), // Disabled
-            lltv: 0 // Disabled
+            lltv: LLTV
         });
         marketId = MarketParamsLib.id(marketParams);
 
@@ -296,6 +298,26 @@ contract HedgerTest is Test, WithSalts {
 
     modifier givenDebtTokenMorphoMarketIsCreated() {
         debtTokenMarket = _createMorphoMarket(address(mstr), debtToken, debtToken);
+        _;
+    }
+
+    modifier givenDebtTokenMorphoMarketHasSupply(
+        uint256 amount_
+    ) {
+        // Mint MGST
+        vm.startPrank(ADMIN);
+        issuer.mint(OWNER, amount_);
+        vm.stopPrank();
+
+        // Approve the morpho market to transfer the MGST
+        vm.startPrank(OWNER);
+        ERC20(address(mstr)).safeApprove(MORPHO, amount_);
+        vm.stopPrank();
+
+        // Deposit MGST into the morpho market
+        vm.startPrank(OWNER);
+        morpho.supply(morpho.idToMarketParams(debtTokenMarket), amount_, 0, OWNER, "");
+        vm.stopPrank();
         _;
     }
 
@@ -373,6 +395,31 @@ contract HedgerTest is Test, WithSalts {
         _;
     }
 
+    modifier givenUserHasDepositedDebtToken(
+        uint256 amount_
+    ) {
+        vm.prank(USER);
+        hedger.deposit(debtToken, amount_);
+        _;
+    }
+
+    modifier givenUserHasAuthorizedHedger() {
+        vm.prank(USER);
+        morpho.setAuthorization(address(hedger), true);
+        _;
+    }
+
+    function _getMaximumHedgeAmount(
+        uint256 collateralAmount_
+    ) internal pure returns (uint256) {
+        // Maximum hedge amount is what can be borrowed against the collateral
+        // = (collateral * collateralPrice / 1e36) * lltv / 1e18
+
+        uint256 collateralPrice = 1e36 * 1e18 / DEBT_TOKEN_CONVERSION_PRICE;
+
+        return (collateralAmount_ * collateralPrice / 1e36) * LLTV / 1e18;
+    }
+
     // ========== ASSERTIONS ========== //
 
     function _expectInvalidDebtToken() internal {
@@ -391,6 +438,10 @@ contract HedgerTest is Test, WithSalts {
 
     function _expectNotOwner() internal {
         vm.expectRevert("Ownable: caller is not the owner");
+    }
+
+    function _expectUnauthorized() internal {
+        vm.expectRevert("unauthorized");
     }
 
     function _assertUserBalances(
@@ -417,5 +468,13 @@ contract HedgerTest is Test, WithSalts {
         MorphoPosition memory position = morpho.position(debtTokenMarket, USER);
 
         assertEq(position.collateral, amount_, "morpho: collateral");
+    }
+
+    function _assertMorphoBorrowed(
+        uint256 amount_
+    ) internal view {
+        MorphoPosition memory position = morpho.position(debtTokenMarket, USER);
+
+        assertEq(position.borrowShares, amount_, "morpho: borrow shares");
     }
 }
