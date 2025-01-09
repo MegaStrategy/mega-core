@@ -681,7 +681,9 @@ contract Hedger is Ownable {
         // Specify a two-hop path for the swap: MGST -> WETH -> RESERVE
         // The router expects the path in forward order since this is an exactInput swap
         ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
-            path: abi.encodePacked(mgst, mgstWethSwapFee, weth, reserveWethSwapFee, reserve),
+            path: abi.encodePacked(
+                address(mgst), mgstWethSwapFee, address(weth), reserveWethSwapFee, address(reserve)
+            ),
             recipient: address(this), // this contract receives since it's an intermediate step
             deadline: block.timestamp,
             amountIn: mgstBorrowed,
@@ -741,7 +743,9 @@ contract Hedger is Ownable {
         // Specify a two-hop path for the swap: RESERVE -> WETH -> MGST
         // The router expects the path in reverse order
         ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
-            path: abi.encodePacked(mgst, mgstWethSwapFee, weth, reserveWethSwapFee, reserve),
+            path: abi.encodePacked(
+                address(mgst), mgstWethSwapFee, address(weth), reserveWethSwapFee, address(reserve)
+            ),
             recipient: address(this), // this contract receives since it's an intermediate step
             deadline: block.timestamp,
             amountIn: externalReserves_ + reservesWithdrawn,
