@@ -61,7 +61,7 @@ contract TasksScript is Script, WithEnvironment {
         _loadEnv(chain_);
 
         // Create the debt token
-        uint48 maturity = uint48(block.timestamp + 1 days);
+        uint48 maturity = uint48(block.timestamp + 7 days);
         vm.startBroadcast();
         address debtToken = Banker(_envAddressNotZero("mega.policies.Banker")).createDebtToken(
             address(_envAddressNotZero("external.tokens.USDC")), maturity, conversionPrice_
