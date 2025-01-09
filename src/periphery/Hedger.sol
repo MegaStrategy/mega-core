@@ -14,7 +14,7 @@ import {
 } from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
 
 // Uniswap
-import {ISwapRouter} from "src/lib/Uniswap/ISwapRouter.sol";
+import {ISwapRouter02} from "src/lib/Uniswap/ISwapRouter02.sol";
 
 /// @title  Hedger
 /// @notice The Hedger is a contract that allows users to hedge a cvToken against the protocol token using a morpho market and a swap router.
@@ -54,7 +54,7 @@ contract Hedger is Ownable {
     mapping(address cvToken => MorphoId) public cvMarkets;
 
     // Uniswap
-    ISwapRouter public swapRouter;
+    ISwapRouter02 public swapRouter;
     uint24 public reserveWethSwapFee;
     uint24 public mgstWethSwapFee;
 
@@ -93,7 +93,7 @@ contract Hedger is Ownable {
         reserve = IERC20(reserve_);
         mgstMarket = MorphoId.wrap(mgstMarket_);
         morpho = IMorpho(morpho_);
-        swapRouter = ISwapRouter(swapRouter_);
+        swapRouter = ISwapRouter02(swapRouter_);
         reserveWethSwapFee = reserveWethSwapFee_;
         mgstWethSwapFee = mgstWethSwapFee_;
 
@@ -680,12 +680,11 @@ contract Hedger is Ownable {
 
         // Specify a two-hop path for the swap: MGST -> WETH -> RESERVE
         // The router expects the path in forward order since this is an exactInput swap
-        ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
+        ISwapRouter02.ExactInputParams memory params = ISwapRouter02.ExactInputParams({
             path: abi.encodePacked(
                 address(mgst), mgstWethSwapFee, address(weth), reserveWethSwapFee, address(reserve)
             ),
             recipient: address(this), // this contract receives since it's an intermediate step
-            deadline: block.timestamp,
             amountIn: mgstBorrowed,
             amountOutMinimum: minReserveOut_
         });
@@ -742,12 +741,11 @@ contract Hedger is Ownable {
 
         // Specify a two-hop path for the swap: RESERVE -> WETH -> MGST
         // The router expects the path in reverse order
-        ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
+        ISwapRouter02.ExactInputParams memory params = ISwapRouter02.ExactInputParams({
             path: abi.encodePacked(
                 address(mgst), mgstWethSwapFee, address(weth), reserveWethSwapFee, address(reserve)
             ),
             recipient: address(this), // this contract receives since it's an intermediate step
-            deadline: block.timestamp,
             amountIn: externalReserves_ + reservesWithdrawn,
             amountOutMinimum: minMgstOut_
         });
