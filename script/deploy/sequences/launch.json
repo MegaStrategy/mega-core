@@ -37,7 +37,7 @@
     {
       "name": "FixedStrikeOptionTeller",
       "args": {
-        "guardian": "0x0000000000000000000000000000000000000000",
+        "guardian": "0x007F3eD580c754A9495881b066e9FC98e406c214",
         "authority": "0x0000000000000000000000000000000000000000"
       }
     },
