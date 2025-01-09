@@ -20,6 +20,7 @@ import {TreasuryCustodian} from "src/policies/TreasuryCustodian.sol";
 import {Emergency} from "src/policies/Emergency.sol";
 import {Banker} from "src/policies/Banker.sol";
 import {Issuer} from "src/policies/Issuer.sol";
+import {Hedger} from "src/periphery/Hedger.sol";
 
 // solhint-disable max-states-count
 /// @notice Script to deploy the system
@@ -65,6 +66,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         selectorMap["Banker"] = this._deployBanker.selector;
         selectorMap["Issuer"] = this._deployIssuer.selector;
         selectorMap["FixedStrikeOptionTeller"] = this._deployFixedStrikeOptionTeller.selector;
+        selectorMap["Hedger"] = this._deployHedger.selector;
 
         // Load env data
         _loadEnv(chain_);
@@ -161,6 +163,15 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         string memory key_
     ) internal view returns (address) {
         return deploymentFileJson.readAddress(
+            string.concat(".sequence[?(@.name == '", deploymentName_, "')].args.", key_)
+        );
+    }
+
+    function _readDeploymentArgUint256(
+        string memory deploymentName_,
+        string memory key_
+    ) internal view returns (uint256) {
+        return deploymentFileJson.readUint(
             string.concat(".sequence[?(@.name == '", deploymentName_, "')].args.", key_)
         );
     }
@@ -312,6 +323,35 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         console2.log("FixedStrikeOptionTeller deployed at:", address(teller));
 
         return (address(teller), "axis.options.FixedStrikeOptionTeller");
+    }
+
+    function _deployHedger(
+        string memory name_
+    ) public returns (address, string memory) {
+        bytes32 mgstMarket_ = bytes32(bytes(_readDeploymentArgString(name_, "mgstMarket")));
+        uint24 reserveWethSwapFee_ = uint24(_readDeploymentArgUint256(name_, "reserveWethSwapFee"));
+        uint24 mgstWethSwapFee_ = uint24(_readDeploymentArgUint256(name_, "mgstWethSwapFee"));
+
+        // Ensure the args are set
+        require(mgstMarket_ != bytes32(0), "mgstMarket must be set");
+        require(reserveWethSwapFee_ != 0, "reserveWethSwapFee must be set");
+        require(mgstWethSwapFee_ != 0, "mgstWethSwapFee must be set");
+
+        // Deploy Hedger
+        vm.broadcast();
+        Hedger hedger = new Hedger(
+            _getAddressNotZero("mega.modules.Token"),
+            _getAddressNotZero("axis.external.tokens.WETH"),
+            _getAddressNotZero("axis.external.tokens.USDC"),
+            mgstMarket_,
+            _getAddressNotZero("external.morpho"),
+            _getAddressNotZero("external.uniswap.swapRouter"),
+            reserveWethSwapFee_,
+            mgstWethSwapFee_
+        );
+        console2.log("Hedger deployed at:", address(hedger));
+
+        return (address(hedger), "mega.periphery.Hedger");
     }
 
     // ========== VERIFICATION ========== //

@@ -1,0 +1,12 @@
+{
+    "sequence": [
+        {
+            "name": "Hedger",
+            "args": {
+                "mgstMarket": "",
+                "reserveWethSwapFee": 500,
+                "mgstWethSwapFee": 3000
+            }
+        }
+    ]
+}
