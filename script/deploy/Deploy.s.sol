@@ -345,7 +345,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
             _getAddressNotZero("axis.external.tokens.USDC"),
             mgstMarket_,
             _getAddressNotZero("external.morpho"),
-            _getAddressNotZero("external.uniswap.swapRouter"),
+            _getAddressNotZero("external.uniswap.v3.swapRouter"),
             reserveWethSwapFee_,
             mgstWethSwapFee_
         );
