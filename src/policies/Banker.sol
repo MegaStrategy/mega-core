@@ -62,12 +62,24 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // ========== DATA STRUCTURES ========== //
 
+    /// @notice Parameters for creating a debt token
+    ///
+    /// @param  underlying      The underlying asset for the debt token
+    /// @param  maturity        The maturity timestamp of the debt token
+    /// @param  conversionPrice The price at which the debt token can be converted to the underlying asset. Amount of underlying to MGST in underlying decimals.
     struct DebtTokenParams {
         address underlying;
         uint48 maturity;
         uint256 conversionPrice;
     }
 
+    /// @notice Parameters for creating an auction
+    ///
+    /// @param  start               The start timestamp of the auction
+    /// @param  duration            The duration of the auction in seconds
+    /// @param  capacity            The capacity of the auction in MGST
+    /// @param  auctionPublicKey    The public key for the auction
+    /// @param  infoHash            The IPFS hash for the auction
     struct AuctionParams {
         uint48 start;
         uint48 duration;

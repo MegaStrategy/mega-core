@@ -20,6 +20,7 @@ import {
     MarketParams as MorphoMarketParams
 } from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
 import {MarketParamsLib} from "morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
+import {Hedger} from "../src/periphery/Hedger.sol";
 
 contract TasksScript is Script, WithEnvironment {
     uint256 public constant LLTV = 945e15; // 94.5%
@@ -174,6 +175,8 @@ contract TasksScript is Script, WithEnvironment {
         console2.log("MGST minted", amount_);
     }
 
+    // ========== UNISWAP V3 LIQUIDITY ========== //
+
     /// @dev This is only useful for testing. The production pool is created by the launch auction.
     function createMgstWethPool(
         string calldata chain_,
@@ -239,7 +242,7 @@ contract TasksScript is Script, WithEnvironment {
                 amount0Min: 0,
                 amount1Min: 0,
                 recipient: msg.sender,
-                deadline: block.timestamp
+                deadline: block.timestamp // NOTE: this might fail?
             })
         );
         vm.stopBroadcast();
@@ -279,6 +282,8 @@ contract TasksScript is Script, WithEnvironment {
         console2.log("Liquidity minted");
     }
 
+    // ========== MORPHO ========== //
+
     function _getMgstMorphoMarketParams()
         internal
         view
@@ -291,6 +296,22 @@ contract TasksScript is Script, WithEnvironment {
             loanToken: usdc,
             collateralToken: mgst,
             oracle: address(0), // TODO add oracle for MGST
+            irm: address(0), // Disabled
+            lltv: LLTV
+        });
+
+        return marketParams;
+    }
+
+    function _getMgstDebtTokenMorphoMarketParams(
+        address debtToken_
+    ) internal view returns (MorphoMarketParams memory marketParams) {
+        address mgst = _envAddressNotZero("mega.modules.Token");
+
+        marketParams = MorphoMarketParams({
+            loanToken: mgst,
+            collateralToken: debtToken_,
+            oracle: debtToken_,
             irm: address(0), // Disabled
             lltv: LLTV
         });
@@ -313,7 +334,11 @@ contract TasksScript is Script, WithEnvironment {
         console2.log("Id:", vm.toString(MorphoId.unwrap(MarketParamsLib.id(mgstMarketParams))));
     }
 
-    function supplyMgstToMorphoMarket(string calldata chain_, uint256 amount_) external {
+    function supplyMgstToMorphoDebtTokenMarket(
+        string calldata chain_,
+        address debtToken_,
+        uint256 amount_
+    ) external {
         _loadEnv(chain_);
 
         address mgst = _envAddressNotZero("mega.modules.Token");
@@ -333,7 +358,7 @@ contract TasksScript is Script, WithEnvironment {
         vm.stopBroadcast();
 
         // Deposit MGST into the morpho market
-        MorphoMarketParams memory mgstMarketParams = _getMgstMorphoMarketParams();
+        MorphoMarketParams memory mgstMarketParams = _getMgstDebtTokenMorphoMarketParams(debtToken_);
 
         vm.startBroadcast();
         IMorpho(_envAddressNotZero("external.morpho")).supply(
@@ -347,15 +372,7 @@ contract TasksScript is Script, WithEnvironment {
     function createMgstDebtTokenMarket(string calldata chain_, address debtToken_) external {
         _loadEnv(chain_);
 
-        address mgst = _envAddressNotZero("mega.modules.Token");
-
-        MorphoMarketParams memory marketParams = MorphoMarketParams({
-            loanToken: debtToken_,
-            collateralToken: mgst,
-            oracle: debtToken_,
-            irm: address(0), // Disabled
-            lltv: LLTV
-        });
+        MorphoMarketParams memory marketParams = _getMgstDebtTokenMorphoMarketParams(debtToken_);
 
         vm.startBroadcast();
         IMorpho(_envAddressNotZero("external.morpho")).createMarket(marketParams);
@@ -363,5 +380,65 @@ contract TasksScript is Script, WithEnvironment {
 
         console2.log("MGST debt token market created");
         console2.log("Id:", vm.toString(MorphoId.unwrap(MarketParamsLib.id(marketParams))));
+    }
+
+    function depositDebtTokenToMorphoMarket(
+        string calldata chain_,
+        address debtToken_,
+        uint256 amount_
+    ) external {
+        _loadEnv(chain_);
+
+        address hedger = _envAddressNotZero("mega.periphery.Hedger");
+
+        // Approve the Morpho market to spend the debt token
+        vm.startBroadcast();
+        ERC20(debtToken_).approve(hedger, amount_);
+        vm.stopBroadcast();
+
+        vm.startBroadcast();
+        Hedger(hedger).deposit(debtToken_, amount_);
+        vm.stopBroadcast();
+
+        console2.log("Debt token deposited to Morpho market");
+    }
+
+    function authorizeHedgerWithMorpho(
+        string calldata chain_
+    ) external {
+        _loadEnv(chain_);
+
+        address hedger = _envAddressNotZero("mega.periphery.Hedger");
+
+        vm.startBroadcast();
+        IMorpho(_envAddressNotZero("external.morpho")).setAuthorization(hedger, true);
+        vm.stopBroadcast();
+
+        console2.log("Hedger authorized with Morpho market");
+    }
+
+    function addDebtTokenToHedger(string calldata chain_, address debtToken_) external {
+        _loadEnv(chain_);
+
+        MorphoMarketParams memory marketParams = _getMgstDebtTokenMorphoMarketParams(debtToken_);
+        bytes32 marketId = MorphoId.unwrap(MarketParamsLib.id(marketParams));
+
+        vm.startBroadcast();
+        Hedger(_envAddressNotZero("mega.periphery.Hedger")).addCvToken(debtToken_, marketId);
+        vm.stopBroadcast();
+
+        console2.log("Debt token added to Hedger");
+    }
+
+    function increaseHedge(string calldata chain_, address debtToken_, uint256 amount_) external {
+        _loadEnv(chain_);
+
+        vm.startBroadcast();
+        Hedger(_envAddressNotZero("mega.periphery.Hedger")).increaseHedge(
+            debtToken_, amount_, amount_ * 99 / 100
+        );
+        vm.stopBroadcast();
+
+        console2.log("Hedge increased");
     }
 }

@@ -158,6 +158,15 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         );
     }
 
+    function _readDeploymentArgBytes32(
+        string memory deploymentName_,
+        string memory key_
+    ) internal view returns (bytes32) {
+        return deploymentFileJson.readBytes32(
+            string.concat(".sequence[?(@.name == '", deploymentName_, "')].args.", key_)
+        );
+    }
+
     function _readDeploymentArgAddress(
         string memory deploymentName_,
         string memory key_
@@ -328,7 +337,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     function _deployHedger(
         string memory name_
     ) public returns (address, string memory) {
-        bytes32 mgstMarket_ = bytes32(bytes(_readDeploymentArgString(name_, "mgstMarket")));
+        bytes32 mgstMarket_ = _readDeploymentArgBytes32(name_, "mgstMarket");
         uint24 reserveWethSwapFee_ = uint24(_readDeploymentArgUint256(name_, "reserveWethSwapFee"));
         uint24 mgstWethSwapFee_ = uint24(_readDeploymentArgUint256(name_, "mgstWethSwapFee"));
 
@@ -341,8 +350,8 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         vm.broadcast();
         Hedger hedger = new Hedger(
             _getAddressNotZero("mega.modules.Token"),
-            _getAddressNotZero("axis.external.tokens.WETH"),
-            _getAddressNotZero("axis.external.tokens.USDC"),
+            _getAddressNotZero("external.tokens.WETH"),
+            _getAddressNotZero("external.tokens.USDC"),
             mgstMarket_,
             _getAddressNotZero("external.morpho"),
             _getAddressNotZero("external.uniswap.v3.swapRouter"),
