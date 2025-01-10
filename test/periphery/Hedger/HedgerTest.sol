@@ -410,6 +410,12 @@ contract HedgerTest is Test, WithSalts {
         _;
     }
 
+    modifier givenUserHasUnauthorizedHedger() {
+        vm.prank(USER);
+        morpho.setAuthorization(address(hedger), false);
+        _;
+    }
+
     function _getMaximumHedgeAmount(
         uint256 collateralAmount_
     ) internal pure returns (uint256) {
@@ -431,6 +437,26 @@ contract HedgerTest is Test, WithSalts {
         uint256 reserveAmount = wethAmount * 3600 * 1e6 / 1e18;
 
         return reserveAmount;
+    }
+
+    function _getMgstOut(
+        uint256 reserveAmount_
+    ) internal pure returns (uint256) {
+        // 1 WETH : 3600 RESERVE
+        uint256 wethAmount = reserveAmount_ * 1e18 / (3600 * 1e6);
+
+        // 1 WETH : 10 MGST
+        uint256 mgstAmount = wethAmount * 1e18 / 1e17;
+
+        return mgstAmount;
+    }
+
+    modifier givenUserHasIncreasedMgstHedge(
+        uint256 amount_
+    ) {
+        vm.prank(USER);
+        hedger.increaseHedge(address(debtToken), amount_, _getReserveOut(amount_) * 95 / 100);
+        _;
     }
 
     // ========== ASSERTIONS ========== //
@@ -499,5 +525,19 @@ contract HedgerTest is Test, WithSalts {
         );
 
         assertEq(borrowAssets, amount_, "morpho: borrow amount");
+    }
+
+    function _assertMorphoBorrowedLessThan(
+        uint256 amount_
+    ) internal view {
+        MorphoPosition memory position = morpho.position(debtTokenMarket, USER);
+
+        uint256 borrowAssets = SharesMathLib.toAssetsDown(
+            position.borrowShares,
+            morpho.market(debtTokenMarket).totalBorrowAssets,
+            morpho.market(debtTokenMarket).totalBorrowShares
+        );
+
+        assertLt(borrowAssets, amount_, "morpho: borrow amount");
     }
 }

@@ -740,13 +740,16 @@ contract Hedger is Ownable {
         // Total reserves should not be zero
         if (externalReserves_ + reservesWithdrawn == 0) revert InvalidParam("reserves");
 
+        // Approve the swap router to spend the reserves
+        reserve.safeApprove(address(swapRouter), externalReserves_ + reservesWithdrawn);
+
         // Swap the reserves for MGST
 
         // Specify a two-hop path for the swap: RESERVE -> WETH -> MGST
         // The router expects the path in reverse order
         ISwapRouter02.ExactInputParams memory params = ISwapRouter02.ExactInputParams({
             path: abi.encodePacked(
-                address(mgst), mgstWethSwapFee, address(weth), reserveWethSwapFee, address(reserve)
+                address(reserve), reserveWethSwapFee, address(weth), mgstWethSwapFee, address(mgst)
             ),
             recipient: address(this), // this contract receives since it's an intermediate step
             amountIn: externalReserves_ + reservesWithdrawn,
