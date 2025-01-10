@@ -179,9 +179,9 @@ contract Hedger is Ownable {
     ///         - `cvToken_` does not have a whitelisted Morpho market
     ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
-    /// @param  cvToken_       The address of the cvToken to hedge
-    /// @param  hedgeAmount_  The amount of MGST to borrow
-    /// @param  minReserveOut_ The minimum amount of reserve token to receive (akin to a slippage parameter)
+    /// @param  cvToken_        The address of the cvToken to hedge
+    /// @param  hedgeAmount_    The amount of MGST to borrow
+    /// @param  minReserveOut_  The minimum amount of reserve token to receive (akin to a slippage parameter)
     function increaseHedge(
         address cvToken_,
         uint256 hedgeAmount_,
