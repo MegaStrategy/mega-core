@@ -692,6 +692,9 @@ contract Hedger is Ownable {
         // Execute the swap
         uint256 reserveReceived = swapRouter.exactInput(params);
 
+        // Approve the Morpho market to spend the reserve token
+        reserve.safeApprove(address(morpho), reserveReceived);
+
         // Get the morpho market params
         marketParams = morpho.idToMarketParams(mgstMarket);
 
