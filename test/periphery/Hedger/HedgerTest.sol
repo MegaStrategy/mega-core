@@ -457,6 +457,10 @@ contract HedgerTest is Test, WithSalts {
         vm.expectRevert("unauthorized");
     }
 
+    function _expectOperatorNotAuthorized() internal {
+        vm.expectRevert(abi.encodeWithSelector(Hedger.NotAuthorized.selector));
+    }
+
     function _assertUserBalances(
         uint256 reserveBalance_,
         uint256 debtTokenBalance_
