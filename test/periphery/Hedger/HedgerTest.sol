@@ -31,6 +31,7 @@ import {Banker} from "src/policies/Banker.sol";
 import {Hedger} from "src/periphery/Hedger.sol";
 import {Issuer} from "src/policies/Issuer.sol";
 import {RolesAdmin} from "src/policies/RolesAdmin.sol";
+import {SharesMathLib} from "morpho-blue-1.0.0/libraries/SharesMathLib.sol";
 
 contract HedgerTest is Test, WithSalts {
     using SafeTransferLib for ERC20;
@@ -70,7 +71,7 @@ contract HedgerTest is Test, WithSalts {
     uint24 public constant MGST_WETH_SWAP_FEE = 3000;
 
     uint256 public constant WETH_RESERVE_WETH_AMOUNT = 1000e18;
-    uint256 public constant WETH_RESERVE_RESERVE_AMOUNT = 3_600_000e18;
+    uint256 public constant WETH_RESERVE_RESERVE_AMOUNT = 3_600_000e6;
     uint256 public constant MGST_WETH_MGST_AMOUNT = 1000e18;
     uint256 public constant MGST_WETH_WETH_AMOUNT = 100e18;
 
@@ -103,7 +104,7 @@ contract HedgerTest is Test, WithSalts {
         banker = new Banker{salt: salt}(kernel, AUCTION_HOUSE);
 
         weth = new MockERC20("WETH", "WETH", 18);
-        reserve = new MockERC20("RESERVE", "RESERVE", 18);
+        reserve = new MockERC20("RESERVE", "RESERVE", 6);
 
         // Install modules and policies
         vm.startPrank(OWNER);
@@ -422,12 +423,12 @@ contract HedgerTest is Test, WithSalts {
 
     function _getReserveOut(
         uint256 mgstAmount_
-    ) internal view returns (uint256) {
+    ) internal pure returns (uint256) {
         // 1 WETH : 10 MGST
         uint256 wethAmount = mgstAmount_ * 1e17 / 1e18;
 
         // 1 WETH : 3600 RESERVE
-        uint256 reserveAmount = wethAmount * 3600;
+        uint256 reserveAmount = wethAmount * 3600 * 1e6 / 1e18;
 
         return reserveAmount;
     }
@@ -487,6 +488,12 @@ contract HedgerTest is Test, WithSalts {
     ) internal view {
         MorphoPosition memory position = morpho.position(debtTokenMarket, USER);
 
-        assertEq(position.borrowShares, amount_, "morpho: borrow shares");
+        uint256 borrowAssets = SharesMathLib.toAssetsDown(
+            position.borrowShares,
+            morpho.market(debtTokenMarket).totalBorrowAssets,
+            morpho.market(debtTokenMarket).totalBorrowShares
+        );
+
+        assertEq(borrowAssets, amount_, "morpho: borrow amount");
     }
 }
