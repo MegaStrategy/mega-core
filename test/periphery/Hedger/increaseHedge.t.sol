@@ -72,9 +72,12 @@ contract HedgerIncreaseHedgeTest is HedgerTest {
         uint256 maximumHedgeAmount = _getMaximumHedgeAmount(DEBT_TOKEN_AMOUNT);
         uint256 hedgeAmount = bound(hedgeAmount_, 1e18, maximumHedgeAmount);
 
+        // Calculate the minimum reserve amount out
+        uint256 minReserveOut = _getReserveOut(hedgeAmount);
+
         // Call
         vm.prank(USER);
-        hedger.increaseHedge(address(debtToken), hedgeAmount, hedgeAmount * 99 / 100);
+        hedger.increaseHedge(address(debtToken), hedgeAmount, minReserveOut * 99 / 100);
 
         // Assertions
         _assertUserBalances(0, 0);

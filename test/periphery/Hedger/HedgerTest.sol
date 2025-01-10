@@ -420,6 +420,18 @@ contract HedgerTest is Test, WithSalts {
         return (collateralAmount_ * collateralPrice / 1e36) * LLTV / 1e18;
     }
 
+    function _getReserveOut(
+        uint256 mgstAmount_
+    ) internal view returns (uint256) {
+        // 1 WETH : 10 MGST
+        uint256 wethAmount = mgstAmount_ * 1e17 / 1e18;
+
+        // 1 WETH : 3600 RESERVE
+        uint256 reserveAmount = wethAmount * 3600;
+
+        return reserveAmount;
+    }
+
     // ========== ASSERTIONS ========== //
 
     function _expectInvalidDebtToken() internal {
