@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import {HedgerTest} from "./HedgerTest.sol";
-import {stdError} from "forge-std/StdError.sol";
 
 import {console2} from "forge-std/console2.sol";
 
@@ -72,7 +71,7 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         givenUserHasReserve(1e18)
     {
         // Expect revert
-        vm.expectRevert(stdError.arithmeticError);
+        _expectArithmeticError();
 
         // Call
         vm.prank(USER);

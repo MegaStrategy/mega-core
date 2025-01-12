@@ -3,6 +3,8 @@ pragma solidity 0.8.19;
 
 import {Test} from "forge-std/Test.sol";
 
+import {stdError} from "forge-std/StdError.sol";
+
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 import {WithSalts} from "../../lib/WithSalts.sol";
@@ -459,6 +461,23 @@ contract HedgerTest is Test, WithSalts {
         _;
     }
 
+    modifier givenUserHasApprovedMorphoReserveDeposit(
+        uint256 amount_
+    ) {
+        vm.prank(USER);
+        reserve.approve(address(morpho), amount_);
+        _;
+    }
+
+    modifier givenUserHasDepositedReserves(
+        uint256 amount_
+    ) {
+        vm.startPrank(USER);
+        morpho.supply(morpho.idToMarketParams(mgstMarket), amount_, 0, USER, "");
+        vm.stopPrank();
+        _;
+    }
+
     // ========== ASSERTIONS ========== //
 
     function _expectInvalidDebtToken() internal {
@@ -481,6 +500,10 @@ contract HedgerTest is Test, WithSalts {
 
     function _expectUnauthorized() internal {
         vm.expectRevert("unauthorized");
+    }
+
+    function _expectArithmeticError() internal {
+        vm.expectRevert(stdError.arithmeticError);
     }
 
     function _expectOperatorNotAuthorized() internal {

@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import {HedgerTest} from "./HedgerTest.sol";
-import {stdError} from "forge-std/Test.sol";
 
 contract HedgerDepositForTest is HedgerTest {
     // given the cvToken is not whitelisted
@@ -35,7 +34,7 @@ contract HedgerDepositForTest is HedgerTest {
         givenDebtTokenIsWhitelisted
     {
         // Expect revert
-        vm.expectRevert(stdError.arithmeticError);
+        _expectArithmeticError();
 
         // Call
         vm.prank(OPERATOR);
@@ -50,7 +49,7 @@ contract HedgerDepositForTest is HedgerTest {
         givenOperatorDebtTokenSpendingIsApproved(DEBT_TOKEN_AMOUNT)
     {
         // Expect revert
-        vm.expectRevert(stdError.arithmeticError);
+        _expectArithmeticError();
 
         // Call
         vm.prank(OPERATOR);

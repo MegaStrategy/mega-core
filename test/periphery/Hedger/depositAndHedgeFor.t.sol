@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import {HedgerTest} from "./HedgerTest.sol";
-import {stdError} from "forge-std/StdError.sol";
 
 contract HedgerDepositAndHedgeForTest is HedgerTest {
     // given the cvToken is not whitelisted
@@ -16,9 +15,9 @@ contract HedgerDepositAndHedgeForTest is HedgerTest {
     // given the user does not have sufficient balance of the cvToken
     //  [X] it reverts
     // when the slippage check fails
-    //  [ ] it reverts
-    // [ ] it deposits the cvToken into the Morpho market on behalf of the user
-    // [ ] it borrows the hedge amount in MGST, swaps it for the reserve token, and deposits it into the Morpho market on behalf of the user
+    //  [X] it reverts
+    // [X] it deposits the cvToken into the Morpho market on behalf of the user
+    // [X] it borrows the hedge amount in MGST, swaps it for the reserve token, and deposits it into the Morpho market on behalf of the user
 
     function test_debtTokenNotWhitelisted_reverts()
         public
@@ -66,7 +65,7 @@ contract HedgerDepositAndHedgeForTest is HedgerTest {
         uint256 minReserveOut = _getReserveOut(hedgeAmount);
 
         // Expect revert
-        vm.expectRevert(stdError.arithmeticError);
+        _expectArithmeticError();
 
         // Call
         vm.prank(OPERATOR);
@@ -86,7 +85,7 @@ contract HedgerDepositAndHedgeForTest is HedgerTest {
         uint256 minReserveOut = _getReserveOut(hedgeAmount);
 
         // Expect revert
-        vm.expectRevert(stdError.arithmeticError);
+        _expectArithmeticError();
 
         // Call
         vm.prank(OPERATOR);
