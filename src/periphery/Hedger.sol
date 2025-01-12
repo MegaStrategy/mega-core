@@ -423,6 +423,8 @@ contract Hedger is Ownable {
         _increaseHedge(cvMarket, mgstAmount_, onBehalfOf_, minReserveOut_);
     }
 
+    // TODO maxIncreaseHedge?
+
     /// @notice Increases a user's hedge position
     /// @dev    This function performs the same operations as `increaseHedge()`, but for a specific user (`onBehalfOf_`)
     ///

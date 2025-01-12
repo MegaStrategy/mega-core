@@ -62,12 +62,12 @@ contract HedgerIncreaseHedgeTest is HedgerTest {
     )
         public
         givenDebtTokenMorphoMarketIsCreated
+        givenDebtTokenMorphoMarketHasSupply(100e18)
         givenDebtTokenIsWhitelisted
         givenDebtTokenSpendingIsApproved(DEBT_TOKEN_AMOUNT)
         givenDebtTokenIsIssued(DEBT_TOKEN_AMOUNT)
         givenUserHasDepositedDebtToken(DEBT_TOKEN_AMOUNT)
         givenUserHasAuthorizedHedger
-        givenDebtTokenMorphoMarketHasSupply(100e18)
     {
         uint256 maximumHedgeAmount = _getMaximumHedgeAmount(DEBT_TOKEN_AMOUNT);
         uint256 hedgeAmount = bound(hedgeAmount_, 1e18, maximumHedgeAmount);
