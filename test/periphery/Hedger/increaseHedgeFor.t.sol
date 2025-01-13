@@ -56,7 +56,7 @@ contract HedgerIncreaseHedgeForTest is HedgerTest {
         givenUserHasAuthorizedHedger
     {
         // Expect revert
-        _expectOperatorNotAuthorized();
+        _expectInvalidOperator();
 
         // Call
         vm.prank(OPERATOR);

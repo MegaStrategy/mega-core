@@ -40,16 +40,17 @@ contract HedgerDepositAndHedgeForTest is HedgerTest {
     function test_callerIsNotAnApprovedOperator_reverts()
         public
         givenDebtTokenMorphoMarketIsCreated
+        givenUserHasApprovedOperator
         givenDebtTokenIsWhitelisted
     {
         uint256 hedgeAmount = _getMaximumHedgeAmount(DEBT_TOKEN_AMOUNT);
         uint256 minReserveOut = _getReserveOut(hedgeAmount);
 
         // Expect revert
-        _expectOperatorNotAuthorized();
+        _expectInvalidOperator();
 
         // Call
-        vm.prank(OPERATOR);
+        vm.prank(ADMIN);
         hedger.depositAndHedgeFor(
             debtToken, DEBT_TOKEN_AMOUNT, hedgeAmount, minReserveOut * 95 / 100, USER
         );

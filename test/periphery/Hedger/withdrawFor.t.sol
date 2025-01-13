@@ -54,6 +54,7 @@ contract HedgerWithdrawForTest is HedgerTest {
         givenDebtTokenMorphoMarketHasSupply(100e18)
         givenDebtTokenIsWhitelisted
         givenUserHasAuthorizedHedger
+        givenUserHasApprovedOperator
         givenDebtTokenIsIssued(DEBT_TOKEN_AMOUNT)
         givenDebtTokenSpendingIsApproved(DEBT_TOKEN_AMOUNT)
         givenUserHasDepositedDebtToken(DEBT_TOKEN_AMOUNT)
@@ -62,7 +63,7 @@ contract HedgerWithdrawForTest is HedgerTest {
         _expectInvalidOperator();
 
         // Call
-        vm.prank(OPERATOR);
+        vm.prank(ADMIN);
         hedger.withdrawFor(debtToken, DEBT_TOKEN_AMOUNT, USER);
     }
 

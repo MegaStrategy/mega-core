@@ -505,6 +505,11 @@ contract Hedger is Ownable {
     ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
         MorphoId cvMarket = _getMarketId(cvToken_);
 
+        // Transfer the external amount of reserves to this contract, if necessary
+        if (reserveToSupply_ > 0) {
+            reserve.safeTransferFrom(onBehalfOf_, address(this), reserveToSupply_);
+        }
+
         // Decrease the hedge position, if necessary
         _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, minMgstOut_);
 
@@ -749,28 +754,28 @@ contract Hedger is Ownable {
 
         // Specify a two-hop path for the swap: RESERVE -> WETH -> MGST
         // The router expects the path in reverse order
-        ISwapRouter02.ExactInputParams memory params = ISwapRouter02.ExactInputParams({
+        ISwapRouter02.ExactOutputParams memory params = ISwapRouter02.ExactOutputParams({
             path: abi.encodePacked(
-                address(reserve), reserveWethSwapFee, address(weth), mgstWethSwapFee, address(mgst)
+                address(mgst), mgstWethSwapFee, address(weth), reserveWethSwapFee, address(reserve)
             ),
             recipient: address(this), // this contract receives since it's an intermediate step
-            amountIn: externalReserves_ + reservesWithdrawn,
-            amountOutMinimum: minMgstOut_
+            amountOut: minMgstOut_,
+            amountInMaximum: externalReserves_ + reservesWithdrawn
         });
 
         // Execute the swap
-        uint256 mgstReceived = swapRouter.exactInput(params);
+        swapRouter.exactOutput(params);
 
         // Repay the MGST to the morpho market
         marketParams = morpho.idToMarketParams(cvMarket_);
 
         // Approve the morpho market to spend the MGST
-        mgst.safeApprove(address(morpho), mgstReceived);
+        mgst.safeApprove(address(morpho), minMgstOut_);
 
         // Repay the loan
         morpho.repay(
             marketParams, // marketParams
-            mgstReceived, // assets
+            minMgstOut_, // assets
             0, // shares (not used)
             onBehalfOf_, // onBehalfOf
             bytes("") // data (not used)

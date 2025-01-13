@@ -86,22 +86,26 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         givenUserHasAuthorizedHedger
         givenDebtTokenMorphoMarketHasSupply(100e18)
         givenUserHasIncreasedMgstHedge(1e18)
-        givenUserHasReserve(_getReserveOut(1e18))
-        givenReserveSpendingIsApproved(_getReserveOut(1e18))
     {
-        uint256 reserveAmount = _getReserveOut(1e18);
+        uint256 mgstBorrowed = 1e18;
+        uint256 reserveAmount = _getReserveOut(mgstBorrowed) * 105 / 100;
+
+        // Mint reserve to the user
+        _mintReserve(reserveAmount);
+        _approveReserveSpendingByHedger(reserveAmount);
 
         // Call
         vm.prank(USER);
         hedger.decreaseHedge(
-            address(debtToken), reserveAmount, 0, _getMgstOut(reserveAmount) * 95 / 100
+            address(debtToken), reserveAmount, 0, mgstBorrowed
         );
 
         // Assertions
-        _assertUserBalances(0, 0);
+        _assertUserReserveBalanceLt(reserveAmount);
+        _assertUserDebtTokenBalance(0);
         _assertOperatorBalances(0, 0);
         _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
-        _assertMorphoBorrowedLessThan(1e18);
+        _assertMorphoBorrowed(0);
     }
 
     function test_reservesToSupply_slippageCheckFails_reverts()
@@ -114,18 +118,21 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         givenUserHasAuthorizedHedger
         givenDebtTokenMorphoMarketHasSupply(100e18)
         givenUserHasIncreasedMgstHedge(1e18)
-        givenUserHasReserve(_getReserveOut(1e18))
-        givenReserveSpendingIsApproved(_getReserveOut(1e18))
     {
-        uint256 reserveAmount = _getReserveOut(1e18);
+        uint256 mgstBorrowed = 1e18;
+        uint256 reserveAmount = _getReserveOut(mgstBorrowed) * 100 / 100;
+
+        // Mint reserve to the user
+        _mintReserve(reserveAmount);
+        _approveReserveSpendingByHedger(reserveAmount);
 
         // Expect revert
-        vm.expectRevert("Too little received");
+        _expectSafeTransferFailure();
 
         // Call
         vm.prank(USER);
         hedger.decreaseHedge(
-            address(debtToken), reserveAmount, 0, _getMgstOut(reserveAmount) * 100 / 100
+            address(debtToken), reserveAmount, 0, mgstBorrowed
         );
     }
 
@@ -140,7 +147,8 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         givenDebtTokenMorphoMarketHasSupply(100e18)
         givenUserHasIncreasedMgstHedge(1e18)
     {
-        uint256 reserveAmount = _getReserveOut(1e18);
+        uint256 mgstBorrowed = 1e18;
+        uint256 reserveAmount = _getReserveOut(mgstBorrowed) * 105 / 100;
 
         // Deposit reserves to MGST<>RESERVE market
         _mintReserve(reserveAmount);
@@ -157,7 +165,7 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         // Call
         vm.prank(USER);
         hedger.decreaseHedge(
-            address(debtToken), 0, reserveAmount, _getMgstOut(reserveAmount) * 95 / 100
+            address(debtToken), 0, reserveAmount, mgstBorrowed
         );
     }
 
@@ -172,7 +180,8 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         givenDebtTokenMorphoMarketHasSupply(100e18)
         givenUserHasIncreasedMgstHedge(1e18)
     {
-        uint256 reserveAmount = _getReserveOut(1e18);
+        uint256 mgstBorrowed = 1e18;
+        uint256 reserveAmount = _getReserveOut(mgstBorrowed) * 105 / 100;
 
         // Deposit reserves to MGST<>RESERVE market
         _mintReserve(reserveAmount);
@@ -182,15 +191,16 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         // Call
         vm.prank(USER);
         hedger.decreaseHedge(
-            address(debtToken), 0, reserveAmount, _getMgstOut(reserveAmount) * 95 / 100
+            address(debtToken), 0, reserveAmount, mgstBorrowed
         );
 
         // Assertions
-        _assertUserBalances(0, 0);
+        _assertUserReserveBalanceLt(reserveAmount);
+        _assertUserDebtTokenBalance(0);
         _assertOperatorBalances(0, 0);
         _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
         _assertMorphoReserveBalance(0);
-        _assertMorphoBorrowedLessThan(1e18);
+        _assertMorphoBorrowed(0);
     }
 
     function test_reservesToSupply_reservesToWithdraw()
@@ -204,7 +214,8 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         givenDebtTokenMorphoMarketHasSupply(100e18)
         givenUserHasIncreasedMgstHedge(1e18)
     {
-        uint256 reserveAmount = _getReserveOut(1e18);
+        uint256 mgstBorrowed = 1e18;
+        uint256 reserveAmount = _getReserveOut(mgstBorrowed) * 105 / 100;
 
         uint256 reservesToSupply = reserveAmount / 3;
         uint256 reservesToWithdraw = reserveAmount - reservesToSupply;
@@ -224,14 +235,15 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
             address(debtToken),
             reservesToSupply,
             reservesToWithdraw,
-            _getMgstOut(reserveAmount) * 95 / 100
+            mgstBorrowed
         );
 
         // Assertions
-        _assertUserBalances(0, 0);
+        _assertUserReserveBalanceLt(reserveAmount);
+        _assertUserDebtTokenBalance(0);
         _assertOperatorBalances(0, 0);
         _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
         _assertMorphoReserveBalance(0);
-        _assertMorphoBorrowedLessThan(1e18);
+        _assertMorphoBorrowed(0);
     }
 }

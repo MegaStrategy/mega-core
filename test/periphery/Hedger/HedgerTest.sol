@@ -530,8 +530,8 @@ contract HedgerTest is Test, WithSalts {
         vm.expectRevert(stdError.arithmeticError);
     }
 
-    function _expectOperatorNotAuthorized() internal {
-        vm.expectRevert(abi.encodeWithSelector(Hedger.NotAuthorized.selector));
+    function _expectSafeTransferFailure() internal {
+        vm.expectRevert(bytes("STF"));
     }
 
     function _assertUserBalances(
@@ -539,6 +539,18 @@ contract HedgerTest is Test, WithSalts {
         uint256 debtTokenBalance_
     ) internal view {
         assertEq(reserve.balanceOf(USER), reserveBalance_, "user: reserve balance");
+        assertEq(ERC20(debtToken).balanceOf(USER), debtTokenBalance_, "user: debt token balance");
+    }
+
+    function _assertUserReserveBalanceLt(
+        uint256 reserveBalance_
+    ) internal view {
+        assertLt(reserve.balanceOf(USER), reserveBalance_, "user: reserve balance");
+    }
+
+    function _assertUserDebtTokenBalance(
+        uint256 debtTokenBalance_
+    ) internal view {
         assertEq(ERC20(debtToken).balanceOf(USER), debtTokenBalance_, "user: debt token balance");
     }
 
