@@ -346,6 +346,12 @@ contract HedgerTest is Test, WithSalts {
         _;
     }
 
+    function _mintReserve(
+        uint256 amount_
+    ) internal {
+        reserve.mint(USER, amount_);
+    }
+
     modifier givenUserHasReserve(
         uint256 amount_
     ) {
@@ -360,11 +366,17 @@ contract HedgerTest is Test, WithSalts {
         _;
     }
 
+    function _approveReserveSpendingByHedger(
+        uint256 amount_
+    ) internal {
+        vm.prank(USER);
+        reserve.approve(address(hedger), amount_);
+    }
+
     modifier givenReserveSpendingIsApproved(
         uint256 amount_
     ) {
-        vm.prank(USER);
-        reserve.approve(address(hedger), amount_);
+        _approveReserveSpendingByHedger(amount_);
         _;
     }
 
@@ -461,20 +473,32 @@ contract HedgerTest is Test, WithSalts {
         _;
     }
 
+    function _approveMorphoReserveDeposit(
+        uint256 amount_
+    ) internal {
+        vm.prank(USER);
+        reserve.approve(address(morpho), amount_);
+    }
+
     modifier givenUserHasApprovedMorphoReserveDeposit(
         uint256 amount_
     ) {
-        vm.prank(USER);
-        reserve.approve(address(morpho), amount_);
+        _approveMorphoReserveDeposit(amount_);
         _;
+    }
+
+    function _depositReservesToMorphoMarket(
+        uint256 amount_
+    ) internal {
+        vm.startPrank(USER);
+        morpho.supply(morpho.idToMarketParams(mgstMarket), amount_, 0, USER, "");
+        vm.stopPrank();
     }
 
     modifier givenUserHasDepositedReserves(
         uint256 amount_
     ) {
-        vm.startPrank(USER);
-        morpho.supply(morpho.idToMarketParams(mgstMarket), amount_, 0, USER, "");
-        vm.stopPrank();
+        _depositReservesToMorphoMarket(amount_);
         _;
     }
 
@@ -534,6 +558,20 @@ contract HedgerTest is Test, WithSalts {
         MorphoPosition memory position = morpho.position(debtTokenMarket, USER);
 
         assertEq(position.collateral, amount_, "morpho: collateral");
+    }
+
+    function _assertMorphoReserveBalance(
+        uint256 amount_
+    ) internal view {
+        MorphoPosition memory position = morpho.position(mgstMarket, USER);
+
+        uint256 borrowAssets = SharesMathLib.toAssetsDown(
+            position.borrowShares,
+            morpho.market(mgstMarket).totalBorrowAssets,
+            morpho.market(mgstMarket).totalBorrowShares
+        );
+
+        assertEq(borrowAssets, amount_, "morpho: reserve balance");
     }
 
     function _assertMorphoBorrowed(
