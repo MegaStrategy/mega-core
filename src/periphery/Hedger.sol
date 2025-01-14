@@ -517,8 +517,6 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, amount_, onBehalfOf_);
     }
 
-    // TODO can we assume the reserve amounts that are needed based on the user's position? (need to use the balance lib)
-
     /// @notice Unwinds a user's hedge position and withdraws all of the collateral to the user
     /// @dev    This function performs the same operations as `unwindAndWithdrawAll()`, but for a specific user (`onBehalfOf_`)
     ///
@@ -541,6 +539,11 @@ contract Hedger is Ownable {
         address onBehalfOf_
     ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
         MorphoId cvMarket = _getMarketId(cvToken_);
+
+        // Transfer the external amount of reserves to this contract, if necessary
+        if (reserveToSupply_ > 0) {
+            reserve.safeTransferFrom(onBehalfOf_, address(this), reserveToSupply_);
+        }
 
         // Decrease the hedge position
         _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, minMgstOut_);

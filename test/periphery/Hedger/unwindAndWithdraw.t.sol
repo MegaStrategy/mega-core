@@ -165,7 +165,6 @@ contract HedgerUnwindAndWithdrawTest is HedgerTest {
         givenUserHasAuthorizedHedger
         givenDebtTokenMorphoMarketHasSupply(100e18)
         givenUserHasIncreasedMgstHedge(1e18)
-        givenUserHasReserve(_getReserveOut(1e18))
     {
         uint256 mgstBorrowed = 1e18;
         uint256 reserveAmount = _getReserveOut(mgstBorrowed) * 105 / 100;
