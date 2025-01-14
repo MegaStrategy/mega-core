@@ -14,8 +14,6 @@ contract HedgerIncreaseHedgeTest is HedgerTest {
     //  [X] it reverts
     // [X] it borrows the hedge amount in MGST, swaps it for the reserve token, and deposits it into the Morpho market on behalf of the caller
 
-    // TODO what if the hedge amount is greater than the user's debt token balance?
-
     function test_cvTokenIsNotWhitelisted_reverts() public {
         // Expect revert
         _expectInvalidParam("cvToken");

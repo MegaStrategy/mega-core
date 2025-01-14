@@ -5,12 +5,12 @@ import {HedgerTest} from "./HedgerTest.sol";
 
 contract HedgerWithdrawForTest is HedgerTest {
     // given the cvToken is not whitelisted
-    //  [ ] it reverts
+    //  [X] it reverts
     // given the user has not approved Hedger to operate the Morpho position
-    //  [ ] it reverts
+    //  [X] it reverts
     // given the caller is not an approved operator for the user
-    //  [ ] it reverts
-    // [ ] it withdraws the collateral from the Morpho market to the user
+    //  [X] it reverts
+    // [X] it withdraws the collateral from the Morpho market to the user
 
     function test_cvTokenIsNotWhitelisted_reverts()
         public
