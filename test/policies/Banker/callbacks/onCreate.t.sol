@@ -64,7 +64,7 @@ contract BankerCallbackOnCreateTest is BankerTest {
             "Another Debt Token",
             "ADT",
             address(stablecoin),
-            address(MSTR),
+            address(mgst),
             debtTokenMaturity,
             debtTokenConversionPrice,
             OWNER

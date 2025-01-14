@@ -3,14 +3,14 @@ pragma solidity 0.8.19;
 
 import {Test} from "@forge-std/Test.sol";
 import {Kernel, Actions} from "src/Kernel.sol";
-import {MSTR} from "src/modules/TOKEN/MSTR.sol";
+import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 import {ModuleTestFixtureGenerator} from "test/lib/ModuleTestFixtureGenerator.sol";
 
 contract TokenTest is Test {
-    using ModuleTestFixtureGenerator for MSTR;
+    using ModuleTestFixtureGenerator for MegaToken;
 
     Kernel public kernel;
-    MSTR public mstr;
+    MegaToken public mgst;
     address public constant OWNER = address(1);
     address public godmode;
     address public constant USER = address(2);
@@ -23,11 +23,11 @@ contract TokenTest is Test {
     function setUp() public {
         vm.prank(OWNER);
         kernel = new Kernel();
-        mstr = new MSTR(kernel, "MSTR", "MSTR");
+        mgst = new MegaToken(kernel, "MGST", "MGST");
 
         // Generate fixtures
         {
-            godmode = mstr.generateGodmodeFixture(type(MSTR).name);
+            godmode = mgst.generateGodmodeFixture(type(MegaToken).name);
             vm.prank(OWNER);
             kernel.executeAction(Actions.ActivatePolicy, godmode);
         }
@@ -35,19 +35,19 @@ contract TokenTest is Test {
 
     modifier givenModuleIsInstalled() {
         vm.prank(OWNER);
-        kernel.executeAction(Actions.InstallModule, address(mstr));
+        kernel.executeAction(Actions.InstallModule, address(mgst));
         _;
     }
 
     modifier givenModuleIsActive() {
         vm.prank(godmode);
-        mstr.activate();
+        mgst.activate();
         _;
     }
 
     modifier givenModuleIsInactive() {
         vm.prank(godmode);
-        mstr.deactivate();
+        mgst.deactivate();
         _;
     }
 
@@ -55,14 +55,14 @@ contract TokenTest is Test {
         uint256 amount_
     ) {
         vm.prank(godmode);
-        mstr.increaseMintApproval(godmode, amount_);
+        mgst.increaseMintApproval(godmode, amount_);
         _;
     }
 
     modifier mint(address to_, uint256 amount_) {
         // Mint
         vm.prank(godmode);
-        mstr.mint(to_, amount_);
+        mgst.mint(to_, amount_);
         _;
     }
 }

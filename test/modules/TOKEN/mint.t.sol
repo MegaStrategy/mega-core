@@ -24,7 +24,7 @@ contract MintTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.mint(USER, 100);
+        mgst.mint(USER, 100);
     }
 
     function test_callerNotPermissioned_reverts() public givenModuleIsActive {
@@ -32,7 +32,7 @@ contract MintTest is TokenTest {
 
         // Call
         vm.prank(USER);
-        mstr.mint(USER, 100);
+        mgst.mint(USER, 100);
     }
 
     function test_amountIsZero_reverts() public givenModuleIsActive {
@@ -40,7 +40,7 @@ contract MintTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.mint(USER, 0);
+        mgst.mint(USER, 0);
     }
 
     function test_callerMintApprovalIsInsufficient_reverts()
@@ -52,7 +52,7 @@ contract MintTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.mint(USER, 1e18 + 1);
+        mgst.mint(USER, 1e18 + 1);
     }
 
     function test_success(
@@ -66,11 +66,11 @@ contract MintTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.mint(USER, mintAmount);
+        mgst.mint(USER, mintAmount);
 
         // Assert
-        assertEq(mstr.balanceOf(USER), mintAmount, "balanceOf(USER)");
-        assertEq(mstr.totalSupply(), mintAmount, "totalSupply");
-        assertEq(mstr.mintApproval(godmode), 1e18 - mintAmount, "mintApproval(godmode)");
+        assertEq(mgst.balanceOf(USER), mintAmount, "balanceOf(USER)");
+        assertEq(mgst.totalSupply(), mintAmount, "totalSupply");
+        assertEq(mgst.mintApproval(godmode), 1e18 - mintAmount, "mintApproval(godmode)");
     }
 }

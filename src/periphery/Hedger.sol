@@ -1052,7 +1052,11 @@ contract Hedger is Ownable {
         // Confirm that the tokens match
         MorphoId cvMarket = MorphoId.wrap(cvMarket_);
         MorphoParams memory marketParams = morpho.idToMarketParams(cvMarket);
+        // If the market does not exist, revert
+        if (marketParams.collateralToken == address(0)) revert InvalidParam("market");
+        // If the collateral token does not match the cvToken, revert
         if (marketParams.collateralToken != cvToken_) revert InvalidParam("collateral");
+        // If the loan token does not match the MGST, revert
         if (marketParams.loanToken != address(mgst)) revert InvalidParam("loan");
 
         // Store the cvMarket ID

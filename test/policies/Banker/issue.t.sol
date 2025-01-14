@@ -97,8 +97,8 @@ contract BankerIssueTest is BankerTest {
 
         // Check that the banker contract's mint allowance for the debt token's underlying asset was increased
         assertEq(
-            MSTR.mintApproval(address(banker)),
-            amount_ * 10 ** MSTR.decimals() / debtTokenParams.conversionPrice
+            mgst.mintApproval(address(banker)),
+            amount_ * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
         );
     }
 }

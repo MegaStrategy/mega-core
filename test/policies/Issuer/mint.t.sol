@@ -47,6 +47,6 @@ contract IssuerMintTest is IssuerTest {
 
         vm.prank(admin);
         issuer.mint(to_, amount_);
-        assertEq(TOKEN.balanceOf(to_), amount_);
+        assertEq(mgst.balanceOf(to_), amount_);
     }
 }

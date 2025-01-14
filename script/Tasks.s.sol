@@ -116,7 +116,7 @@ contract TasksScript is Script, WithEnvironment {
         );
         vm.stopBroadcast();
 
-        // Convert the debt token to TOKEN
+        // Convert the debt token to the protocol token
         vm.startBroadcast();
         Banker(_envAddressNotZero("mega.policies.Banker")).convert(debtToken_, amount_);
         vm.stopBroadcast();

@@ -6,9 +6,9 @@ import {ERC20Permit} from "@openzeppelin-contracts-4.9.6/token/ERC20/extensions/
 import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
 import {Kernel, Module, Keycode, toKeycode} from "src/Kernel.sol";
 
-/// @notice Token implementation for the system
-/// @dev This is a fork of the OlympusMinter, but modified to use the contract as the token instead of an external one
-contract MSTR is TOKENv1 {
+/// @notice Implementation of the protocol token
+/// @dev    This is a fork of the OlympusMinter, but modified to use the contract as the token instead of an external one
+contract MegaToken is TOKENv1 {
     //============================================================================================//
     //                                      MODULE SETUP                                          //
     //============================================================================================//

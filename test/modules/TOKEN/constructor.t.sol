@@ -8,9 +8,9 @@ contract ConstructorTest is TokenTest {
     // [X] the module is locally active
 
     function test_success() public view {
-        assertEq(mstr.name(), "MSTR", "name");
-        assertEq(mstr.symbol(), "MSTR", "symbol");
-        assertEq(mstr.decimals(), 18, "decimals");
-        assertTrue(mstr.active(), "active");
+        assertEq(mgst.name(), "MGST", "name");
+        assertEq(mgst.symbol(), "MGST", "symbol");
+        assertEq(mgst.decimals(), 18, "decimals");
+        assertTrue(mgst.active(), "active");
     }
 }

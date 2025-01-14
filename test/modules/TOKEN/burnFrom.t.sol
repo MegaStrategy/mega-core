@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {TokenTest} from "./TokenTest.sol";
-import {TOKENv1} from "src/modules/TOKEN/MSTR.sol";
+import {TOKENv1} from "src/modules/TOKEN/MegaToken.sol";
 
 contract BurnFromTest is TokenTest {
     // when the module is not locally active
@@ -26,14 +26,14 @@ contract BurnFromTest is TokenTest {
         vm.expectRevert(abi.encodeWithSelector(TOKENv1.TOKEN_NotActive.selector));
 
         vm.prank(godmode);
-        mstr.burnFrom(USER, 100);
+        mgst.burnFrom(USER, 100);
     }
 
     function test_amountIsZero_reverts() public givenModuleIsInstalled givenModuleIsActive {
         vm.expectRevert(abi.encodeWithSelector(TOKENv1.TOKEN_ZeroAmount.selector));
 
         vm.prank(godmode);
-        mstr.burnFrom(USER, 0);
+        mgst.burnFrom(USER, 0);
     }
 
     function test_fromAddressAllowanceInsufficient_reverts()
@@ -45,12 +45,12 @@ contract BurnFromTest is TokenTest {
     {
         // Insufficient allowance
         vm.prank(USER);
-        mstr.approve(godmode, 1e18 - 1);
+        mgst.approve(godmode, 1e18 - 1);
 
         vm.expectRevert("ERC20: insufficient allowance");
 
         vm.prank(godmode);
-        mstr.burnFrom(USER, 1e18);
+        mgst.burnFrom(USER, 1e18);
     }
 
     function test_insufficientBalance_reverts()
@@ -62,13 +62,13 @@ contract BurnFromTest is TokenTest {
     {
         // Sufficient allowance
         vm.prank(USER);
-        mstr.approve(godmode, 1e18 + 1);
+        mgst.approve(godmode, 1e18 + 1);
 
         // Insufficient balance
         vm.expectRevert("ERC20: burn amount exceeds balance");
 
         vm.prank(godmode);
-        mstr.burnFrom(USER, 1e18 + 1);
+        mgst.burnFrom(USER, 1e18 + 1);
     }
 
     function test_maxAllowance(
@@ -84,14 +84,14 @@ contract BurnFromTest is TokenTest {
 
         // Sufficient allowance
         vm.prank(USER);
-        mstr.approve(godmode, type(uint256).max);
+        mgst.approve(godmode, type(uint256).max);
 
         // Call
         vm.prank(godmode);
-        mstr.burnFrom(USER, burnAmount);
+        mgst.burnFrom(USER, burnAmount);
 
         // Assert
-        assertEq(mstr.allowance(USER, godmode), type(uint256).max, "allowance");
+        assertEq(mgst.allowance(USER, godmode), type(uint256).max, "allowance");
     }
 
     function test_success(
@@ -107,7 +107,7 @@ contract BurnFromTest is TokenTest {
 
         // Sufficient allowance
         vm.prank(USER);
-        mstr.approve(godmode, 1e18);
+        mgst.approve(godmode, 1e18);
 
         // Expect event
         vm.expectEmit();
@@ -115,11 +115,11 @@ contract BurnFromTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.burnFrom(USER, burnAmount);
+        mgst.burnFrom(USER, burnAmount);
 
         // Assert
-        assertEq(mstr.balanceOf(USER), 1e18 - burnAmount, "balance");
-        assertEq(mstr.totalSupply(), 1e18 - burnAmount, "totalSupply");
-        assertEq(mstr.allowance(USER, godmode), 1e18 - burnAmount, "allowance");
+        assertEq(mgst.balanceOf(USER), 1e18 - burnAmount, "balance");
+        assertEq(mgst.totalSupply(), 1e18 - burnAmount, "totalSupply");
+        assertEq(mgst.allowance(USER, godmode), 1e18 - burnAmount, "allowance");
     }
 }

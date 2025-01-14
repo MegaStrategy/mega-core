@@ -70,7 +70,7 @@ contract IssuerIssueOTest is IssuerTest {
 
         vm.prank(admin);
         issuer.issueO(token, to_, amount_);
-        assertEq(TOKEN.balanceOf(address(teller)), amount_);
+        assertEq(mgst.balanceOf(address(teller)), amount_);
         assertEq(oToken(token).balanceOf(to_), amount_);
     }
 }

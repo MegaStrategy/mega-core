@@ -19,24 +19,24 @@ contract DeactivateTest is TokenTest {
         vm.expectRevert(abi.encodeWithSelector(Module.Module_PolicyNotPermitted.selector, USER));
 
         vm.prank(USER);
-        mstr.deactivate();
+        mgst.deactivate();
     }
 
     function test_moduleAlreadyInactive() public givenModuleIsInstalled givenModuleIsInactive {
         // Call
         vm.prank(godmode);
-        mstr.deactivate();
+        mgst.deactivate();
 
         // Assert
-        assertEq(mstr.active(), false, "active");
+        assertEq(mgst.active(), false, "active");
     }
 
     function test_success() public givenModuleIsInstalled givenModuleIsActive {
         // Call
         vm.prank(godmode);
-        mstr.deactivate();
+        mgst.deactivate();
 
         // Assert
-        assertEq(mstr.active(), false, "active");
+        assertEq(mgst.active(), false, "active");
     }
 }

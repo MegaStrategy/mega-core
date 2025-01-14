@@ -16,7 +16,7 @@ import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptio
 import {IFixedStrikeOptionTeller as oTeller} from "src/lib/oTokens/IFixedStrikeOptionTeller.sol";
 
 /// @title  Issuer
-/// @notice Policy that manages issuance of MSTR and options tokens
+/// @notice Policy that manages issuance of the protocol token and options tokens
 contract Issuer is Policy, RolesConsumer {
     using Timestamp for uint48;
     using TransferHelper for ERC20;
@@ -80,7 +80,7 @@ contract Issuer is Policy, RolesConsumer {
 
     // ========= MINT ========= //
 
-    /// @notice Mint MSTR to an address
+    /// @notice Mint the protocol token to an address
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
     ///         - The amount is zero
@@ -98,7 +98,7 @@ contract Issuer is Policy, RolesConsumer {
         // Increase mint allowance by provided amount
         TOKEN.increaseMintApproval(address(this), amount_);
 
-        // Mint the MSTR
+        // Mint the protocol token
         TOKEN.mint(to_, amount_);
     }
 
@@ -124,7 +124,7 @@ contract Issuer is Policy, RolesConsumer {
         // Teller validates the inputs
         token = address(
             teller.deploy(
-                ERC20(address(TOKEN)), // payoutToken_ = MSTR
+                ERC20(address(TOKEN)), // payoutToken_ = protocol token
                 ERC20(quoteToken_), // quoteToken_ = quoteToken
                 uint48(0), // eligible_ = immediately: TODO should we allow setting this?
                 expiry_, // expiry_ = expiry

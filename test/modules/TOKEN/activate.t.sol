@@ -15,20 +15,20 @@ contract ActivateTest is TokenTest {
         vm.expectRevert(abi.encodeWithSelector(Module.Module_PolicyNotPermitted.selector, USER));
 
         vm.prank(USER);
-        mstr.activate();
+        mgst.activate();
     }
 
     function test_moduleAlreadyActive() public givenModuleIsInstalled givenModuleIsActive {
         // Assert
-        assertEq(mstr.active(), true, "active");
+        assertEq(mgst.active(), true, "active");
     }
 
     function test_success() public givenModuleIsInstalled givenModuleIsInactive {
         // Call
         vm.prank(godmode);
-        mstr.activate();
+        mgst.activate();
 
         // Assert
-        assertEq(mstr.active(), true, "active");
+        assertEq(mgst.active(), true, "active");
     }
 }

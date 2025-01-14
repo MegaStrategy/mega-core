@@ -92,7 +92,7 @@ contract IssuerCreateOTest is IssuerTest {
         assertTrue(issuer.createdBy(address(token)));
 
         // Check that the oToken's parameters are correct
-        assertEq(address(token.payout()), address(TOKEN));
+        assertEq(address(token.payout()), address(mgst));
         assertEq(address(token.quote()), address(quoteToken));
         assertEq(token.eligible(), uint48(block.timestamp) / 1 days * 1 days);
         assertEq(token.expiry(), expiry / 1 days * 1 days);

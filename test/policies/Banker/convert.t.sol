@@ -36,7 +36,7 @@ contract BankerConvertTest is BankerTest {
                 "Fake Debt Token",
                 "FDT",
                 debtTokenParams.underlying,
-                address(MSTR),
+                address(mgst),
                 debtTokenParams.maturity,
                 debtTokenParams.conversionPrice,
                 OWNER
@@ -72,7 +72,7 @@ contract BankerConvertTest is BankerTest {
 
         // Check beginning balances and withdraw approval
         assertEq(ERC20(debtToken).balanceOf(buyer), amount_);
-        assertEq(MSTR.balanceOf(buyer), 0);
+        assertEq(mgst.balanceOf(buyer), 0);
         assertEq(
             TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount_
         );
@@ -86,7 +86,7 @@ contract BankerConvertTest is BankerTest {
         // Check that the balances are updated
         assertEq(ERC20(debtToken).balanceOf(buyer), 0);
         assertEq(
-            MSTR.balanceOf(buyer), amount_ * 10 ** MSTR.decimals() / debtTokenParams.conversionPrice
+            mgst.balanceOf(buyer), amount_ * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
         );
         assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), 0);
     }

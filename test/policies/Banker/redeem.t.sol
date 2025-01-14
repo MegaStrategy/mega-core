@@ -40,7 +40,7 @@ contract BankerRedeemTest is BankerTest {
                 "Fake Debt Token",
                 "FDT",
                 debtTokenParams.underlying,
-                address(MSTR),
+                address(mgst),
                 debtTokenParams.maturity,
                 debtTokenParams.conversionPrice,
                 OWNER
@@ -112,8 +112,8 @@ contract BankerRedeemTest is BankerTest {
             TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount_
         );
         assertEq(
-            MSTR.mintApproval(address(banker)),
-            amount_ * 10 ** MSTR.decimals() / debtTokenParams.conversionPrice
+            mgst.mintApproval(address(banker)),
+            amount_ * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
         );
 
         // Warp to maturity
@@ -132,6 +132,6 @@ contract BankerRedeemTest is BankerTest {
             ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), treasuryFunds_ - amount_
         );
         assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), 0);
-        assertEq(MSTR.mintApproval(address(banker)), 0);
+        assertEq(mgst.mintApproval(address(banker)), 0);
     }
 }

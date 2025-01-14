@@ -5,7 +5,7 @@ import {HedgerTest} from "./HedgerTest.sol";
 
 import {Id as MorphoId} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
 
-contract AddCvTokenTest is HedgerTest {
+contract HedgerAddCvTokenTest is HedgerTest {
     // given the caller is not the owner
     //  [X] it reverts
     // given the cvToken is zero
@@ -35,7 +35,9 @@ contract AddCvTokenTest is HedgerTest {
         _expectInvalidParam("cvToken");
 
         // Call
+        vm.startPrank(OWNER);
         hedger.addCvToken(address(0), MorphoId.unwrap(mgstMarket));
+        vm.stopPrank();
     }
 
     function test_cvMarketIdIsZero_reverts() public {
@@ -43,7 +45,9 @@ contract AddCvTokenTest is HedgerTest {
         _expectInvalidParam("cvMarket");
 
         // Call
+        vm.startPrank(OWNER);
         hedger.addCvToken(debtToken, bytes32(0));
+        vm.stopPrank();
     }
 
     function test_collateralTokenMismatch_reverts() public {
@@ -51,7 +55,9 @@ contract AddCvTokenTest is HedgerTest {
         _expectInvalidParam("collateral");
 
         // Call
+        vm.startPrank(OWNER);
         hedger.addCvToken(address(reserve), MorphoId.unwrap(mgstMarket));
+        vm.stopPrank();
     }
 
     function test_loanTokenMismatch_reverts() public {
@@ -62,7 +68,9 @@ contract AddCvTokenTest is HedgerTest {
         _expectInvalidParam("loan");
 
         // Call
+        vm.startPrank(OWNER);
         hedger.addCvToken(debtToken, MorphoId.unwrap(newMarket));
+        vm.stopPrank();
     }
 
     function test_marketDoesNotExist_reverts() public {
@@ -73,7 +81,9 @@ contract AddCvTokenTest is HedgerTest {
         _expectInvalidParam("market");
 
         // Call
+        vm.startPrank(OWNER);
         hedger.addCvToken(debtToken, MorphoId.unwrap(marketId));
+        vm.stopPrank();
     }
 
     function test_alreadyInWhitelist()
@@ -82,8 +92,9 @@ contract AddCvTokenTest is HedgerTest {
         givenDebtTokenIsWhitelisted
     {
         // Call
-        vm.prank(OWNER);
+        vm.startPrank(OWNER);
         hedger.addCvToken(debtToken, MorphoId.unwrap(debtTokenMarket));
+        vm.stopPrank();
 
         // Assert
         assertEq(
@@ -98,8 +109,9 @@ contract AddCvTokenTest is HedgerTest {
         MorphoId newMarket = _createMorphoMarket(address(mgst), debtToken, debtToken);
 
         // Call
-        vm.prank(OWNER);
+        vm.startPrank(OWNER);
         hedger.addCvToken(debtToken, MorphoId.unwrap(newMarket));
+        vm.stopPrank();
 
         // Assert
         assertEq(

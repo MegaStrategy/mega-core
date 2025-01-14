@@ -7,7 +7,7 @@ import {Issuer} from "src/policies/Issuer.sol";
 import {RolesAdmin} from "src/policies/RolesAdmin.sol";
 import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
 import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
-import {MSTR as MegaStrategy} from "src/modules/TOKEN/MSTR.sol";
+import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 
 import {Test} from "@forge-std/Test.sol";
 import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
@@ -23,7 +23,7 @@ abstract contract IssuerTest is Test {
     Kernel public kernel;
     OlympusRoles public ROLES;
     OlympusTreasury public TRSRY;
-    MegaStrategy public TOKEN;
+    MegaToken public mgst;
     Issuer public issuer;
     RolesAdmin public rolesAdmin;
 
@@ -49,7 +49,7 @@ abstract contract IssuerTest is Test {
         // Modules
         ROLES = new OlympusRoles(kernel);
         TRSRY = new OlympusTreasury(kernel);
-        TOKEN = new MegaStrategy(kernel, "MegaStrategy", "MSTR");
+        mgst = new MegaToken(kernel, "MGST", "MGST");
 
         // Policies
         issuer = new Issuer(kernel, address(teller));
@@ -58,7 +58,7 @@ abstract contract IssuerTest is Test {
         // Install the modules and policies in the kernel
         kernel.executeAction(Actions.InstallModule, address(ROLES));
         kernel.executeAction(Actions.InstallModule, address(TRSRY));
-        kernel.executeAction(Actions.InstallModule, address(TOKEN));
+        kernel.executeAction(Actions.InstallModule, address(mgst));
         kernel.executeAction(Actions.ActivatePolicy, address(issuer));
         kernel.executeAction(Actions.ActivatePolicy, address(rolesAdmin));
 

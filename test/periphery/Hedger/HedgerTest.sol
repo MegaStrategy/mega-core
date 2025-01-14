@@ -26,7 +26,7 @@ import {SqrtPriceMath} from "test/lib/SqrtPriceMath.sol";
 import {SafeTransferLib} from "solmate-6.8.0/utils/SafeTransferLib.sol";
 
 import {Kernel, Actions} from "src/Kernel.sol";
-import {MSTR} from "src/modules/TOKEN/MSTR.sol";
+import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
 import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
 import {Banker} from "src/policies/Banker.sol";
@@ -39,7 +39,7 @@ contract HedgerTest is Test, WithSalts {
     using SafeTransferLib for ERC20;
 
     Kernel public kernel;
-    MSTR public mgst;
+    MegaToken public mgst;
     OlympusRoles public roles;
     OlympusTreasury public treasury;
     Banker public banker;
@@ -93,7 +93,7 @@ contract HedgerTest is Test, WithSalts {
         vm.store(KERNEL, bytes32(uint256(0)), bytes32(abi.encode(OWNER)));
 
         vm.startPrank(OWNER);
-        mgst = new MSTR(kernel, "MGST", "MGST");
+        mgst = new MegaToken(kernel, "MGST", "MGST");
         roles = new OlympusRoles(kernel);
         treasury = new OlympusTreasury(kernel);
         issuer = new Issuer(kernel, address(0)); // No oToken teller needed

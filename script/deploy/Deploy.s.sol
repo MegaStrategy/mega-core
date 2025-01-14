@@ -13,7 +13,7 @@ import {FixedStrikeOptionTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.s
 import "src/Kernel.sol";
 import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
 import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
-import {MSTR} from "src/modules/TOKEN/MSTR.sol";
+import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 
 import {RolesAdmin} from "src/policies/RolesAdmin.sol";
 import {TreasuryCustodian} from "src/policies/TreasuryCustodian.sol";
@@ -225,7 +225,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy Token module
         vm.broadcast();
-        MSTR token = new MSTR(kernel, name, symbol);
+        MegaToken token = new MegaToken(kernel, name, symbol);
         console2.log("Token deployed at:", address(token));
 
         return (address(token), "mega.modules.Token");
@@ -373,7 +373,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
         OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
-        MSTR token = MSTR(_getAddressNotZero("mega.modules.Token"));
+        MegaToken token = MegaToken(_getAddressNotZero("mega.modules.Token"));
         RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
         TreasuryCustodian treasuryCustodian =
             TreasuryCustodian(_getAddressNotZero("mega.policies.TreasuryCustodian"));
@@ -412,7 +412,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         _loadEnv(chain_);
 
         OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
-        MSTR token = MSTR(_getAddressNotZero("mega.modules.Token"));
+        MegaToken token = MegaToken(_getAddressNotZero("mega.modules.Token"));
         OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
         RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
         TreasuryCustodian treasuryCustodian =
