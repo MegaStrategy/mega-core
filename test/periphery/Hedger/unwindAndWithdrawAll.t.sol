@@ -4,7 +4,10 @@ pragma solidity 0.8.19;
 import {HedgerTest} from "./HedgerTest.sol";
 
 import {console2} from "forge-std/console2.sol";
-import {Position as MorphoPosition, Market as MorphoMarket} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {
+    Position as MorphoPosition,
+    Market as MorphoMarket
+} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
 
 contract HedgerUnwindAndWithdrawAllTest is HedgerTest {
     // given the cvToken is not whitelisted

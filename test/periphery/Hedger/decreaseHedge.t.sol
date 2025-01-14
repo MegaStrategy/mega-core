@@ -96,9 +96,7 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
 
         // Call
         vm.prank(USER);
-        hedger.decreaseHedge(
-            address(debtToken), reserveAmount, 0, mgstBorrowed
-        );
+        hedger.decreaseHedge(address(debtToken), reserveAmount, 0, mgstBorrowed);
 
         // Assertions
         _assertUserReserveBalanceLt(reserveAmount);
@@ -131,9 +129,7 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
 
         // Call
         vm.prank(USER);
-        hedger.decreaseHedge(
-            address(debtToken), reserveAmount, 0, mgstBorrowed
-        );
+        hedger.decreaseHedge(address(debtToken), reserveAmount, 0, mgstBorrowed);
     }
 
     function test_reservesToWithdraw_hedgerNotAuthorized_reverts()
@@ -164,9 +160,7 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
 
         // Call
         vm.prank(USER);
-        hedger.decreaseHedge(
-            address(debtToken), 0, reserveAmount, mgstBorrowed
-        );
+        hedger.decreaseHedge(address(debtToken), 0, reserveAmount, mgstBorrowed);
     }
 
     function test_reservesToWithdraw()
@@ -190,9 +184,7 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
 
         // Call
         vm.prank(USER);
-        hedger.decreaseHedge(
-            address(debtToken), 0, reserveAmount, mgstBorrowed
-        );
+        hedger.decreaseHedge(address(debtToken), 0, reserveAmount, mgstBorrowed);
 
         // Assertions
         _assertUserReserveBalanceLt(reserveAmount);
@@ -231,12 +223,7 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
 
         // Call
         vm.prank(USER);
-        hedger.decreaseHedge(
-            address(debtToken),
-            reservesToSupply,
-            reservesToWithdraw,
-            mgstBorrowed
-        );
+        hedger.decreaseHedge(address(debtToken), reservesToSupply, reservesToWithdraw, mgstBorrowed);
 
         // Assertions
         _assertUserReserveBalanceLt(reserveAmount);
