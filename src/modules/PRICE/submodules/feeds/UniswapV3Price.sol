@@ -4,8 +4,8 @@ pragma solidity ^0.8.15;
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 // Libraries
-import {UniswapV3OracleHelper as OracleHelper} from "src/libraries/UniswapV3/Oracle.sol";
-import {FullMath} from "src/libraries/FullMath.sol";
+import {UniswapV3OracleHelper as OracleHelper} from "src/lib/Uniswap/OracleHelper.sol";
+import {FullMath} from "src/lib/FullMath.sol";
 
 // Uniswap V3
 import {IUniswapV3Pool} from

@@ -4,8 +4,8 @@ pragma solidity ^0.8.15;
 import {Module} from "src/Kernel.sol";
 import {SubKeycode, Submodule, toSubKeycode} from "src/Submodules.sol";
 import {PriceSubmodule} from "src/modules/PRICE/PRICE.v2.sol";
-import {AggregatorV2V3Interface} from "src/interfaces/AggregatorV2V3Interface.sol";
-import {FullMath} from "src/libraries/FullMath.sol";
+import {AggregatorV2V3Interface} from "src/lib/Chainlink/AggregatorV2V3Interface.sol";
+import {FullMath} from "src/lib/FullMath.sol";
 
 /// @title      ChainlinkPriceFeeds
 /// @author     0xJem

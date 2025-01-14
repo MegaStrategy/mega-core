@@ -4,8 +4,8 @@ pragma solidity ^0.8.15;
 import {Module} from "src/Kernel.sol";
 import {SubKeycode, Submodule, toSubKeycode} from "src/Submodules.sol";
 import {PriceSubmodule} from "src/modules/PRICE/PRICE.v2.sol";
-import {QuickSort} from "src/libraries/QuickSort.sol";
-import {Deviation} from "src/libraries/Deviation.sol";
+import {QuickSort} from "src/lib/QuickSort.sol";
+import {Deviation} from "src/lib/Deviation.sol";
 
 /// @title      SimplePriceFeedStrategy
 /// @author     0xJem

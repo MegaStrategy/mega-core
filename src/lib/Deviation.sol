@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import {FullMath} from "src/libraries/FullMath.sol";
+import {FullMath} from "src/lib/FullMath.sol";
 
 library Deviation {
     using FullMath for uint256;
