@@ -12,14 +12,19 @@ import {
     Id as MorphoId,
     Position as MorphoPosition
 } from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {IOracle} from "morpho-blue-1.0.0/interfaces/IOracle.sol";
+import {MathLib} from "morpho-blue-1.0.0/libraries/MathLib.sol";
+import {SharesMathLib} from "morpho-blue-1.0.0/libraries/SharesMathLib.sol";
 
 // Uniswap
 import {ISwapRouter02} from "src/lib/Uniswap/ISwapRouter02.sol";
+import {IQuoterV2} from "src/lib/Uniswap/IQuoterV2.sol";
 
 /// @title  Hedger
 /// @notice The Hedger is a contract that allows users to hedge a cvToken against the protocol token using a morpho market and a swap router.
 contract Hedger is Ownable {
     using SafeERC20 for IERC20;
+    using MathLib for uint256;
 
     // Requirements
     // The purpose of this contract is to provide a way to hedge a cvToken
@@ -51,10 +56,12 @@ contract Hedger is Ownable {
     // Morpho
     IMorpho public morpho;
     MorphoId public mgstMarket;
+    uint256 internal constant ORACLE_PRICE_SCALE = 1e36;
     mapping(address cvToken => MorphoId) public cvMarkets;
 
     // Uniswap
     ISwapRouter02 public swapRouter;
+    IQuoterV2 public swapQuoter;
     uint24 public reserveWethSwapFee;
     uint24 public mgstWethSwapFee;
 
@@ -70,6 +77,7 @@ contract Hedger is Ownable {
         bytes32 mgstMarket_,
         address morpho_,
         address swapRouter_,
+        address swapQuoter_,
         uint24 reserveWethSwapFee_,
         uint24 mgstWethSwapFee_
     ) {
@@ -79,7 +87,7 @@ contract Hedger is Ownable {
         if (reserve_ == address(0)) revert InvalidParam("reserve");
         if (morpho_ == address(0)) revert InvalidParam("morpho");
         if (swapRouter_ == address(0)) revert InvalidParam("swapRouter");
-
+        if (swapQuoter_ == address(0)) revert InvalidParam("swapQuoter");
         // Ensure the mgstMarket ID is not zero
         if (mgstMarket_ == bytes32(0)) revert InvalidParam("mgstMarket id");
 
@@ -94,6 +102,7 @@ contract Hedger is Ownable {
         mgstMarket = MorphoId.wrap(mgstMarket_);
         morpho = IMorpho(morpho_);
         swapRouter = ISwapRouter02(swapRouter_);
+        swapQuoter = IQuoterV2(swapQuoter_);
         reserveWethSwapFee = reserveWethSwapFee_;
         mgstWethSwapFee = mgstWethSwapFee_;
 
@@ -145,6 +154,25 @@ contract Hedger is Ownable {
         _supplyCollateral(cvMarket, amount_, msg.sender);
     }
 
+    /// @notice Returns the amount of cvToken collateral in the Morpho market
+    /// @dev    This function performs the following:
+    ///         - Gets the user's position in the morpho market
+    ///         - Returns the amount of cvToken collateral
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_    The address of the cvToken to get the collateral position for
+    /// @return collateral  The amount of cvToken collateral in the Morpho market
+    function getCollateralPosition(
+        address cvToken_
+    ) external view returns (uint256 collateral) {
+        MorphoId cvMarket = _getMarketId(cvToken_);
+
+        collateral = _getCollateralPosition(cvMarket, msg.sender);
+        return collateral;
+    }
+
     /// @notice Deposits a user's cvToken into the Morpho market and hedges it
     /// @dev    This function is a combination of `deposit()` and `increaseHedge()`, and performs the same validation and operations.
     ///
@@ -165,6 +193,24 @@ contract Hedger is Ownable {
 
         // Increase the hedge position
         _increaseHedge(cvMarket, hedgeAmount_, msg.sender, minReserveOut_);
+    }
+
+    /// @notice Returns the maximum amount of MGST that can be borrowed against a user's cvToken deposit
+    /// @dev    This function performs the following:
+    ///         - Gets the user's position in the morpho market
+    ///         - Calculates the maximum amount of MGST that can be borrowed for the user's position
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_        The address of the cvToken to hedge
+    /// @return maxHedgeAmount_ The maximum amount of MGST that can be borrowed for the user's position
+    function maxIncreaseHedge(
+        address cvToken_
+    ) external view returns (uint256) {
+        MorphoId cvMarket = _getMarketId(cvToken_);
+
+        return _maxHedge(cvMarket, msg.sender);
     }
 
     /// @notice Increases a user's hedge position
@@ -193,6 +239,25 @@ contract Hedger is Ownable {
         _increaseHedge(cvMarket, hedgeAmount_, msg.sender, minReserveOut_);
     }
 
+    /// @notice Returns the amount of MGST borrowed against a user's cvToken deposit. This can be used as input to functions that decrease a user's hedge position.
+    /// @dev    This function performs the following:
+    ///         - Gets the user's position in the morpho market
+    ///         - Returns the amount of MGST borrowed
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_        The address of the cvToken to hedge
+    /// @return mgstBorrowed    The amount of MGST borrowed
+    function getHedgePosition(
+        address cvToken_
+    ) external view returns (uint256 mgstBorrowed) {
+        MorphoId cvMarket = _getMarketId(cvToken_);
+
+        mgstBorrowed = _getHedgePosition(cvMarket, msg.sender);
+        return mgstBorrowed;
+    }
+
     /// @notice Decreases a user's hedge position, utilising reserves from the user or the Morpho market
     /// @dev    This function performs the following:
     ///         - Performs validation checks
@@ -210,12 +275,12 @@ contract Hedger is Ownable {
     /// @param  cvToken_           The address of the cvToken to hedge
     /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
     /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
-    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
+    /// @param  mgstToRepay_       The amount of borrowed MGST to repay
     function decreaseHedge(
         address cvToken_,
         uint256 reserveToSupply_,
         uint256 reserveFromMorpho_,
-        uint256 minMgstOut_
+        uint256 mgstToRepay_
     ) external {
         MorphoId cvMarket = _getMarketId(cvToken_);
 
@@ -225,10 +290,27 @@ contract Hedger is Ownable {
         }
 
         // Decrease the hedge position
-        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, minMgstOut_);
+        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, mgstToRepay_);
     }
 
-    /// @notice Unwinds the caller's hedge position and withdraws the collateral to the caller
+    /// @notice Returns the amount of reserves required to decrease a user's hedge position by a given amount of MGST
+    /// @dev    This function is not a view function (due to the Uniswap V3 swap quoter), but does not modify state.
+    ///
+    /// @param  cvToken_            The address of the cvToken to hedge
+    /// @param  mgstToRepay_        The amount of borrowed MGST to repay
+    /// @return reservesRequired    The amount of reserves required to decrease the hedge position
+    function previewDecreaseHedge(
+        address cvToken_,
+        uint256 mgstToRepay_
+    ) external returns (uint256 reservesRequired) {
+        // Validate market
+        _getMarketId(cvToken_);
+
+        reservesRequired = _previewDecreaseHedge(mgstToRepay_);
+        return reservesRequired;
+    }
+
+    /// @notice Unwinds the caller's hedge position and withdraws the cvToken collateral to the caller
     /// @dev    This function performs the following:
     ///         - Performs validation checks
     ///         - Transfers the reserve token to this contract, if `reserveToSupply_` is greater than zero
@@ -242,18 +324,19 @@ contract Hedger is Ownable {
     ///         - The caller has not approved this contract to spend the reserve token
     ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
+    ///         - The Morpho contract reverts during withdrawal
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
     /// @param  amount_            The amount of cvToken to withdraw
     /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
     /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
-    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
+    /// @param  mgstToRepay_       The amount of borrowed MGST to repay
     function unwindAndWithdraw(
         address cvToken_,
         uint256 amount_,
         uint256 reserveToSupply_,
         uint256 reserveFromMorpho_,
-        uint256 minMgstOut_
+        uint256 mgstToRepay_
     ) external {
         MorphoId cvMarket = _getMarketId(cvToken_);
 
@@ -263,7 +346,7 @@ contract Hedger is Ownable {
         }
 
         // Decrease the hedge position, if necessary
-        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, minMgstOut_);
+        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, mgstToRepay_);
 
         // Withdraw the collateral from the morpho market
         _withdrawCollateral(cvMarket, amount_, msg.sender);
@@ -277,16 +360,17 @@ contract Hedger is Ownable {
     ///         - The caller has not approved this contract to spend the reserve token
     ///         - The caller has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - Both `reserveToSupply_` and `reserveFromMorpho_` are zero
+    ///         - The Morpho contract reverts during withdrawal
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
     /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
     /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
-    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
+    /// @param  mgstToRepay_       The amount of borrowed MGST to repay
     function unwindAndWithdrawAll(
         address cvToken_,
         uint256 reserveToSupply_,
         uint256 reserveFromMorpho_,
-        uint256 minMgstOut_
+        uint256 mgstToRepay_
     ) external {
         MorphoId cvMarket = _getMarketId(cvToken_);
 
@@ -296,7 +380,7 @@ contract Hedger is Ownable {
         }
 
         // Decrease the hedge position, if necessary
-        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, minMgstOut_);
+        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, mgstToRepay_);
 
         // Get the user's deposited balance of cvToken in the morpho market
         MorphoPosition memory position = morpho.position(cvMarket, msg.sender);
@@ -305,7 +389,7 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, position.collateral, msg.sender);
     }
 
-    /// @notice Withdraws the caller's collateral from the Morpho market
+    /// @notice Withdraws the caller's cvToken collateral from the Morpho market
     /// @dev    This function performs the following:
     ///         - Performs validation checks
     ///         - Withdraws the collateral from the Morpho market
@@ -324,7 +408,7 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, amount_, msg.sender);
     }
 
-    /// @notice Withdraws all of the caller's collateral from the Morpho market
+    /// @notice Withdraws all of the caller's cvToken collateral from the Morpho market
     /// @dev    This function performs the following:
     ///         - Performs validation checks
     ///         - Withdraws all of the collateral from the Morpho market
@@ -393,6 +477,25 @@ contract Hedger is Ownable {
         _supplyCollateral(cvMarket, amount_, onBehalfOf_);
     }
 
+    /// @notice Returns the amount of cvToken collateral in the Morpho market for a specific user
+    /// @dev    This function performs the same operations as `getCollateralPosition()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_    The address of the cvToken to get the collateral position for
+    /// @param  onBehalfOf_ The address of the user to perform the operation for
+    /// @return collateral  The amount of cvToken collateral in the Morpho market
+    function getCollateralPositionFor(
+        address cvToken_,
+        address onBehalfOf_
+    ) external view returns (uint256 collateral) {
+        MorphoId cvMarket = _getMarketId(cvToken_);
+
+        collateral = _getCollateralPosition(cvMarket, onBehalfOf_);
+        return collateral;
+    }
+
     /// @notice Deposits a user's cvToken into the Morpho market and hedges it
     /// @dev    This function performs the same operations as `depositAndHedge()`, but for a specific user (`onBehalfOf_`)
     ///
@@ -423,13 +526,29 @@ contract Hedger is Ownable {
         _increaseHedge(cvMarket, mgstAmount_, onBehalfOf_, minReserveOut_);
     }
 
-    // TODO maxIncreaseHedge?
+    /// @notice Returns the maximum amount of MGST that can be borrowed against a user's cvToken deposit
+    /// @dev    This function performs the same operations as `maxIncreaseHedge()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_   The address of the cvToken to hedge
+    /// @param  onBehalfOf_ The address of the user to perform the operation for
+    /// @return maxHedgeAmount_ The maximum amount of MGST that can be borrowed for the user's position
+    function maxIncreaseHedgeFor(
+        address cvToken_,
+        address onBehalfOf_
+    ) external view returns (uint256) {
+        MorphoId cvMarket = _getMarketId(cvToken_);
+        return _maxHedge(cvMarket, onBehalfOf_);
+    }
 
     /// @notice Increases a user's hedge position
     /// @dev    This function performs the same operations as `increaseHedge()`, but for a specific user (`onBehalfOf_`)
     ///
     ///         This function reverts if:
     ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
     ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///
     /// @param  cvToken_       The address of the cvToken to hedge
@@ -448,6 +567,25 @@ contract Hedger is Ownable {
         _increaseHedge(cvMarket, mgstAmount_, onBehalfOf_, minReserveOut_);
     }
 
+    /// @notice Returns the amount of MGST borrowed against a user's cvToken deposit. This can be used as input to functions that decrease a user's hedge position.
+    /// @dev    This function performs the same operations as `getHedgePosition()`, but for a specific user (`onBehalfOf_`)
+    ///
+    ///         This function reverts if:
+    ///         - `cvToken_` does not have a whitelisted Morpho market
+    ///
+    /// @param  cvToken_        The address of the cvToken to hedge
+    /// @param  onBehalfOf_     The address of the user to perform the operation for
+    /// @return mgstBorrowed    The amount of MGST borrowed
+    function getHedgePositionFor(
+        address cvToken_,
+        address onBehalfOf_
+    ) external view returns (uint256 mgstBorrowed) {
+        MorphoId cvMarket = _getMarketId(cvToken_);
+
+        mgstBorrowed = _getHedgePosition(cvMarket, onBehalfOf_);
+        return mgstBorrowed;
+    }
+
     /// @notice Decreases a user's hedge position, utilising reserves from the user or the Morpho market
     /// @dev    This function performs the same operations as `decreaseHedge()`, but for a specific user (`onBehalfOf_`)
     ///
@@ -460,13 +598,13 @@ contract Hedger is Ownable {
     /// @param  cvToken_           The address of the cvToken to hedge
     /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
     /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
-    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
+    /// @param  mgstToRepay_       The amount of borrowed MGST to repay
     /// @param  onBehalfOf_        The address of the user to perform the operation on behalf of
     function decreaseHedgeFor(
         address cvToken_,
         uint256 reserveToSupply_,
         uint256 reserveFromMorpho_,
-        uint256 minMgstOut_,
+        uint256 mgstToRepay_,
         address onBehalfOf_
     ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
         MorphoId cvMarket = _getMarketId(cvToken_);
@@ -477,7 +615,7 @@ contract Hedger is Ownable {
         }
 
         // Decrease the hedge position
-        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, minMgstOut_);
+        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, mgstToRepay_);
     }
 
     /// @notice Unwinds a user's hedge position and withdraws the collateral to the user
@@ -488,19 +626,20 @@ contract Hedger is Ownable {
     ///         - The user (`onBehalfOf_`) has not approved this contract to spend the reserve token
     ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///         - The Morpho contract reverts during withdrawal
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
     /// @param  amount_            The amount of cvToken to withdraw
     /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
     /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
-    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
+    /// @param  mgstToRepay_        The amount of borrowed MGST to repay
     /// @param  onBehalfOf_        The address of the user to perform the operation for
     function unwindAndWithdrawFor(
         address cvToken_,
         uint256 amount_,
         uint256 reserveToSupply_,
         uint256 reserveFromMorpho_,
-        uint256 minMgstOut_,
+        uint256 mgstToRepay_,
         address onBehalfOf_
     ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
         MorphoId cvMarket = _getMarketId(cvToken_);
@@ -511,7 +650,7 @@ contract Hedger is Ownable {
         }
 
         // Decrease the hedge position, if necessary
-        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, minMgstOut_);
+        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, mgstToRepay_);
 
         // Withdraw the collateral from the morpho market
         _withdrawCollateral(cvMarket, amount_, onBehalfOf_);
@@ -525,17 +664,18 @@ contract Hedger is Ownable {
     ///         - The user (`onBehalfOf_`) has not approved this contract to spend the reserve token
     ///         - The user has not approved this contract to manage the Morpho position (using `setAuthorization()`)
     ///         - The caller is not an approved operator for the user (`onBehalfOf_`)
+    ///         - The Morpho contract reverts during withdrawal
     ///
     /// @param  cvToken_           The address of the cvToken to hedge
     /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
     /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
-    /// @param  minMgstOut_        The minimum amount of MGST to receive (akin to a slippage parameter)
+    /// @param  mgstToRepay_       The amount of borrowed MGST to repay
     /// @param  onBehalfOf_        The address of the user to perform the operation for
     function unwindAndWithdrawAllFor(
         address cvToken_,
         uint256 reserveToSupply_,
         uint256 reserveFromMorpho_,
-        uint256 minMgstOut_,
+        uint256 mgstToRepay_,
         address onBehalfOf_
     ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
         MorphoId cvMarket = _getMarketId(cvToken_);
@@ -546,7 +686,7 @@ contract Hedger is Ownable {
         }
 
         // Decrease the hedge position
-        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, minMgstOut_);
+        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, mgstToRepay_);
 
         // Get the user's deposited balance of cvToken in the morpho market
         MorphoPosition memory position = morpho.position(cvMarket, onBehalfOf_);
@@ -617,6 +757,59 @@ contract Hedger is Ownable {
     }
 
     // ========== INTERNAL OPERATIONS ========== //
+
+    function _maxHedge(MorphoId cvMarket_, address onBehalfOf_) internal view returns (uint256) {
+        MorphoParams memory marketParams = morpho.idToMarketParams(cvMarket_);
+        MorphoPosition memory position = morpho.position(cvMarket_, onBehalfOf_);
+
+        uint256 maxBorrow = uint256(position.collateral).mulDivDown(
+            IOracle(marketParams.oracle).price(), ORACLE_PRICE_SCALE
+        ).wMulDown(marketParams.lltv);
+
+        uint256 borrowed = SharesMathLib.toAssetsUp(
+            position.borrowShares,
+            morpho.market(cvMarket_).totalBorrowAssets,
+            morpho.market(cvMarket_).totalBorrowShares
+        );
+
+        return maxBorrow - borrowed;
+    }
+
+    function _getHedgePosition(
+        MorphoId cvMarket_,
+        address onBehalfOf_
+    ) internal view returns (uint256) {
+        MorphoPosition memory position = morpho.position(cvMarket_, onBehalfOf_);
+
+        uint256 borrowAssets = SharesMathLib.toAssetsDown(
+            position.borrowShares,
+            morpho.market(cvMarket_).totalBorrowAssets,
+            morpho.market(cvMarket_).totalBorrowShares
+        );
+
+        return borrowAssets;
+    }
+
+    function _getCollateralPosition(
+        MorphoId cvMarket_,
+        address onBehalfOf_
+    ) internal view returns (uint256) {
+        MorphoPosition memory position = morpho.position(cvMarket_, onBehalfOf_);
+
+        return position.collateral;
+    }
+
+    function _previewDecreaseHedge(
+        uint256 mgstToRepay_
+    ) internal returns (uint256) {
+        (uint256 reservesRequired,,,) = swapQuoter.quoteExactOutput(
+            abi.encodePacked(
+                address(mgst), mgstWethSwapFee, address(weth), reserveWethSwapFee, address(reserve)
+            ),
+            mgstToRepay_
+        );
+        return reservesRequired;
+    }
 
     function _supplyCollateral(MorphoId cvMarket_, uint256 amount_, address onBehalfOf_) internal {
         // Validate the amount is not zero

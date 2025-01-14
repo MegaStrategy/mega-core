@@ -221,6 +221,9 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         _approveMorphoReserveDeposit(reservesToWithdraw);
         _depositReservesToMorphoMarket(reservesToWithdraw);
 
+        uint256 maxHedgeBefore = hedger.maxIncreaseHedgeFor(address(debtToken), USER);
+        uint256 reservesRequired = hedger.previewDecreaseHedge(address(debtToken), mgstBorrowed);
+
         // Call
         vm.prank(USER);
         hedger.decreaseHedge(address(debtToken), reservesToSupply, reservesToWithdraw, mgstBorrowed);
@@ -232,5 +235,17 @@ contract HedgerDecreaseHedgeTest is HedgerTest {
         _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
         _assertMorphoReserveBalance(0);
         _assertMorphoBorrowed(0);
+
+        // Check the maximum hedge amount after
+        assertEq(
+            hedger.maxIncreaseHedgeFor(address(debtToken), USER),
+            maxHedgeBefore + mgstBorrowed,
+            "maxDecreaseHedgeFor"
+        );
+
+        // Check the reserves required
+        assertEq(
+            reservesRequired, reserveAmount - reserve.balanceOf(address(USER)), "reservesRequired"
+        );
     }
 }

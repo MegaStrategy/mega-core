@@ -127,5 +127,12 @@ contract HedgerDepositAndHedgeTest is HedgerTest {
         _assertOperatorBalances(0, 0);
         _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
         _assertMorphoBorrowed(hedgeAmount);
+
+        // Check the maximum hedge amount after
+        assertEq(
+            hedger.maxIncreaseHedgeFor(address(debtToken), USER),
+            maximumHedgeAmount - hedgeAmount,
+            "maxIncreaseHedgeFor"
+        );
     }
 }

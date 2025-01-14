@@ -59,6 +59,7 @@ contract HedgerTest is Test, WithSalts {
     address public constant MORPHO = address(0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb);
     address public constant AUCTION_HOUSE = address(0xBA0000c59d144f2a9aEa064dcb2f963e1a0B3212);
     address public constant SWAP_ROUTER = address(0x2626664c2603336E57B271c5C0b26F421741e481);
+    address public constant SWAP_QUOTER = address(0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a);
     address public constant UNISWAP_V3_FACTORY = address(0x33128a8fC17869897dcE68Ed026d694621f6FDfD);
     address public constant UNISWAP_V3_POSITION_MANAGER =
         address(0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1);
@@ -216,6 +217,7 @@ contract HedgerTest is Test, WithSalts {
             MorphoId.unwrap(mgstMarket),
             MORPHO,
             SWAP_ROUTER,
+            SWAP_QUOTER,
             RESERVE_WETH_SWAP_FEE,
             MGST_WETH_SWAP_FEE
         );
@@ -570,6 +572,11 @@ contract HedgerTest is Test, WithSalts {
         MorphoPosition memory position = morpho.position(debtTokenMarket, USER);
 
         assertEq(position.collateral, amount_, "morpho: collateral");
+
+        // Check that the getter is consistent
+        assertEq(
+            hedger.getCollateralPositionFor(debtToken, USER), amount_, "getCollateralPositionFor"
+        );
     }
 
     function _assertMorphoReserveBalance(

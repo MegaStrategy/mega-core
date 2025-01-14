@@ -127,6 +127,13 @@ contract HedgerIncreaseHedgeForTest is HedgerTest {
         // Calculate the minimum reserve amount out
         uint256 minReserveOut = _getReserveOut(hedgeAmount);
 
+        // Check the maximum hedge amount
+        assertEq(
+            hedger.maxIncreaseHedgeFor(address(debtToken), USER),
+            maximumHedgeAmount,
+            "maxIncreaseHedgeFor"
+        );
+
         // Call
         vm.prank(OPERATOR);
         hedger.increaseHedgeFor(address(debtToken), hedgeAmount, minReserveOut * 95 / 100, USER);
@@ -136,5 +143,12 @@ contract HedgerIncreaseHedgeForTest is HedgerTest {
         _assertOperatorBalances(0, 0);
         _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT);
         _assertMorphoBorrowed(hedgeAmount);
+
+        // Check the maximum hedge amount after
+        assertEq(
+            hedger.maxIncreaseHedgeFor(address(debtToken), USER),
+            maximumHedgeAmount - hedgeAmount,
+            "maxIncreaseHedgeFor"
+        );
     }
 }

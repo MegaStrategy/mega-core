@@ -308,6 +308,8 @@ contract HedgerUnwindAndWithdrawTest is HedgerTest {
         _approveMorphoReserveDeposit(reservesToWithdraw);
         _depositReservesToMorphoMarket(reservesToWithdraw);
 
+        uint256 reservesRequired = hedger.previewDecreaseHedge(address(debtToken), mgstBorrowed);
+
         // Call
         vm.prank(USER);
         hedger.unwindAndWithdraw(
@@ -321,5 +323,10 @@ contract HedgerUnwindAndWithdrawTest is HedgerTest {
         _assertMorphoDebtTokenCollateral(DEBT_TOKEN_AMOUNT - debtTokenAmount);
         _assertMorphoReserveBalance(0);
         _assertMorphoBorrowed(0);
+
+        // Check the reserves required
+        assertEq(
+            reservesRequired, reserveAmount - reserve.balanceOf(address(USER)), "reservesRequired"
+        );
     }
 }
