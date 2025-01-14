@@ -13,7 +13,7 @@
         "lint": "pnpm run fmt && pnpm run solhint",
         "postinstall": "./shell/install.sh",
         "publish": "./shell/publish.sh",
-        "size": "forge clean && forge build --sizes --skip test --skip '*/Mock*.sol'",
+        "size": "forge clean && forge build --sizes --skip test --skip '*/Mock*.sol' --skip '*/BatchAuctionHouse.sol' --skip '*/EMP.sol'",
         "solhint:check": "solhint --config ./.solhint.json 'src/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'",
         "solhint": "solhint --fix --config ./.solhint.json 'src/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'",
         "test": "forge test -vvv"
