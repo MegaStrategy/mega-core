@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import {HedgerTest} from "./HedgerTest.sol";
 
-import {Ownable} from "@openzeppelin-contracts-4.9.6/access/Ownable.sol";
 import {
     Id as MorphoId,
     MarketParams as MorphoMarketParams
