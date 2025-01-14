@@ -29,8 +29,9 @@ contract OlympusPricev2 is PRICEv2 {
     /// @param decimals_                Decimals that all prices will be returned with
     /// @param observationFrequency_    Frequency at which prices are stored for moving average
     constructor(Kernel kernel_, uint8 decimals_, uint32 observationFrequency_) Module(kernel_) {
-        if (observationFrequency_ == 0)
+        if (observationFrequency_ == 0) {
             revert PRICE_ObservationFrequencyInvalid(observationFrequency_);
+        }
 
         decimals = decimals_;
         observationFrequency = observationFrequency_;
@@ -63,12 +64,16 @@ contract OlympusPricev2 is PRICEv2 {
     }
 
     /// @inheritdoc PRICEv2
-    function getAssetData(address asset_) external view override returns (Asset memory) {
+    function getAssetData(
+        address asset_
+    ) external view override returns (Asset memory) {
         return _assetData[asset_];
     }
 
     /// @inheritdoc PRICEv2
-    function isAssetApproved(address asset_) external view override returns (bool) {
+    function isAssetApproved(
+        address asset_
+    ) external view override returns (bool) {
         return _assetData[asset_].approved;
     }
 
@@ -80,14 +85,16 @@ contract OlympusPricev2 is PRICEv2 {
     /// @dev        Will revert if:
     /// @dev        - `asset_` is not approved
     /// @dev        - No price could be determined
-    function getPrice(address asset_) external view override returns (uint256) {
+    function getPrice(
+        address asset_
+    ) external view override returns (uint256) {
         // Try to use the last price, must be updated on the current timestamp
         // getPrice checks if asset is approved
         (uint256 price, uint48 timestamp) = getPrice(asset_, Variant.LAST);
         if (timestamp == uint48(block.timestamp)) return price;
 
         // If last price is stale, use the current price
-        (price, , ) = _getCurrentPrice(asset_, true);
+        (price,,) = _getCurrentPrice(asset_, true);
         return price;
     }
 
@@ -106,7 +113,7 @@ contract OlympusPricev2 is PRICEv2 {
         if (timestamp >= uint48(block.timestamp) - maxAge_) return price;
 
         // If last price is stale, use the current price
-        (price, , ) = _getCurrentPrice(asset_, true);
+        (price,,) = _getCurrentPrice(asset_, true);
         return price;
     }
 
@@ -124,7 +131,7 @@ contract OlympusPricev2 is PRICEv2 {
 
         // Route to correct price function based on requested variant
         if (variant_ == Variant.CURRENT) {
-            (uint256 price_, uint48 timestamp_, ) = _getCurrentPrice(asset_, true);
+            (uint256 price_, uint48 timestamp_,) = _getCurrentPrice(asset_, true);
             return (price_, timestamp_);
         } else if (variant_ == Variant.LAST) {
             return _getLastPrice(asset_);
@@ -164,11 +171,11 @@ contract OlympusPricev2 is PRICEv2 {
             : new uint256[](numFeeds);
         uint8 _decimals = decimals; // cache in memory to save gas
         bool successAllFeeds = true;
-        for (uint256 i; i < numFeeds; ) {
+        for (uint256 i; i < numFeeds;) {
             (bool success_, bytes memory data_) = address(_getSubmoduleIfInstalled(feeds[i].target))
                 .staticcall(
-                    abi.encodeWithSelector(feeds[i].selector, asset_, _decimals, feeds[i].params)
-                );
+                abi.encodeWithSelector(feeds[i].selector, asset_, _decimals, feeds[i].params)
+            );
 
             // Store price if successful, otherwise leave as zero
             // Idea is that if you have several price calls and just
@@ -192,8 +199,9 @@ contract OlympusPricev2 is PRICEv2 {
         if (asset.useMovingAverage && includeMovingAverage_) {
             // Check if the moving average is stale
             // If the observation frequency has passed (including in the current block), it is stale and should be updated
-            if (asset.lastObservationTime + observationFrequency <= block.timestamp)
+            if (asset.lastObservationTime + observationFrequency <= block.timestamp) {
                 revert PRICE_MovingAverageStale(asset_, asset.lastObservationTime);
+            }
 
             prices[numFeeds] = asset.cumulativeObs / asset.numObservations;
         }
@@ -231,14 +239,15 @@ contract OlympusPricev2 is PRICEv2 {
     ///
     /// @param asset_   Asset to get the price of
     /// @return         The price of the asset and asset's last observation time
-    function _getLastPrice(address asset_) internal view returns (uint256, uint48) {
+    function _getLastPrice(
+        address asset_
+    ) internal view returns (uint256, uint48) {
         // Load asset data
         Asset memory asset = _assetData[asset_];
 
         // Get last observation stored for asset
-        uint256 lastPrice = asset.obs[
-            asset.nextObsIndex == 0 ? asset.numObservations - 1 : asset.nextObsIndex - 1
-        ];
+        uint256 lastPrice =
+            asset.obs[asset.nextObsIndex == 0 ? asset.numObservations - 1 : asset.nextObsIndex - 1];
 
         // Last price doesn't have to be checked for zero because it is checked before being stored
 
@@ -255,7 +264,9 @@ contract OlympusPricev2 is PRICEv2 {
     ///
     /// @param asset_   Asset to get the price of
     /// @return         The price of the asset and asset's last observation time
-    function _getMovingAveragePrice(address asset_) internal view returns (uint256, uint48) {
+    function _getMovingAveragePrice(
+        address asset_
+    ) internal view returns (uint256, uint48) {
         // Load asset data
         Asset memory asset = _assetData[asset_];
 
@@ -281,10 +292,10 @@ contract OlympusPricev2 is PRICEv2 {
         // Try to use the last prices, timestamp must be current
         // If stale, get current price
         if (assetTime != uint48(block.timestamp)) {
-            (assetPrice, , ) = _getCurrentPrice(asset_, true);
+            (assetPrice,,) = _getCurrentPrice(asset_, true);
         }
         if (baseTime != uint48(block.timestamp)) {
-            (basePrice, , ) = _getCurrentPrice(base_, true);
+            (basePrice,,) = _getCurrentPrice(base_, true);
         }
 
         // Calculate the price of the asset in the base and return
@@ -314,10 +325,10 @@ contract OlympusPricev2 is PRICEv2 {
         // Try to use the last prices, timestamp must be no older than maxAge_
         // If stale, get current price
         if (assetTime < uint48(block.timestamp) - maxAge_) {
-            (assetPrice, , ) = _getCurrentPrice(asset_, true);
+            (assetPrice,,) = _getCurrentPrice(asset_, true);
         }
         if (baseTime < uint48(block.timestamp) - maxAge_) {
-            (basePrice, , ) = _getCurrentPrice(base_, true);
+            (basePrice,,) = _getCurrentPrice(base_, true);
         }
 
         // Calculate the price of the asset in the base and return
@@ -358,14 +369,16 @@ contract OlympusPricev2 is PRICEv2 {
     /// @dev        - The asset is not approved
     /// @dev        - The caller is not permissioned
     /// @dev        - The price was not able to be determined
-    function storePrice(address asset_) public override permissioned {
+    function storePrice(
+        address asset_
+    ) public override permissioned {
         Asset storage asset = _assetData[asset_];
 
         // Check if asset is approved
         if (!asset.approved) revert PRICE_AssetNotApproved(asset_);
 
         // Get the current price for the asset
-        (uint256 price, uint48 currentTime, ) = _getCurrentPrice(asset_, false);
+        (uint256 price, uint48 currentTime,) = _getCurrentPrice(asset_, false);
 
         // Store the data in the obs index
         uint256 oldestPrice = asset.obs[asset.nextObsIndex];
@@ -376,8 +389,9 @@ contract OlympusPricev2 is PRICEv2 {
         asset.nextObsIndex = (asset.nextObsIndex + 1) % asset.numObservations;
 
         // Update the cumulative observation, if storing the moving average
-        if (asset.storeMovingAverage)
+        if (asset.storeMovingAverage) {
             asset.cumulativeObs = asset.cumulativeObs + price - oldestPrice;
+        }
 
         // Emit event
         emit PriceStored(asset_, price, currentTime);
@@ -392,7 +406,7 @@ contract OlympusPricev2 is PRICEv2 {
         // Iterate through assets and store the price for each
         uint256 len = assets.length;
 
-        for (uint256 i; i < len; ) {
+        for (uint256 i; i < len;) {
             address currentAsset = assets[i];
             Asset memory asset = _assetData[currentAsset];
 
@@ -444,20 +458,19 @@ contract OlympusPricev2 is PRICEv2 {
         if (asset.approved) revert PRICE_AssetAlreadyApproved(asset_);
 
         // If not storing the moving average, validate that it's not being used by the strategy
-        if (useMovingAverage_ && !storeMovingAverage_)
+        if (useMovingAverage_ && !storeMovingAverage_) {
             revert PRICE_ParamsStoreMovingAverageRequired(asset_);
+        }
 
         // Strategy cannot be zero if number of feeds + useMovingAverage is greater than 1
         if (
-            (feeds_.length + (useMovingAverage_ ? 1 : 0)) > 1 &&
-            fromSubKeycode(strategy_.target) == bytes20(0)
-        )
+            (feeds_.length + (useMovingAverage_ ? 1 : 0)) > 1
+                && fromSubKeycode(strategy_.target) == bytes20(0)
+        ) {
             revert PRICE_ParamsStrategyInsufficient(
-                asset_,
-                abi.encode(strategy_),
-                feeds_.length,
-                useMovingAverage_
+                asset_, abi.encode(strategy_), feeds_.length, useMovingAverage_
             );
+        }
 
         // Update asset strategy data
         _updateAssetPriceStrategy(asset_, strategy_, useMovingAverage_);
@@ -467,15 +480,11 @@ contract OlympusPricev2 is PRICEv2 {
 
         // Update asset moving average data
         _updateAssetMovingAverage(
-            asset_,
-            storeMovingAverage_,
-            movingAverageDuration_,
-            lastObservationTime_,
-            observations_
+            asset_, storeMovingAverage_, movingAverageDuration_, lastObservationTime_, observations_
         );
 
         // Validate configuration
-        (, , bool successAllFeeds) = _getCurrentPrice(asset_, true);
+        (,, bool successAllFeeds) = _getCurrentPrice(asset_, true);
         if (!successAllFeeds) revert PRICE_PriceFeedCallFailed(asset_);
 
         // Set asset as approved and add to array
@@ -490,13 +499,15 @@ contract OlympusPricev2 is PRICEv2 {
     /// @dev        Will revert if:
     /// @dev        - `asset_` is not approved
     /// @dev        - The caller is not permissioned
-    function removeAsset(address asset_) external override permissioned {
+    function removeAsset(
+        address asset_
+    ) external override permissioned {
         // Ensure asset is already added
         if (!_assetData[asset_].approved) revert PRICE_AssetNotApproved(asset_);
 
         // Remove asset from array
         uint256 len = assets.length;
-        for (uint256 i; i < len; ) {
+        for (uint256 i; i < len;) {
             if (assets[i] == asset_) {
                 assets[i] = assets[len - 1];
                 assets.pop();
@@ -539,15 +550,13 @@ contract OlympusPricev2 is PRICEv2 {
             Component memory strategy = abi.decode(assetData.strategy, (Component));
 
             if (
-                (feeds_.length + (assetData.useMovingAverage ? 1 : 0)) > 1 &&
-                fromSubKeycode(strategy.target) == bytes20(0)
-            )
+                (feeds_.length + (assetData.useMovingAverage ? 1 : 0)) > 1
+                    && fromSubKeycode(strategy.target) == bytes20(0)
+            ) {
                 revert PRICE_ParamsStrategyInsufficient(
-                    asset_,
-                    assetData.strategy,
-                    feeds_.length,
-                    assetData.useMovingAverage
+                    asset_, assetData.strategy, feeds_.length, assetData.useMovingAverage
                 );
+            }
         }
 
         _updateAssetPriceFeeds(asset_, feeds_);
@@ -577,17 +586,17 @@ contract OlympusPricev2 is PRICEv2 {
 
         bytes32[] memory hashes = new bytes32[](len);
 
-        for (uint256 i; i < len; ) {
+        for (uint256 i; i < len;) {
             // Check that the submodule is installed
-            if (!_submoduleIsInstalled(feeds_[i].target))
+            if (!_submoduleIsInstalled(feeds_[i].target)) {
                 revert PRICE_SubmoduleNotInstalled(asset_, abi.encode(feeds_[i].target));
+            }
 
             // Confirm that the feed is not a duplicate by checking the hash against hashes of previous feeds in the array
-            bytes32 _hash = keccak256(
-                abi.encode(feeds_[i].target, feeds_[i].selector, feeds_[i].params)
-            );
+            bytes32 _hash =
+                keccak256(abi.encode(feeds_[i].target, feeds_[i].selector, feeds_[i].params));
 
-            for (uint256 j; j < i; ) {
+            for (uint256 j; j < i;) {
                 if (_hash == hashes[j]) revert PRICE_DuplicatePriceFeed(asset_, i);
                 unchecked {
                     ++j;
@@ -624,21 +633,20 @@ contract OlympusPricev2 is PRICEv2 {
         if (!_assetData[asset_].approved) revert PRICE_AssetNotApproved(asset_);
 
         // Validate that the moving average is stored for the asset to use in strategy
-        if (useMovingAverage_ && !_assetData[asset_].storeMovingAverage)
+        if (useMovingAverage_ && !_assetData[asset_].storeMovingAverage) {
             revert PRICE_ParamsStoreMovingAverageRequired(asset_);
+        }
 
         // Strategy cannot be zero if number of feeds + useMovingAverage is greater than 1
         Component[] memory feeds = abi.decode(_assetData[asset_].feeds, (Component[]));
         if (
-            (feeds.length + (useMovingAverage_ ? 1 : 0)) > 1 &&
-            fromSubKeycode(strategy_.target) == bytes20(0)
-        )
+            (feeds.length + (useMovingAverage_ ? 1 : 0)) > 1
+                && fromSubKeycode(strategy_.target) == bytes20(0)
+        ) {
             revert PRICE_ParamsStrategyInsufficient(
-                asset_,
-                abi.encode(strategy_),
-                feeds.length,
-                useMovingAverage_
+                asset_, abi.encode(strategy_), feeds.length, useMovingAverage_
             );
+        }
 
         _updateAssetPriceStrategy(asset_, strategy_, useMovingAverage_);
 
@@ -670,8 +678,8 @@ contract OlympusPricev2 is PRICEv2 {
         // A strategy is optional if there is only one price feed being used.
         // The number of feeds is checked in the external functions that call this one.
         if (
-            fromSubKeycode(strategy_.target) != bytes20(0) &&
-            !_submoduleIsInstalled(strategy_.target)
+            fromSubKeycode(strategy_.target) != bytes20(0)
+                && !_submoduleIsInstalled(strategy_.target)
         ) revert PRICE_SubmoduleNotInstalled(asset_, abi.encode(strategy_.target));
 
         // Update the asset price strategy
@@ -709,15 +717,12 @@ contract OlympusPricev2 is PRICEv2 {
         // If not storing the moving average, validate that it's not being used by the strategy.
         // If it is, then you are moving from storing a moving average to not storing a moving average.
         // First, change the strategy to not use the moving average, then update the moving average data.
-        if (_assetData[asset_].useMovingAverage && !storeMovingAverage_)
+        if (_assetData[asset_].useMovingAverage && !storeMovingAverage_) {
             revert PRICE_ParamsStoreMovingAverageRequired(asset_);
+        }
 
         _updateAssetMovingAverage(
-            asset_,
-            storeMovingAverage_,
-            movingAverageDuration_,
-            lastObservationTime_,
-            observations_
+            asset_, storeMovingAverage_, movingAverageDuration_, lastObservationTime_, observations_
         );
 
         // Emit event
@@ -754,31 +759,26 @@ contract OlympusPricev2 is PRICEv2 {
         if (asset.obs.length > 0) delete asset.obs;
 
         // Ensure last observation time is not in the future
-        if (lastObservationTime_ > block.timestamp)
+        if (lastObservationTime_ > block.timestamp) {
             revert PRICE_ParamsLastObservationTimeInvalid(
-                asset_,
-                lastObservationTime_,
-                0,
-                uint48(block.timestamp)
+                asset_, lastObservationTime_, 0, uint48(block.timestamp)
             );
+        }
 
         if (storeMovingAverage_) {
             // If storing a moving average, validate params
-            if (movingAverageDuration_ == 0 || movingAverageDuration_ % observationFrequency != 0)
+            if (movingAverageDuration_ == 0 || movingAverageDuration_ % observationFrequency != 0) {
                 revert PRICE_ParamsMovingAverageDurationInvalid(
-                    asset_,
-                    movingAverageDuration_,
-                    observationFrequency
+                    asset_, movingAverageDuration_, observationFrequency
                 );
+            }
 
             uint16 numObservations = uint16(movingAverageDuration_ / observationFrequency);
-            if (observations_.length != numObservations || numObservations < 2)
+            if (observations_.length != numObservations || numObservations < 2) {
                 revert PRICE_ParamsInvalidObservationCount(
-                    asset_,
-                    observations_.length,
-                    numObservations,
-                    numObservations
+                    asset_, observations_.length, numObservations, numObservations
                 );
+            }
 
             asset.storeMovingAverage = true;
 
@@ -787,7 +787,7 @@ contract OlympusPricev2 is PRICEv2 {
             asset.numObservations = numObservations;
             asset.lastObservationTime = lastObservationTime_;
             asset.cumulativeObs = 0; // reset to zero before adding new observations
-            for (uint256 i; i < numObservations; ) {
+            for (uint256 i; i < numObservations;) {
                 if (observations_[i] == 0) revert PRICE_ParamsObservationZero(asset_, i);
 
                 asset.cumulativeObs += observations_[i];
@@ -801,8 +801,9 @@ contract OlympusPricev2 is PRICEv2 {
             emit PriceStored(asset_, observations_[numObservations - 1], lastObservationTime_);
         } else {
             // If not storing the moving average, validate that the array has at most one value (for caching)
-            if (observations_.length > 1)
+            if (observations_.length > 1) {
                 revert PRICE_ParamsInvalidObservationCount(asset_, observations_.length, 0, 1);
+            }
 
             asset.storeMovingAverage = false;
             asset.movingAverageDuration = 0;
@@ -812,7 +813,7 @@ contract OlympusPricev2 is PRICEv2 {
                 // If no observation provided, get the current price and store it
                 // We can do this here because we know the moving average isn't being stored
                 // and therefore, it is not being used in the strategy to calculate the price
-                (uint256 currentPrice, uint48 timestamp, ) = _getCurrentPrice(asset_, false);
+                (uint256 currentPrice, uint48 timestamp,) = _getCurrentPrice(asset_, false);
                 asset.obs.push(currentPrice);
                 asset.lastObservationTime = timestamp;
 

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.15;
 
 // Uniswap V3
-import {IUniswapV3Pool} from "@uniswap-v3-core-1.0.2-solc-0.8-simulate/interfaces/IUniswapV3Pool.sol";
+import {IUniswapV3Pool} from
+    "@uniswap-v3-core-1.0.2-solc-0.8-simulate/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "@uniswap-v3-core-1.0.2-solc-0.8-simulate/libraries/TickMath.sol";
 import {OracleLibrary} from "@uniswap-v3-periphery-1.4.2-solc-0.8/libraries/OracleLibrary.sol";
 
@@ -28,9 +29,7 @@ library UniswapV3OracleHelper {
     /// @param observationWindow_     The observation window
     /// @param minObservationWindow_  The minimum observation window
     error UniswapV3OracleHelper_ObservationTooShort(
-        address pool_,
-        uint32 observationWindow_,
-        uint32 minObservationWindow_
+        address pool_, uint32 observationWindow_, uint32 minObservationWindow_
     );
 
     /// @notice                     The observation window for `pool_` is invalid
@@ -46,10 +45,7 @@ library UniswapV3OracleHelper {
     /// @param minTick_             The minimum tick
     /// @param maxTick_             The maximum tick
     error UniswapV3OracleHelper_TickOutOfBounds(
-        address pool_,
-        int56 timeWeightedTick_,
-        int24 minTick_,
-        int24 maxTick_
+        address pool_, int56 timeWeightedTick_, int24 minTick_, int24 maxTick_
     );
 
     // ========  Functions  ======== //
@@ -69,12 +65,11 @@ library UniswapV3OracleHelper {
         IUniswapV3Pool pool = IUniswapV3Pool(pool_);
 
         // Ensure the observation window is long enough
-        if (period_ < TWAP_MIN_OBSERVATION_WINDOW)
+        if (period_ < TWAP_MIN_OBSERVATION_WINDOW) {
             revert UniswapV3OracleHelper_ObservationTooShort(
-                pool_,
-                period_,
-                TWAP_MIN_OBSERVATION_WINDOW
+                pool_, period_, TWAP_MIN_OBSERVATION_WINDOW
             );
+        }
 
         // Get tick and liquidity from the TWAP
         uint32[] memory observationWindow = new uint32[](2);
@@ -83,16 +78,16 @@ library UniswapV3OracleHelper {
 
         int56 timeWeightedTick;
         try pool.observe(observationWindow) returns (
-            int56[] memory tickCumulatives,
-            uint160[] memory
+            int56[] memory tickCumulatives, uint160[] memory
         ) {
             int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
             timeWeightedTick = (tickCumulativesDelta) / int32(period_);
 
             // If the time-weighted tick is negative, round down towards negative infinity
             // Matches the Uniswap V3 library: https://github.com/Uniswap/v3-periphery/blob/697c2474757ea89fec12a4e6db16a574fe259610/contracts/libraries/OracleLibrary.sol#L35
-            if (tickCumulativesDelta < 0 && tickCumulativesDelta % int32(period_) != 0)
+            if (tickCumulativesDelta < 0 && tickCumulativesDelta % int32(period_) != 0) {
                 timeWeightedTick--;
+            }
         } catch (bytes memory) {
             // This function will revert if the observation window is longer than the oldest observation in the pool
             // https://github.com/Uniswap/v3-core/blob/d8b1c635c275d2a9450bd6a78f3fa2484fef73eb/contracts/libraries/Oracle.sol#L226C30-L226C30
@@ -101,13 +96,11 @@ library UniswapV3OracleHelper {
 
         // Ensure the time-weighted tick is within the bounds of permissible ticks
         // Otherwise getQuoteAtTick will revert: https://docs.uniswap.org/contracts/v3/reference/error-codes
-        if (timeWeightedTick > TickMath.MAX_TICK || timeWeightedTick < TickMath.MIN_TICK)
+        if (timeWeightedTick > TickMath.MAX_TICK || timeWeightedTick < TickMath.MIN_TICK) {
             revert UniswapV3OracleHelper_TickOutOfBounds(
-                pool_,
-                timeWeightedTick,
-                TickMath.MIN_TICK,
-                TickMath.MAX_TICK
+                pool_, timeWeightedTick, TickMath.MIN_TICK, TickMath.MAX_TICK
             );
+        }
 
         return timeWeightedTick;
     }

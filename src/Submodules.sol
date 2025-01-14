@@ -16,12 +16,16 @@ type SubKeycode is bytes20;
 error InvalidSubKeycode(SubKeycode subKeycode_);
 
 // solhint-disable-next-line func-visibility
-function toSubKeycode(bytes20 key_) pure returns (SubKeycode) {
+function toSubKeycode(
+    bytes20 key_
+) pure returns (SubKeycode) {
     return SubKeycode.wrap(key_);
 }
 
 // solhint-disable-next-line func-visibility
-function fromSubKeycode(SubKeycode key_) pure returns (bytes20) {
+function fromSubKeycode(
+    SubKeycode key_
+) pure returns (bytes20) {
     return SubKeycode.unwrap(key_);
 }
 
@@ -33,7 +37,7 @@ function ensureValidSubKeycode(SubKeycode subKeycode_, Keycode parentKeycode_) p
     // and only contain A-Z, 0-9, _, or blank characters.
     bytes5 unwrappedParent = Keycode.unwrap(parentKeycode_);
     bytes20 unwrappedSub = SubKeycode.unwrap(subKeycode_);
-    for (uint256 i; i < 20; ) {
+    for (uint256 i; i < 20;) {
         bytes1 char = unwrappedSub[i];
         if (i < 5) {
             if (unwrappedParent[i] != char) revert InvalidSubKeycode(subKeycode_);
@@ -42,15 +46,14 @@ function ensureValidSubKeycode(SubKeycode subKeycode_, Keycode parentKeycode_) p
             if (char != 0x2e) revert InvalidSubKeycode(subKeycode_); // .
         } else if (i < 9) {
             // Must have at least 3 non-blank characters after the period
-            if ((char < 0x30 || char > 0x39) && (char < 0x41 || char > 0x5A) && char != 0x5f)
-                revert InvalidSubKeycode(subKeycode_); // 0-9, A-Z, _
+            if ((char < 0x30 || char > 0x39) && (char < 0x41 || char > 0x5A) && char != 0x5f) {
+                revert InvalidSubKeycode(subKeycode_);
+            } // 0-9, A-Z, _
         } else {
             // Characters after the first 3 can be blank or 0-9, A-Z, _
             if (
-                (char < 0x30 || char > 0x39) &&
-                (char < 0x41 || char > 0x5A) &&
-                char != 0x5f &&
-                char != 0x00
+                (char < 0x30 || char > 0x39) && (char < 0x41 || char > 0x5A) && char != 0x5f
+                    && char != 0x00
             ) revert InvalidSubKeycode(subKeycode_); // 0-9, A-Z, _, or blank
         }
 
@@ -91,14 +94,17 @@ abstract contract ModuleWithSubmodules is Module {
     /// @dev    - The caller is not permissioned
     ///
     /// @param newSubmodule_    The new submodule to install
-    function installSubmodule(Submodule newSubmodule_) external permissioned {
+    function installSubmodule(
+        Submodule newSubmodule_
+    ) external permissioned {
         // Validate new submodule and get its subkeycode
         SubKeycode subKeycode = _validateSubmodule(newSubmodule_);
 
         // Check that a submodule with this keycode is not already installed
         // If this reverts, then the new submodule should be installed via upgradeSubmodule
-        if (address(getSubmoduleForKeycode[subKeycode]) != address(0))
+        if (address(getSubmoduleForKeycode[subKeycode]) != address(0)) {
             revert Module_SubmoduleAlreadyInstalled(subKeycode);
+        }
 
         // Store submodule in module
         getSubmoduleForKeycode[subKeycode] = newSubmodule_;
@@ -117,15 +123,18 @@ abstract contract ModuleWithSubmodules is Module {
     /// @dev    - The caller is not permissioned
     ///
     /// @param newSubmodule_    The new submodule to install
-    function upgradeSubmodule(Submodule newSubmodule_) external permissioned {
+    function upgradeSubmodule(
+        Submodule newSubmodule_
+    ) external permissioned {
         // Validate new submodule and get its subkeycode
         SubKeycode subKeycode = _validateSubmodule(newSubmodule_);
 
         // Get the existing submodule, ensure that it's not zero and not the same as the new submodule
         // If this reverts due to no submodule being installed, then the new submodule should be installed via installSubmodule
         Submodule oldSubmodule = getSubmoduleForKeycode[subKeycode];
-        if (oldSubmodule == Submodule(address(0)) || oldSubmodule == newSubmodule_)
+        if (oldSubmodule == Submodule(address(0)) || oldSubmodule == newSubmodule_) {
             revert Module_InvalidSubmoduleUpgrade(subKeycode);
+        }
 
         // Update submodule in module
         getSubmoduleForKeycode[subKeycode] = newSubmodule_;
@@ -161,23 +170,30 @@ abstract contract ModuleWithSubmodules is Module {
         return submodules;
     }
 
-    function _submoduleIsInstalled(SubKeycode subKeycode_) internal view returns (bool) {
+    function _submoduleIsInstalled(
+        SubKeycode subKeycode_
+    ) internal view returns (bool) {
         Submodule submodule = getSubmoduleForKeycode[subKeycode_];
         return address(submodule) != address(0);
     }
 
-    function _getSubmoduleIfInstalled(SubKeycode subKeycode_) internal view returns (Submodule) {
+    function _getSubmoduleIfInstalled(
+        SubKeycode subKeycode_
+    ) internal view returns (Submodule) {
         Submodule submodule = getSubmoduleForKeycode[subKeycode_];
         if (address(submodule) == address(0)) revert Module_SubmoduleNotInstalled(subKeycode_);
         return submodule;
     }
 
-    function _validateSubmodule(Submodule newSubmodule_) internal view returns (SubKeycode) {
+    function _validateSubmodule(
+        Submodule newSubmodule_
+    ) internal view returns (SubKeycode) {
         // Validate new submodule is a contract, has correct parent, and has valid SubKeycode
         ensureContract(address(newSubmodule_));
         Keycode keycode = KEYCODE();
-        if (fromKeycode(newSubmodule_.PARENT()) != fromKeycode(keycode))
+        if (fromKeycode(newSubmodule_.PARENT()) != fromKeycode(keycode)) {
             revert Module_InvalidSubmodule();
+        }
         SubKeycode subKeycode = newSubmodule_.SUBKEYCODE();
         ensureValidSubKeycode(subKeycode, keycode);
 
@@ -196,9 +212,12 @@ abstract contract Submodule {
     /// @notice The parent module for this submodule.
     Module public parent;
 
-    constructor(Module parent_) {
-        if (fromKeycode(parent_.KEYCODE()) != fromKeycode(PARENT()))
+    constructor(
+        Module parent_
+    ) {
+        if (fromKeycode(parent_.KEYCODE()) != fromKeycode(PARENT())) {
             revert Submodule_InvalidParent();
+        }
         parent = parent_;
     }
 

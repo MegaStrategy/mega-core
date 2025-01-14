@@ -1,7 +1,7 @@
 /// SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.15;
 
-import {Kernel, Keycode, toKeycode} from "src/Kernel.sol";
+import {Keycode, toKeycode} from "src/Kernel.sol";
 import {ModuleWithSubmodules, SubKeycode, Submodule} from "src/Submodules.sol";
 
 /// @notice     Abstract Bophades module for price resolution
@@ -108,9 +108,7 @@ abstract contract PRICEv2 is ModuleWithSubmodules {
     /// @param movingAverageDuration_   The moving average duration that was provided
     /// @param observationFrequency_    The observation frequency that was provided
     error PRICE_ParamsMovingAverageDurationInvalid(
-        address asset_,
-        uint32 movingAverageDuration_,
-        uint32 observationFrequency_
+        address asset_, uint32 movingAverageDuration_, uint32 observationFrequency_
     );
 
     /// @notice                     The provided observation value is zero
@@ -138,9 +136,7 @@ abstract contract PRICEv2 is ModuleWithSubmodules {
     /// @param feedCount_       The number of price feeds provided
     /// @param feedCountRequired_    The minimum number of price feeds required
     error PRICE_ParamsPriceFeedInsufficient(
-        address asset_,
-        uint256 feedCount_,
-        uint256 feedCountRequired_
+        address asset_, uint256 feedCount_, uint256 feedCountRequired_
     );
 
     /// @notice         The asset requires storeMovingAverage to be enabled
@@ -158,10 +154,7 @@ abstract contract PRICEv2 is ModuleWithSubmodules {
     /// @param feedCount_           The number of price feeds configured for the asset
     /// @param useMovingAverage_    Whether the moving average should be used as an argument to the strategy
     error PRICE_ParamsStrategyInsufficient(
-        address asset_,
-        bytes strategy_,
-        uint256 feedCount_,
-        bool useMovingAverage_
+        address asset_, bytes strategy_, uint256 feedCount_, bool useMovingAverage_
     );
 
     /// @notice         The variant provided in the parameters is invalid
@@ -256,10 +249,14 @@ abstract contract PRICEv2 is ModuleWithSubmodules {
     ///
     /// @param asset_   The address of the asset
     /// @return         The asset configuration as an `Asset` struct
-    function getAssetData(address asset_) external view virtual returns (Asset memory);
+    function getAssetData(
+        address asset_
+    ) external view virtual returns (Asset memory);
 
     /// @notice         Indicates whether `asset_` has been registered
-    function isAssetApproved(address asset_) external view virtual returns (bool);
+    function isAssetApproved(
+        address asset_
+    ) external view virtual returns (bool);
 
     // ========== ASSET PRICES ========== //
 
@@ -267,7 +264,9 @@ abstract contract PRICEv2 is ModuleWithSubmodules {
     ///
     /// @param asset_   The address of the asset
     /// @return         The USD price of the asset in the scale of `decimals`
-    function getPrice(address asset_) external view virtual returns (uint256);
+    function getPrice(
+        address asset_
+    ) external view virtual returns (uint256);
 
     /// @notice         Returns a price no older than the provided age in the system unit of account
     ///
@@ -322,7 +321,9 @@ abstract contract PRICEv2 is ModuleWithSubmodules {
     /// @notice         Calculates and stores the current price of an asset
     ///
     /// @param asset_   The address of the asset
-    function storePrice(address asset_) external virtual;
+    function storePrice(
+        address asset_
+    ) external virtual;
 
     /// @notice         Calculates and stores the current price of assets that track a moving average
     function storeObservations() external virtual;
@@ -353,7 +354,9 @@ abstract contract PRICEv2 is ModuleWithSubmodules {
     /// @notice         Removes an asset definition
     ///
     /// @param asset_   The address of the asset
-    function removeAsset(address asset_) external virtual;
+    function removeAsset(
+        address asset_
+    ) external virtual;
 
     /// @notice             Updates the price feeds for an asset
     ///

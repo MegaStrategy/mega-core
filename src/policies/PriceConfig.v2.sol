@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import {Kernel, Keycode, Permissions, Policy, toKeycode} from "src/Kernel.sol";
-import {Submodule, SubKeycode, toSubKeycode} from "src/Submodules.sol";
+import {Submodule, SubKeycode} from "src/Submodules.sol";
 import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
 import {PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";
 
@@ -31,7 +31,9 @@ contract PriceConfigV2 is Policy, RolesConsumer {
     //                                      POLICY SETUP                                          //
     //============================================================================================//
 
-    constructor(Kernel kernel_) Policy(kernel_) {}
+    constructor(
+        Kernel kernel_
+    ) Policy(kernel_) {}
 
     /// @inheritdoc Policy
     function configureDependencies() external override returns (Keycode[] memory dependencies) {
@@ -42,8 +44,8 @@ contract PriceConfigV2 is Policy, RolesConsumer {
         ROLES = ROLESv1(getModuleAddress(dependencies[0]));
         PRICE = PRICEv2(getModuleAddress(dependencies[1]));
 
-        (uint8 PRICE_MAJOR, ) = PRICE.VERSION();
-        (uint8 ROLES_MAJOR, ) = ROLES.VERSION();
+        (uint8 PRICE_MAJOR,) = PRICE.VERSION();
+        (uint8 ROLES_MAJOR,) = ROLES.VERSION();
 
         // Ensure Modules are using the expected major version.
         // Modules should be sorted in alphabetical order.
@@ -113,7 +115,9 @@ contract PriceConfigV2 is Policy, RolesConsumer {
 
     /// @notice     Remove an asset from the PRICE module
     /// @dev        After removal, calls to PRICEv2 for the asset's price will revert
-    function removeAssetPrice(address asset_) external onlyRole("priceconfig_policy") {
+    function removeAssetPrice(
+        address asset_
+    ) external onlyRole("priceconfig_policy") {
         PRICE.removeAsset(asset_);
     }
 
@@ -159,11 +163,7 @@ contract PriceConfigV2 is Policy, RolesConsumer {
         uint256[] memory observations_
     ) external onlyRole("priceconfig_policy") {
         PRICE.updateAssetMovingAverage(
-            asset_,
-            storeMovingAverage_,
-            movingAverageDuration_,
-            lastObservationTime_,
-            observations_
+            asset_, storeMovingAverage_, movingAverageDuration_, lastObservationTime_, observations_
         );
     }
 
@@ -172,14 +172,18 @@ contract PriceConfigV2 is Policy, RolesConsumer {
     //==================================================================================================//
 
     /// @notice Install a new submodule on the designated module
-    function installSubmodule(Submodule submodule_) external onlyRole("priceconfig_admin") {
+    function installSubmodule(
+        Submodule submodule_
+    ) external onlyRole("priceconfig_admin") {
         PRICE.installSubmodule(submodule_);
     }
 
     /// @notice     Upgrade a submodule on the PRICE module
     /// @dev        The upgraded submodule must have the same SubKeycode as an existing submodule that it is replacing,
     /// @dev        otherwise use installSubmodule
-    function upgradeSubmodule(Submodule submodule_) external onlyRole("priceconfig_admin") {
+    function upgradeSubmodule(
+        Submodule submodule_
+    ) external onlyRole("priceconfig_admin") {
         PRICE.upgradeSubmodule(submodule_);
     }
 

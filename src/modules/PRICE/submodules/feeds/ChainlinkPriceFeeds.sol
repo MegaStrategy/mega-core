@@ -71,9 +71,7 @@ contract ChainlinkPriceFeeds is PriceSubmodule {
     /// @param roundTimestamp_      The timestamp of the round returned by the price feed
     /// @param thresholdTimestamp_  The earliest acceptable timestamp
     error Chainlink_FeedRoundStale(
-        address feed_,
-        uint256 roundTimestamp_,
-        uint256 thresholdTimestamp_
+        address feed_, uint256 roundTimestamp_, uint256 thresholdTimestamp_
     );
 
     /// @notice                 A price feed specified in the parameters is invalid
@@ -104,7 +102,9 @@ contract ChainlinkPriceFeeds is PriceSubmodule {
 
     // ========== CONSTRUCTOR ========== //
 
-    constructor(Module parent_) Submodule(parent_) {}
+    constructor(
+        Module parent_
+    ) Submodule(parent_) {}
 
     // ========== KERNEL FUNCTIONS =========== //
 
@@ -136,15 +136,15 @@ contract ChainlinkPriceFeeds is PriceSubmodule {
         uint256 blockTimestamp,
         uint256 paramsUpdateThreshold
     ) internal pure {
-        if (roundData.priceInt <= 0)
+        if (roundData.priceInt <= 0) {
             revert Chainlink_FeedPriceInvalid(address(feed_), roundData.priceInt);
+        }
 
-        if (roundData.updatedAt < blockTimestamp - paramsUpdateThreshold)
+        if (roundData.updatedAt < blockTimestamp - paramsUpdateThreshold) {
             revert Chainlink_FeedRoundStale(
-                address(feed_),
-                roundData.updatedAt,
-                blockTimestamp - paramsUpdateThreshold
+                address(feed_), roundData.updatedAt, blockTimestamp - paramsUpdateThreshold
             );
+        }
     }
 
     /// @notice                         Retrieves the latest price returned by the specified Chainlink price feed.
@@ -164,11 +164,7 @@ contract ChainlinkPriceFeeds is PriceSubmodule {
         FeedRoundData memory roundData;
         {
             try feed_.latestRoundData() returns (
-                uint80 roundId,
-                int256 priceInt,
-                uint256 startedAt,
-                uint256 updatedAt,
-                uint80
+                uint80 roundId, int256 priceInt, uint256 startedAt, uint256 updatedAt, uint80
             ) {
                 roundData = FeedRoundData(roundId, priceInt, startedAt, updatedAt);
             } catch (bytes memory) {
@@ -197,27 +193,26 @@ contract ChainlinkPriceFeeds is PriceSubmodule {
     ) external view returns (uint256) {
         // Decode params
         OneFeedParams memory params = abi.decode(params_, (OneFeedParams));
-        if (address(params.feed) == address(0))
+        if (address(params.feed) == address(0)) {
             revert Chainlink_ParamsFeedInvalid(0, address(params.feed));
-        if (params.updateThreshold == 0)
+        }
+        if (params.updateThreshold == 0) {
             revert Chainlink_ParamsUpdateThresholdInvalid(1, params.updateThreshold);
+        }
 
         // Ensure that no decimals would result in an underflow or overflow
-        if (outputDecimals_ > BASE_10_MAX_EXPONENT)
+        if (outputDecimals_ > BASE_10_MAX_EXPONENT) {
             revert Chainlink_OutputDecimalsOutOfBounds(outputDecimals_, BASE_10_MAX_EXPONENT);
+        }
         uint8 feedDecimals = params.feed.decimals();
-        if (feedDecimals > BASE_10_MAX_EXPONENT)
+        if (feedDecimals > BASE_10_MAX_EXPONENT) {
             revert Chainlink_FeedDecimalsOutOfBounds(
-                address(params.feed),
-                feedDecimals,
-                BASE_10_MAX_EXPONENT
+                address(params.feed), feedDecimals, BASE_10_MAX_EXPONENT
             );
+        }
 
         uint256 feedPrice = _getFeedPrice(
-            params.feed,
-            uint256(params.updateThreshold),
-            feedDecimals,
-            outputDecimals_
+            params.feed, uint256(params.updateThreshold), feedDecimals, outputDecimals_
         );
 
         return feedPrice;
@@ -240,32 +235,35 @@ contract ChainlinkPriceFeeds is PriceSubmodule {
     ) external view returns (uint256) {
         // Decode params
         TwoFeedParams memory params = abi.decode(params_, (TwoFeedParams));
-        if (address(params.firstFeed) == address(0))
+        if (address(params.firstFeed) == address(0)) {
             revert Chainlink_ParamsFeedInvalid(0, address(params.firstFeed));
-        if (params.firstUpdateThreshold == 0)
+        }
+        if (params.firstUpdateThreshold == 0) {
             revert Chainlink_ParamsUpdateThresholdInvalid(1, params.firstUpdateThreshold);
-        if (address(params.secondFeed) == address(0))
+        }
+        if (address(params.secondFeed) == address(0)) {
             revert Chainlink_ParamsFeedInvalid(2, address(params.secondFeed));
-        if (params.secondUpdateThreshold == 0)
+        }
+        if (params.secondUpdateThreshold == 0) {
             revert Chainlink_ParamsUpdateThresholdInvalid(3, params.secondUpdateThreshold);
+        }
 
         // Ensure that no decimals would result in an underflow or overflow
-        if (outputDecimals_ > BASE_10_MAX_EXPONENT)
+        if (outputDecimals_ > BASE_10_MAX_EXPONENT) {
             revert Chainlink_OutputDecimalsOutOfBounds(outputDecimals_, BASE_10_MAX_EXPONENT);
+        }
         uint8 firstFeedDecimals = params.firstFeed.decimals();
-        if (firstFeedDecimals > BASE_10_MAX_EXPONENT)
+        if (firstFeedDecimals > BASE_10_MAX_EXPONENT) {
             revert Chainlink_FeedDecimalsOutOfBounds(
-                address(params.firstFeed),
-                firstFeedDecimals,
-                BASE_10_MAX_EXPONENT
+                address(params.firstFeed), firstFeedDecimals, BASE_10_MAX_EXPONENT
             );
+        }
         uint8 secondFeedDecimals = params.secondFeed.decimals();
-        if (secondFeedDecimals > BASE_10_MAX_EXPONENT)
+        if (secondFeedDecimals > BASE_10_MAX_EXPONENT) {
             revert Chainlink_FeedDecimalsOutOfBounds(
-                address(params.secondFeed),
-                secondFeedDecimals,
-                BASE_10_MAX_EXPONENT
+                address(params.secondFeed), secondFeedDecimals, BASE_10_MAX_EXPONENT
             );
+        }
 
         // Get prices from feeds
         uint256 numeratorPrice = _getFeedPrice(
@@ -304,32 +302,35 @@ contract ChainlinkPriceFeeds is PriceSubmodule {
     ) external view returns (uint256) {
         // Decode params
         TwoFeedParams memory params = abi.decode(params_, (TwoFeedParams));
-        if (address(params.firstFeed) == address(0))
+        if (address(params.firstFeed) == address(0)) {
             revert Chainlink_ParamsFeedInvalid(0, address(params.firstFeed));
-        if (params.firstUpdateThreshold == 0)
+        }
+        if (params.firstUpdateThreshold == 0) {
             revert Chainlink_ParamsUpdateThresholdInvalid(1, params.firstUpdateThreshold);
-        if (address(params.secondFeed) == address(0))
+        }
+        if (address(params.secondFeed) == address(0)) {
             revert Chainlink_ParamsFeedInvalid(2, address(params.secondFeed));
-        if (params.secondUpdateThreshold == 0)
+        }
+        if (params.secondUpdateThreshold == 0) {
             revert Chainlink_ParamsUpdateThresholdInvalid(3, params.secondUpdateThreshold);
+        }
 
         // Ensure that no decimals would result in an underflow or overflow
-        if (outputDecimals_ > BASE_10_MAX_EXPONENT)
+        if (outputDecimals_ > BASE_10_MAX_EXPONENT) {
             revert Chainlink_OutputDecimalsOutOfBounds(outputDecimals_, BASE_10_MAX_EXPONENT);
+        }
         uint8 firstFeedDecimals = params.firstFeed.decimals();
-        if (firstFeedDecimals > BASE_10_MAX_EXPONENT)
+        if (firstFeedDecimals > BASE_10_MAX_EXPONENT) {
             revert Chainlink_FeedDecimalsOutOfBounds(
-                address(params.firstFeed),
-                firstFeedDecimals,
-                BASE_10_MAX_EXPONENT
+                address(params.firstFeed), firstFeedDecimals, BASE_10_MAX_EXPONENT
             );
+        }
         uint8 secondFeedDecimals = params.secondFeed.decimals();
-        if (secondFeedDecimals > BASE_10_MAX_EXPONENT)
+        if (secondFeedDecimals > BASE_10_MAX_EXPONENT) {
             revert Chainlink_FeedDecimalsOutOfBounds(
-                address(params.secondFeed),
-                secondFeedDecimals,
-                BASE_10_MAX_EXPONENT
+                address(params.secondFeed), secondFeedDecimals, BASE_10_MAX_EXPONENT
             );
+        }
 
         // Get prices from feeds
         uint256 firstPrice = _getFeedPrice(

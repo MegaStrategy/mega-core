@@ -8,7 +8,8 @@ import {UniswapV3OracleHelper as OracleHelper} from "src/libraries/UniswapV3/Ora
 import {FullMath} from "src/libraries/FullMath.sol";
 
 // Uniswap V3
-import {IUniswapV3Pool} from "@uniswap-v3-core-1.0.2-solc-0.8-simulate/interfaces/IUniswapV3Pool.sol";
+import {IUniswapV3Pool} from
+    "@uniswap-v3-core-1.0.2-solc-0.8-simulate/interfaces/IUniswapV3Pool.sol";
 import {OracleLibrary} from "@uniswap-v3-periphery-1.4.2-solc-0.8/libraries/OracleLibrary.sol";
 
 // Bophades
@@ -36,7 +37,7 @@ contract UniswapV3Price is PriceSubmodule {
     }
 
     /// @notice     The minimum tick that can be used in a pool, as defined by UniswapV3 libraries
-    int24 internal constant MIN_TICK = -887272;
+    int24 internal constant MIN_TICK = -887_272;
     /// @notice     The maximum tick that can be used in a pool, as defined by UniswapV3 libraries
     int24 internal constant MAX_TICK = -MIN_TICK;
 
@@ -47,9 +48,7 @@ contract UniswapV3Price is PriceSubmodule {
     /// @param assetDecimals_   The number of decimals of the asset
     /// @param maxDecimals_     The maximum number of decimals allowed
     error UniswapV3_AssetDecimalsOutOfBounds(
-        address asset_,
-        uint8 assetDecimals_,
-        uint8 maxDecimals_
+        address asset_, uint8 assetDecimals_, uint8 maxDecimals_
     );
 
     /// @notice                 The lookup token was not found in the pool
@@ -89,7 +88,9 @@ contract UniswapV3Price is PriceSubmodule {
 
     // ========== CONSTRUCTOR ========== //
 
-    constructor(Module parent_) Submodule(parent_) {}
+    constructor(
+        Module parent_
+    ) Submodule(parent_) {}
 
     // ========== SUBMODULE FUNCTIONS =========== //
 
@@ -128,11 +129,8 @@ contract UniswapV3Price is PriceSubmodule {
         bytes calldata params_
     ) external view returns (uint256) {
         UniswapV3Params memory params = abi.decode(params_, (UniswapV3Params));
-        (
-            address quoteToken,
-            uint8 quoteTokenDecimals,
-            uint8 lookupTokenDecimals
-        ) = _checkPoolAndTokenParams(lookupToken_, outputDecimals_, params.pool);
+        (address quoteToken, uint8 quoteTokenDecimals, uint8 lookupTokenDecimals) =
+            _checkPoolAndTokenParams(lookupToken_, outputDecimals_, params.pool);
 
         uint256 baseInQuotePrice = OracleHelper.getTWAPRatio(
             address(params.pool),
@@ -145,7 +143,7 @@ contract UniswapV3Price is PriceSubmodule {
         // Get the price of {quoteToken} in USD
         // Decimals: outputDecimals_
         // PRICE will revert if the price cannot be determined or is 0.
-        (uint256 quoteInUsdPrice, ) = _PRICE().getPrice(quoteToken, PRICEv2.Variant.CURRENT);
+        (uint256 quoteInUsdPrice,) = _PRICE().getPrice(quoteToken, PRICEv2.Variant.CURRENT);
 
         // Calculate final price in USD
         // Decimals: outputDecimals_
@@ -174,29 +172,23 @@ contract UniswapV3Price is PriceSubmodule {
         bytes calldata params_
     ) external view returns (uint256) {
         UniswapV3Params memory params = abi.decode(params_, (UniswapV3Params));
-        (
-            address quoteToken,
-            uint8 quoteTokenDecimals,
-            uint8 lookupTokenDecimals
-        ) = _checkPoolAndTokenParams(lookupToken_, outputDecimals_, params.pool);
+        (address quoteToken, uint8 quoteTokenDecimals, uint8 lookupTokenDecimals) =
+            _checkPoolAndTokenParams(lookupToken_, outputDecimals_, params.pool);
 
         // Get the current price of the lookup token in terms of the quote token
-        (, int24 currentTick, , , , , bool unlocked) = params.pool.slot0();
+        (, int24 currentTick,,,,, bool unlocked) = params.pool.slot0();
 
         // Check for re-entrancy
         if (unlocked == false) revert UniswapV3_PoolReentrancy(address(params.pool));
 
         uint256 baseInQuotePrice = OracleLibrary.getQuoteAtTick(
-            currentTick,
-            uint128(10 ** lookupTokenDecimals),
-            lookupToken_,
-            quoteToken
+            currentTick, uint128(10 ** lookupTokenDecimals), lookupToken_, quoteToken
         );
 
         // Get the price of {quoteToken} in USD
         // Decimals: outputDecimals_
         // PRICE will revert if the price cannot be determined or is 0.
-        (uint256 quoteInUsdPrice, ) = _PRICE().getPrice(quoteToken, PRICEv2.Variant.CURRENT);
+        (uint256 quoteInUsdPrice,) = _PRICE().getPrice(quoteToken, PRICEv2.Variant.CURRENT);
 
         // Calculate final price in USD
         // Decimals: outputDecimals_
@@ -234,8 +226,9 @@ contract UniswapV3Price is PriceSubmodule {
             bool lookupTokenFound;
             try pool_.token0() returns (address token) {
                 // Check if token is zero address, revert if so
-                if (token == address(0))
+                if (token == address(0)) {
                     revert UniswapV3_PoolTokensInvalid(address(pool_), 0, token);
+                }
 
                 // If token is the lookup token, set lookupTokenFound to true
                 // Otherwise, it should be the quote token
@@ -252,8 +245,9 @@ contract UniswapV3Price is PriceSubmodule {
             }
             try pool_.token1() returns (address token) {
                 // Check if token is zero address, revert if so
-                if (token == address(0))
+                if (token == address(0)) {
                     revert UniswapV3_PoolTokensInvalid(address(pool_), 1, token);
+                }
 
                 // If token is the lookup token, set lookupTokenFound to true
                 // Otherwise, it should be the quote token
@@ -270,33 +264,33 @@ contract UniswapV3Price is PriceSubmodule {
             }
 
             // If lookup token wasn't found, revert
-            if (!lookupTokenFound)
+            if (!lookupTokenFound) {
                 revert UniswapV3_LookupTokenNotFound(address(pool_), lookupToken_);
+            }
         }
 
         // Validate output decimals are not too high
-        if (outputDecimals_ > BASE_10_MAX_EXPONENT)
+        if (outputDecimals_ > BASE_10_MAX_EXPONENT) {
             revert UniswapV3_OutputDecimalsOutOfBounds(outputDecimals_, BASE_10_MAX_EXPONENT);
+        }
 
         uint8 quoteTokenDecimals = ERC20(quoteToken).decimals();
         uint8 lookupTokenDecimals = ERC20(lookupToken_).decimals();
 
         // Avoid overflows with decimal normalisation
-        if (quoteTokenDecimals > BASE_10_MAX_EXPONENT)
+        if (quoteTokenDecimals > BASE_10_MAX_EXPONENT) {
             revert UniswapV3_AssetDecimalsOutOfBounds(
-                quoteToken,
-                quoteTokenDecimals,
-                BASE_10_MAX_EXPONENT
+                quoteToken, quoteTokenDecimals, BASE_10_MAX_EXPONENT
             );
+        }
 
         // lookupTokenDecimals must be less than 38 to avoid overflow when cast to uint128
         // BASE_10_MAX_EXPONENT is less than 38, so this check is safe
-        if (lookupTokenDecimals > BASE_10_MAX_EXPONENT)
+        if (lookupTokenDecimals > BASE_10_MAX_EXPONENT) {
             revert UniswapV3_AssetDecimalsOutOfBounds(
-                lookupToken_,
-                lookupTokenDecimals,
-                BASE_10_MAX_EXPONENT
+                lookupToken_, lookupTokenDecimals, BASE_10_MAX_EXPONENT
             );
+        }
 
         return (quoteToken, quoteTokenDecimals, lookupTokenDecimals);
     }

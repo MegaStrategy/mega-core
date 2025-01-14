@@ -38,7 +38,9 @@ contract SimplePriceFeedStrategy is PriceSubmodule {
 
     // ========== CONSTRUCTOR ========== //
 
-    constructor(Module parent_) Submodule(parent_) {}
+    constructor(
+        Module parent_
+    ) Submodule(parent_) {}
 
     // ========== SUBMODULE FUNCTIONS =========== //
 
@@ -59,7 +61,9 @@ contract SimplePriceFeedStrategy is PriceSubmodule {
     ///
     /// @param array_  Array of uint256 values
     /// @return        Array of non-zero uint256 values
-    function _getNonZeroArray(uint256[] memory array_) internal pure returns (uint256[] memory) {
+    function _getNonZeroArray(
+        uint256[] memory array_
+    ) internal pure returns (uint256[] memory) {
         // Determine the number of non-zero array elements
         uint256 nonZeroCount = 0;
         for (uint256 i = 0; i < array_.length; i++) {
@@ -85,7 +89,9 @@ contract SimplePriceFeedStrategy is PriceSubmodule {
     ///
     /// @param prices_  Array of prices
     /// @return         The average price or 0
-    function _getAveragePrice(uint256[] memory prices_) internal pure returns (uint256) {
+    function _getAveragePrice(
+        uint256[] memory prices_
+    ) internal pure returns (uint256) {
         uint256 pricesLen = prices_.length;
 
         // If all price feeds are down, no average can be calculated
@@ -108,7 +114,9 @@ contract SimplePriceFeedStrategy is PriceSubmodule {
     ///
     /// @param prices_  Array of prices
     /// @return         The median price
-    function _getMedianPrice(uint256[] memory prices_) internal pure returns (uint256) {
+    function _getMedianPrice(
+        uint256[] memory prices_
+    ) internal pure returns (uint256) {
         uint256 pricesLen = prices_.length;
 
         // If there are an even number of prices, return the average of the two middle prices
@@ -196,18 +204,21 @@ contract SimplePriceFeedStrategy is PriceSubmodule {
         if (params_.length != DEVIATION_PARAMS_LENGTH) revert SimpleStrategy_ParamsInvalid(params_);
         uint256 deviationBps = abi.decode(params_, (uint256));
         // Not necessary to use `Deviation.isDeviatingWithBpsCheck()` thanks to this check
-        if (deviationBps <= DEVIATION_MIN || deviationBps >= DEVIATION_MAX)
+        if (deviationBps <= DEVIATION_MIN || deviationBps >= DEVIATION_MAX) {
             revert SimpleStrategy_ParamsInvalid(params_);
+        }
 
         // Check the deviation of the minimum from the average
         uint256 minPrice = sortedPrices[0];
-        if (Deviation.isDeviating(minPrice, averagePrice, deviationBps, DEVIATION_MAX))
+        if (Deviation.isDeviating(minPrice, averagePrice, deviationBps, DEVIATION_MAX)) {
             return averagePrice;
+        }
 
         // Check the deviation of the maximum from the average
         uint256 maxPrice = sortedPrices[sortedPrices.length - 1];
-        if (Deviation.isDeviating(maxPrice, averagePrice, deviationBps, DEVIATION_MAX))
+        if (Deviation.isDeviating(maxPrice, averagePrice, deviationBps, DEVIATION_MAX)) {
             return averagePrice;
+        }
 
         // Otherwise, return the first non-zero value
         return firstNonZeroPrice;
@@ -261,16 +272,17 @@ contract SimplePriceFeedStrategy is PriceSubmodule {
 
         if (params_.length != DEVIATION_PARAMS_LENGTH) revert SimpleStrategy_ParamsInvalid(params_);
         uint256 deviationBps = abi.decode(params_, (uint256));
-        if (deviationBps <= DEVIATION_MIN || deviationBps >= DEVIATION_MAX)
+        if (deviationBps <= DEVIATION_MIN || deviationBps >= DEVIATION_MAX) {
             revert SimpleStrategy_ParamsInvalid(params_);
+        }
 
         // Check the deviation of the minimum from the average
         uint256 minPrice = sortedPrices[0];
-        if (((averagePrice - minPrice) * 10000) / averagePrice > deviationBps) return medianPrice;
+        if (((averagePrice - minPrice) * 10_000) / averagePrice > deviationBps) return medianPrice;
 
         // Check the deviation of the maximum from the average
         uint256 maxPrice = sortedPrices[sortedPrices.length - 1];
-        if (((maxPrice - averagePrice) * 10000) / averagePrice > deviationBps) return medianPrice;
+        if (((maxPrice - averagePrice) * 10_000) / averagePrice > deviationBps) return medianPrice;
 
         // Otherwise, return the first non-zero value
         return firstNonZeroPrice;
@@ -290,7 +302,10 @@ contract SimplePriceFeedStrategy is PriceSubmodule {
     ///
     /// @param prices_  Array of prices
     /// @return         The resolved price
-    function getAveragePrice(uint256[] memory prices_, bytes memory) public pure returns (uint256) {
+    function getAveragePrice(
+        uint256[] memory prices_,
+        bytes memory
+    ) public pure returns (uint256) {
         // Handle misconfiguration
         if (prices_.length < 2) revert SimpleStrategy_PriceCountInvalid(prices_.length, 2);
 

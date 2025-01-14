@@ -30,8 +30,9 @@ library Deviation {
         uint256 deviationBps_,
         uint256 deviationMax_
     ) internal pure returns (bool) {
-        if (deviationBps_ > deviationMax_)
+        if (deviationBps_ > deviationMax_) {
             revert Deviation_InvalidDeviationBps(deviationBps_, deviationMax_);
+        }
 
         return isDeviating(value_, benchmark_, deviationBps_, deviationMax_);
     }
