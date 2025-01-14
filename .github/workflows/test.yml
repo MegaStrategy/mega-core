@@ -45,10 +45,17 @@ jobs:
 
             - name: Run Forge build
               run: |
-                  pnpm run size
+                  forge build
               id: build
 
             - name: Run Forge tests
+              env:
+                  FORK_RPC_URL: ${{ secrets.FORK_RPC_URL }}
               run: |
                   forge test -vvv
               id: test
+
+            - name: Build Size
+              run: |
+                  pnpm run size
+              id: size
