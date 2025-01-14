@@ -364,7 +364,7 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, amount_, msg.sender);
     }
 
-    /// @notice Unwinds the caller's hedge position and withdraws all of the collateral to the caller
+    /// @notice Unwinds the caller's entire hedge position and withdraws all of the collateral to the caller
     /// @dev    This function performs the same operations as `unwindAndWithdraw()`, but for all of the user's collateral
     ///
     ///         Notes:
@@ -380,12 +380,10 @@ contract Hedger is Ownable {
     /// @param  cvToken_           The address of the cvToken to hedge
     /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
     /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
-    /// @param  mgstToRepay_       The amount of borrowed MGST to repay
     function unwindAndWithdrawAll(
         address cvToken_,
         uint256 reserveToSupply_,
-        uint256 reserveFromMorpho_,
-        uint256 mgstToRepay_
+        uint256 reserveFromMorpho_
     ) external {
         MorphoId cvMarket = _getMarketId(cvToken_);
 
@@ -394,11 +392,12 @@ contract Hedger is Ownable {
             reserve.safeTransferFrom(msg.sender, address(this), reserveToSupply_);
         }
 
-        // Decrease the hedge position, if necessary
-        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, mgstToRepay_);
-
         // Get the user's deposited balance of cvToken in the morpho market
         MorphoPosition memory position = morpho.position(cvMarket, msg.sender);
+        uint256 mgstBorrowed = _getBorrowedAssets(cvMarket, position);
+
+        // Decrease the hedge position, if necessary
+        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, msg.sender, mgstBorrowed);
 
         // Withdraw all the collateral from the morpho market
         _withdrawCollateral(cvMarket, position.collateral, msg.sender);
@@ -678,7 +677,7 @@ contract Hedger is Ownable {
         _withdrawCollateral(cvMarket, amount_, onBehalfOf_);
     }
 
-    /// @notice Unwinds a user's hedge position and withdraws all of the collateral to the user
+    /// @notice Unwinds a user's entire hedge position and withdraws all of the collateral to the user
     /// @dev    This function performs the same operations as `unwindAndWithdrawAll()`, but for a specific user (`onBehalfOf_`)
     ///
     ///         Notes:
@@ -694,13 +693,11 @@ contract Hedger is Ownable {
     /// @param  cvToken_           The address of the cvToken to hedge
     /// @param  reserveToSupply_   The amount of reserve token to supply to the morpho market
     /// @param  reserveFromMorpho_ The amount of reserve token to withdraw from the morpho market
-    /// @param  mgstToRepay_       The amount of borrowed MGST to repay
     /// @param  onBehalfOf_        The address of the user to perform the operation for
     function unwindAndWithdrawAllFor(
         address cvToken_,
         uint256 reserveToSupply_,
         uint256 reserveFromMorpho_,
-        uint256 mgstToRepay_,
         address onBehalfOf_
     ) external onlyApprovedOperator(onBehalfOf_, msg.sender) {
         MorphoId cvMarket = _getMarketId(cvToken_);
@@ -710,11 +707,12 @@ contract Hedger is Ownable {
             reserve.safeTransferFrom(onBehalfOf_, address(this), reserveToSupply_);
         }
 
-        // Decrease the hedge position
-        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, mgstToRepay_);
-
         // Get the user's deposited balance of cvToken in the morpho market
         MorphoPosition memory position = morpho.position(cvMarket, onBehalfOf_);
+        uint256 mgstBorrowed = _getBorrowedAssets(cvMarket, position);
+
+        // Decrease the hedge position
+        _decreaseHedge(cvMarket, reserveToSupply_, reserveFromMorpho_, onBehalfOf_, mgstBorrowed);
 
         // Withdraw all the collateral from the morpho market
         _withdrawCollateral(cvMarket, position.collateral, onBehalfOf_);
@@ -800,19 +798,24 @@ contract Hedger is Ownable {
         return maxBorrow - borrowed;
     }
 
+    function _getBorrowedAssets(
+        MorphoId cvMarket_,
+        MorphoPosition memory position_
+    ) internal view returns (uint256) {
+        return SharesMathLib.toAssetsDown(
+            position_.borrowShares,
+            morpho.market(cvMarket_).totalBorrowAssets,
+            morpho.market(cvMarket_).totalBorrowShares
+        );
+    }
+
     function _getHedgePosition(
         MorphoId cvMarket_,
         address onBehalfOf_
     ) internal view returns (uint256) {
         MorphoPosition memory position = morpho.position(cvMarket_, onBehalfOf_);
 
-        uint256 borrowAssets = SharesMathLib.toAssetsDown(
-            position.borrowShares,
-            morpho.market(cvMarket_).totalBorrowAssets,
-            morpho.market(cvMarket_).totalBorrowShares
-        );
-
-        return borrowAssets;
+        return _getBorrowedAssets(cvMarket_, position);
     }
 
     function _getCollateralPosition(
