@@ -39,6 +39,16 @@ contract Hedger is Ownable {
     // with the user's address as the owner.
     // It supports managing positions for any cvToken<>MGST morpho market.
 
+    // ========== EVENTS ========== //
+
+    event CvTokenAdded(address cvToken, bytes32 cvMarketId);
+
+    event MgstWethSwapFeeSet(uint24 mgstWethSwapFee);
+
+    event ReserveWethSwapFeeSet(uint24 reserveWethSwapFee);
+
+    event MgstMarketSet(bytes32 mgstMarketId);
+
     // ========== ERRORS ========== //
 
     error InvalidParam(string name);
@@ -103,14 +113,13 @@ contract Hedger is Ownable {
         morpho = IMorpho(morpho_);
         swapRouter = ISwapRouter02(swapRouter_);
         swapQuoter = IQuoterV2(swapQuoter_);
-        reserveWethSwapFee = reserveWethSwapFee_;
-        mgstWethSwapFee = mgstWethSwapFee_;
 
-        // Get the morpho market params for the mgstMarket ID
-        // Confirm that the tokens match
-        MorphoParams memory marketParams = morpho.idToMarketParams(MorphoId.wrap(mgstMarket_));
-        if (marketParams.collateralToken != mgst_) revert InvalidParam("mgstMarket collateral");
-        if (marketParams.loanToken != reserve_) revert InvalidParam("mgstMarket loan");
+        // Validate and set the swap fees
+        setMgstWethSwapFee(mgstWethSwapFee_);
+        setReserveWethSwapFee(reserveWethSwapFee_);
+
+        // Validate and set the MGST market ID
+        setMgstMarket(mgstMarket_);
     }
 
     // ========== VALIDATION ========== //
@@ -1061,21 +1070,61 @@ contract Hedger is Ownable {
 
         // Store the cvMarket ID
         cvMarkets[cvToken_] = cvMarket;
+
+        emit CvTokenAdded(cvToken_, cvMarket_);
     }
 
     function setReserveWethSwapFee(
         uint24 reserveWethSwapFee_
-    ) external onlyOwner {
+    ) public onlyOwner {
         if (reserveWethSwapFee_ == 0) revert InvalidParam("reserveWethSwapFee");
 
         reserveWethSwapFee = reserveWethSwapFee_;
+
+        emit ReserveWethSwapFeeSet(reserveWethSwapFee_);
     }
 
     function setMgstWethSwapFee(
         uint24 mgstWethSwapFee_
-    ) external onlyOwner {
+    ) public onlyOwner {
         if (mgstWethSwapFee_ == 0) revert InvalidParam("mgstWethSwapFee");
 
         mgstWethSwapFee = mgstWethSwapFee_;
+
+        emit MgstWethSwapFeeSet(mgstWethSwapFee_);
+    }
+
+    /// @notice Sets the MGST<>RESERVE morpho market ID
+    /// @dev    This function reverts if:
+    ///         - The caller is not the owner
+    ///         - The market ID is zero
+    ///         - The market does not exist
+    ///         - The collateral token is not the protocol token
+    ///         - The loan token is not the reserve token
+    ///
+    /// @param  mgstMarket_  The unwrapped Morpho market ID of the MGST<>RESERVE market
+    function setMgstMarket(
+        bytes32 mgstMarket_
+    ) public onlyOwner {
+        // Ensure the market ID is not zero
+        if (mgstMarket_ == bytes32(0)) revert InvalidParam("zero");
+
+        // Get the morpho market params for the market ID
+        // Confirm that the tokens match
+        MorphoId mgstMarketId = MorphoId.wrap(mgstMarket_);
+        MorphoParams memory marketParams = morpho.idToMarketParams(mgstMarketId);
+
+        // If the market does not exist, revert
+        if (marketParams.collateralToken == address(0)) revert InvalidParam("market");
+
+        // If the collateral token is not the protocol token, revert
+        if (marketParams.collateralToken != address(mgst)) revert InvalidParam("collateral");
+        // If the loan token is not the reserve token, revert
+        if (marketParams.loanToken != address(reserve)) revert InvalidParam("loan");
+
+        // Store the market ID
+        mgstMarket = mgstMarketId;
+
+        emit MgstMarketSet(mgstMarket_);
     }
 }
