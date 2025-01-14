@@ -504,6 +504,8 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         console2.log("Done");
 
         vm.stopBroadcast();
+
+        // See PriceConfiguration.s.sol for PRICE submodule installation and configuration
     }
 
     /// @dev Verifies that the environment variable addresses were set correctly following deployment
