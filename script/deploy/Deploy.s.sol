@@ -26,6 +26,13 @@ import {Banker} from "src/policies/Banker.sol";
 import {Issuer} from "src/policies/Issuer.sol";
 import {Hedger} from "src/periphery/Hedger.sol";
 import {PriceConfigV2} from "src/policies/PriceConfig.v2.sol";
+import {MegaTokenOracle} from "src/policies/MegaTokenOracle.sol";
+
+import {
+    Id as MorphoId,
+    MarketParams as MorphoMarketParams
+} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {MarketParamsLib} from "morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
 
 // solhint-disable max-states-count
 /// @notice Script to deploy the system
@@ -79,6 +86,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         selectorMap["FixedStrikeOptionTeller"] = this._deployFixedStrikeOptionTeller.selector;
         selectorMap["Hedger"] = this._deployHedger.selector;
         selectorMap["PriceConfigV2"] = this._deployPriceConfigV2.selector;
+        selectorMap["MegaTokenOracle"] = this._deployMegaTokenOracle.selector;
 
         // Load env data
         _loadEnv(chain_);
@@ -414,26 +422,59 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         return (address(teller), "axis.options.FixedStrikeOptionTeller");
     }
 
+    function _deployMegaTokenOracle(
+        string memory
+    ) public returns (address, string memory) {
+        // No additional arguments for MegaTokenOracle policy
+
+        address loanToken = _getAddressNotZero("external.tokens.USDC");
+
+        console2.log("    Loan token:", loanToken);
+
+        // Deploy MegaTokenOracle policy
+        vm.broadcast();
+        MegaTokenOracle megaTokenOracle = new MegaTokenOracle(kernel, loanToken);
+        console2.log("MegaTokenOracle deployed at:", address(megaTokenOracle));
+
+        return (address(megaTokenOracle), "mega.policies.MegaTokenOracle");
+    }
+
     function _deployHedger(
         string memory name_
     ) public returns (address, string memory) {
-        // TODO create market params
-        bytes32 mgstMarket_ = _readDeploymentArgBytes32(name_, "mgstMarket");
         uint24 reserveWethSwapFee_ = uint24(_readDeploymentArgUint256(name_, "reserveWethSwapFee"));
         uint24 mgstWethSwapFee_ = uint24(_readDeploymentArgUint256(name_, "mgstWethSwapFee"));
+        uint256 lltv = _readDeploymentArgUint256(name_, "lltv");
 
         // Ensure the args are set
-        require(mgstMarket_ != bytes32(0), "mgstMarket must be set");
         require(reserveWethSwapFee_ != 0, "reserveWethSwapFee must be set");
         require(mgstWethSwapFee_ != 0, "mgstWethSwapFee must be set");
+        require(lltv != 0, "lltv must be set");
+
+        console2.log("    Reserve WETH swap fee:", reserveWethSwapFee_);
+        console2.log("    MGST WETH swap fee:", mgstWethSwapFee_);
+        console2.log("    LLTV:", lltv);
+
+        address reserve = _getAddressNotZero("external.tokens.USDC");
+        address mgst = _getAddressNotZero("external.tokens.MGST");
+
+        // Derive the ID for the MGST<>RESERVE market
+        MorphoMarketParams memory mgstMarketParams = MorphoMarketParams({
+            loanToken: reserve,
+            collateralToken: mgst,
+            oracle: _getAddressNotZero("mega.policies.MegaTokenOracle"),
+            irm: address(0), // Disabled
+            lltv: lltv
+        });
+        bytes32 mgstMarketId = MorphoId.unwrap(MarketParamsLib.id(mgstMarketParams));
 
         // Deploy Hedger
         vm.broadcast();
         Hedger hedger = new Hedger(
             _getAddressNotZero("mega.modules.Token"),
             _getAddressNotZero("external.tokens.WETH"),
-            _getAddressNotZero("external.tokens.USDC"),
-            mgstMarket_,
+            reserve,
+            mgstMarketId,
             _getAddressNotZero("external.morpho"),
             _getAddressNotZero("external.uniswap.v3.swapRouter02"),
             _getAddressNotZero("external.uniswap.v3.swapQuoterV2"),
@@ -480,6 +521,8 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         Issuer issuer = Issuer(_getAddressNotZero("mega.policies.Issuer"));
         PriceConfigV2 priceConfigV2 =
             PriceConfigV2(_getAddressNotZero("mega.policies.PriceConfigV2"));
+        MegaTokenOracle megaTokenOracle =
+            MegaTokenOracle(_getAddressNotZero("mega.policies.MegaTokenOracle"));
 
         vm.startBroadcast();
 
@@ -500,7 +543,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         kernel.executeAction(Actions.ActivatePolicy, address(banker));
         kernel.executeAction(Actions.ActivatePolicy, address(issuer));
         kernel.executeAction(Actions.ActivatePolicy, address(priceConfigV2));
-
+        kernel.executeAction(Actions.ActivatePolicy, address(megaTokenOracle));
         console2.log("Done");
 
         vm.stopBroadcast();

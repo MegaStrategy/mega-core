@@ -3,9 +3,9 @@
         {
             "name": "Hedger",
             "args": {
-                "mgstMarket": "",
                 "reserveWethSwapFee": 500,
-                "mgstWethSwapFee": 3000
+                "mgstWethSwapFee": 3000,
+                "lltv": 945000000000000000
             }
         }
     ]
