@@ -194,7 +194,8 @@ contract HedgerUnwindAndWithdrawAllForTest is HedgerTest {
         givenUserHasIncreasedMgstHedge(1e18)
     {
         uint256 mgstBorrowed = hedger.getHedgePositionFor(address(debtToken), USER);
-        uint256 reservesRequired = hedger.previewDecreaseHedge(address(debtToken), mgstBorrowed) * 95 / 100;
+        uint256 reservesRequired =
+            hedger.previewDecreaseHedge(address(debtToken), mgstBorrowed) * 95 / 100;
 
         // Mint reserve to the user
         _mintReserve(reservesRequired);

@@ -39,7 +39,7 @@ contract HedgerTest is Test, WithSalts {
     using SafeTransferLib for ERC20;
 
     Kernel public kernel;
-    MSTR public mstr;
+    MSTR public mgst;
     OlympusRoles public roles;
     OlympusTreasury public treasury;
     Banker public banker;
@@ -93,7 +93,7 @@ contract HedgerTest is Test, WithSalts {
         vm.store(KERNEL, bytes32(uint256(0)), bytes32(abi.encode(OWNER)));
 
         vm.startPrank(OWNER);
-        mstr = new MSTR(kernel, "MSTR", "MSTR");
+        mgst = new MSTR(kernel, "MGST", "MGST");
         roles = new OlympusRoles(kernel);
         treasury = new OlympusTreasury(kernel);
         issuer = new Issuer(kernel, address(0)); // No oToken teller needed
@@ -112,7 +112,7 @@ contract HedgerTest is Test, WithSalts {
         // Install modules and policies
         vm.startPrank(OWNER);
         kernel.executeAction(Actions.InstallModule, address(roles));
-        kernel.executeAction(Actions.InstallModule, address(mstr));
+        kernel.executeAction(Actions.InstallModule, address(mgst));
         kernel.executeAction(Actions.InstallModule, address(treasury));
         kernel.executeAction(Actions.ActivatePolicy, address(rolesAdmin));
         kernel.executeAction(Actions.ActivatePolicy, address(banker));
@@ -146,12 +146,12 @@ contract HedgerTest is Test, WithSalts {
         // Create a Uniswap V3 pool for MGST/WETH
         vm.startPrank(OWNER);
         address mgstWethPool = IUniswapV3Factory(UNISWAP_V3_FACTORY).createPool(
-            address(mstr), address(weth), MGST_WETH_SWAP_FEE
+            address(mgst), address(weth), MGST_WETH_SWAP_FEE
         );
 
         // Initialize MGST/WETH
         uint160 mgstWethSqrtPriceX96 = SqrtPriceMath.getSqrtPriceX96(
-            address(mstr), address(weth), MGST_WETH_MGST_AMOUNT, MGST_WETH_WETH_AMOUNT
+            address(mgst), address(weth), MGST_WETH_MGST_AMOUNT, MGST_WETH_WETH_AMOUNT
         );
         IUniswapV3Pool(mgstWethPool).initialize(mgstWethSqrtPriceX96);
         vm.stopPrank();
@@ -182,13 +182,13 @@ contract HedgerTest is Test, WithSalts {
         vm.stopPrank();
 
         vm.startPrank(OWNER);
-        ERC20(address(mstr)).safeApprove(UNISWAP_V3_POSITION_MANAGER, MGST_WETH_MGST_AMOUNT);
+        ERC20(address(mgst)).safeApprove(UNISWAP_V3_POSITION_MANAGER, MGST_WETH_MGST_AMOUNT);
         ERC20(address(weth)).safeApprove(UNISWAP_V3_POSITION_MANAGER, MGST_WETH_WETH_AMOUNT);
         vm.stopPrank();
 
         // Deploy liquidity into the MGST/WETH pool
         _mint(
-            address(mstr),
+            address(mgst),
             address(weth),
             MGST_WETH_MGST_AMOUNT,
             MGST_WETH_WETH_AMOUNT,
@@ -198,7 +198,7 @@ contract HedgerTest is Test, WithSalts {
         // Create a morpho market for MGST<>RESERVE
         MorphoMarketParams memory mgstMarketParams = MorphoMarketParams({
             loanToken: address(reserve),
-            collateralToken: address(mstr),
+            collateralToken: address(mgst),
             oracle: address(0), // TODO add oracle for MGST
             irm: address(0), // Disabled
             lltv: LLTV
@@ -211,7 +211,7 @@ contract HedgerTest is Test, WithSalts {
         // Create a hedger
         vm.startPrank(OWNER);
         hedger = new Hedger(
-            address(mstr),
+            address(mgst),
             address(weth),
             address(reserve),
             MorphoId.unwrap(mgstMarket),
@@ -302,7 +302,7 @@ contract HedgerTest is Test, WithSalts {
     }
 
     modifier givenDebtTokenMorphoMarketIsCreated() {
-        debtTokenMarket = _createMorphoMarket(address(mstr), debtToken, debtToken);
+        debtTokenMarket = _createMorphoMarket(address(mgst), debtToken, debtToken);
         _;
     }
 
@@ -316,7 +316,7 @@ contract HedgerTest is Test, WithSalts {
 
         // Approve the morpho market to transfer the MGST
         vm.startPrank(OWNER);
-        ERC20(address(mstr)).safeApprove(MORPHO, amount_);
+        ERC20(address(mgst)).safeApprove(MORPHO, amount_);
         vm.stopPrank();
 
         // Deposit MGST into the morpho market

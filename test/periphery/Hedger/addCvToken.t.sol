@@ -95,7 +95,7 @@ contract AddCvTokenTest is HedgerTest {
 
     function test_addCvToken() public {
         // Create the market
-        MorphoId newMarket = _createMorphoMarket(address(mstr), debtToken, debtToken);
+        MorphoId newMarket = _createMorphoMarket(address(mgst), debtToken, debtToken);
 
         // Call
         vm.prank(OWNER);
