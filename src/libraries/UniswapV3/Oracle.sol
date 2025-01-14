@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
 // Uniswap V3
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
+import {IUniswapV3Pool} from "@uniswap-v3-core-1.0.2-solc-0.8-simulate/interfaces/IUniswapV3Pool.sol";
+import {TickMath} from "@uniswap-v3-core-1.0.2-solc-0.8-simulate/libraries/TickMath.sol";
+import {OracleLibrary} from "@uniswap-v3-periphery-1.4.2-solc-0.8/libraries/OracleLibrary.sol";
 
 // Standard libraries
-import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 /// @title      UniswapV3OracleHelper
 /// @author     0xJem

@@ -1,7 +1,9 @@
-/// SPDX-License-Identifier: AGPL-3.0
-pragma solidity 0.8.15;
+// SPDX-License-Identifier: AGPL-3.0
+pragma solidity ^0.8.15;
 
-import "src/modules/PRICE/PRICE.v2.sol";
+import {Kernel, Keycode, Module, toKeycode} from "src/Kernel.sol";
+import {fromSubKeycode} from "src/Submodules.sol";
+import {PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";
 
 /// @title      OlympusPriceV2
 /// @author     Oighty

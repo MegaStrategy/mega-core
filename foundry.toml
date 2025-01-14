@@ -36,3 +36,5 @@ axis-periphery = "1.0.0"
 solmate = "6.8.0"
 morpho-blue = { version = "1.0.0", git = "https://github.com/morpho-org/morpho-blue.git", rev = "4844569ce51f2a01a46e27a5a22f54e9a388adcc" }
 surl = { version = "1.0.0", git = "https://github.com/memester-xyz/surl.git", rev = "034c912ae9b5e707a5afd21f145b452ad8e800df" }
+"@uniswap-v3-core" = "1.0.2-solc-0.8-simulate"
+"@uniswap-v3-periphery" = { version = "1.4.2-solc-0.8", git = "https://github.com/Uniswap/v3-periphery.git", rev = "b325bb0905d922ae61fcc7df85ee802e8df5e96c" }

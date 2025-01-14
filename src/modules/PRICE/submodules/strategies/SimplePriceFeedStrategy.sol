@@ -1,9 +1,11 @@
 /// SPDX-License-Identifier: AGPL-3.0
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
-import "modules/PRICE/PRICE.v2.sol";
-import {QuickSort} from "libraries/QuickSort.sol";
-import {Deviation} from "libraries/Deviation.sol";
+import {Module} from "src/Kernel.sol";
+import {SubKeycode, Submodule, toSubKeycode} from "src/Submodules.sol";
+import {PriceSubmodule} from "src/modules/PRICE/PRICE.v2.sol";
+import {QuickSort} from "src/libraries/QuickSort.sol";
+import {Deviation} from "src/libraries/Deviation.sol";
 
 /// @title      SimplePriceFeedStrategy
 /// @author     0xJem

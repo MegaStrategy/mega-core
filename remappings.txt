@@ -3,6 +3,8 @@
 @solady-0.0.124/=dependencies/solady-0.0.261/src/
 @solmate-6.7.0/=dependencies/solmate-6.8.0/src/
 @solmate-6.8.0/=dependencies/solmate-6.8.0/src/
+@uniswap-v3-core-1.0.2-solc-0.8-simulate/=dependencies/@uniswap-v3-core-1.0.2-solc-0.8-simulate/contracts/
+@uniswap-v3-periphery-1.4.2-solc-0.8/=dependencies/@uniswap-v3-periphery-1.4.2-solc-0.8/contracts/
 axis-core-1.0.1/=dependencies/axis-core-1.0.1/src/
 axis-periphery-1.0.0/=dependencies/axis-periphery-1.0.0/src/
 forge-std/=dependencies/forge-std-1.9.4/src/
@@ -10,3 +12,4 @@ morpho-blue-1.0.0/=dependencies/morpho-blue-1.0.0/src/
 solady-0.0.261/=dependencies/solady-0.0.261/src/
 solmate-6.8.0/=dependencies/solmate-6.8.0/src/
 surl-1.0.0/=dependencies/surl-1.0.0/src/
+@uniswap/v3-core/=dependencies/@uniswap-v3-core-1.0.2-solc-0.8-simulate/

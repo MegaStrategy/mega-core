@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
-import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 // Libraries
-import {UniswapV3OracleHelper as OracleHelper} from "libraries/UniswapV3/Oracle.sol";
-import {FullMath} from "libraries/FullMath.sol";
+import {UniswapV3OracleHelper as OracleHelper} from "src/libraries/UniswapV3/Oracle.sol";
+import {FullMath} from "src/libraries/FullMath.sol";
 
 // Uniswap V3
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {OracleLibrary} from "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
+import {IUniswapV3Pool} from "@uniswap-v3-core-1.0.2-solc-0.8-simulate/interfaces/IUniswapV3Pool.sol";
+import {OracleLibrary} from "@uniswap-v3-periphery-1.4.2-solc-0.8/libraries/OracleLibrary.sol";
 
 // Bophades
-import "modules/PRICE/PRICE.v2.sol";
+import {Module} from "src/Kernel.sol";
+import {SubKeycode, Submodule, toSubKeycode} from "src/Submodules.sol";
+import {PriceSubmodule, PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";
 
 /// @title      UniswapV3Price
 /// @author     0xJem

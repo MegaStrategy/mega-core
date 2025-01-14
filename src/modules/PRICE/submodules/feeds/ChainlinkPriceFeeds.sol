@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
-import "modules/PRICE/PRICE.v2.sol";
-import {AggregatorV2V3Interface} from "interfaces/AggregatorV2V3Interface.sol";
-import {FullMath} from "libraries/FullMath.sol";
+import {Module} from "src/Kernel.sol";
+import {SubKeycode, Submodule, toSubKeycode} from "src/Submodules.sol";
+import {PriceSubmodule} from "src/modules/PRICE/PRICE.v2.sol";
+import {AggregatorV2V3Interface} from "src/interfaces/AggregatorV2V3Interface.sol";
+import {FullMath} from "src/libraries/FullMath.sol";
 
 /// @title      ChainlinkPriceFeeds
 /// @author     0xJem
