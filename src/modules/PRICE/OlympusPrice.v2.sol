@@ -8,7 +8,7 @@ import {PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";
 /// @title      OlympusPriceV2
 /// @author     Oighty
 /// @notice     Provides current and historical prices for assets
-contract OlympusPricev2 is PRICEv2 {
+contract OlympusPriceV2 is PRICEv2 {
     // DONE
     // [X] Update functions for asset price feeds, strategies, etc.
     // [X] Toggle MA on and off for an asset

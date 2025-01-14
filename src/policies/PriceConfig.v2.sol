@@ -7,7 +7,7 @@ import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
 import {PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";
 
 /// @notice     Policy to configure PRICEv2
-/// @dev        Some functions in this policy are gated to addresses with the "priceconfig_policy" or "priceconfig_admin" roles
+/// @dev        Some functions in this policy are gated to addresses with the "manager" or "admin" roles
 contract PriceConfigV2 is Policy, RolesConsumer {
     // DONE
     // [X] Policy setup
@@ -100,7 +100,7 @@ contract PriceConfigV2 is Policy, RolesConsumer {
         uint256[] memory observations_,
         PRICEv2.Component memory strategy_,
         PRICEv2.Component[] memory feeds_
-    ) external onlyRole("priceconfig_policy") {
+    ) external onlyRole("manager") {
         PRICE.addAsset(
             asset_,
             storeMovingAverage_,
@@ -117,7 +117,7 @@ contract PriceConfigV2 is Policy, RolesConsumer {
     /// @dev        After removal, calls to PRICEv2 for the asset's price will revert
     function removeAssetPrice(
         address asset_
-    ) external onlyRole("priceconfig_policy") {
+    ) external onlyRole("manager") {
         PRICE.removeAsset(asset_);
     }
 
@@ -129,7 +129,7 @@ contract PriceConfigV2 is Policy, RolesConsumer {
     function updateAssetPriceFeeds(
         address asset_,
         PRICEv2.Component[] memory feeds_
-    ) external onlyRole("priceconfig_policy") {
+    ) external onlyRole("manager") {
         PRICE.updateAssetPriceFeeds(asset_, feeds_);
     }
 
@@ -143,7 +143,7 @@ contract PriceConfigV2 is Policy, RolesConsumer {
         address asset_,
         PRICEv2.Component memory strategy_,
         bool useMovingAverage_
-    ) external onlyRole("priceconfig_policy") {
+    ) external onlyRole("manager") {
         PRICE.updateAssetPriceStrategy(asset_, strategy_, useMovingAverage_);
     }
 
@@ -161,7 +161,7 @@ contract PriceConfigV2 is Policy, RolesConsumer {
         uint32 movingAverageDuration_,
         uint48 lastObservationTime_,
         uint256[] memory observations_
-    ) external onlyRole("priceconfig_policy") {
+    ) external onlyRole("manager") {
         PRICE.updateAssetMovingAverage(
             asset_, storeMovingAverage_, movingAverageDuration_, lastObservationTime_, observations_
         );
@@ -174,7 +174,7 @@ contract PriceConfigV2 is Policy, RolesConsumer {
     /// @notice Install a new submodule on the designated module
     function installSubmodule(
         Submodule submodule_
-    ) external onlyRole("priceconfig_admin") {
+    ) external onlyRole("admin") {
         PRICE.installSubmodule(submodule_);
     }
 
@@ -183,7 +183,7 @@ contract PriceConfigV2 is Policy, RolesConsumer {
     /// @dev        otherwise use installSubmodule
     function upgradeSubmodule(
         Submodule submodule_
-    ) external onlyRole("priceconfig_admin") {
+    ) external onlyRole("admin") {
         PRICE.upgradeSubmodule(submodule_);
     }
 
@@ -193,7 +193,7 @@ contract PriceConfigV2 is Policy, RolesConsumer {
     function execOnSubmodule(
         SubKeycode subKeycode_,
         bytes calldata data_
-    ) external onlyRole("priceconfig_policy") {
+    ) external onlyRole("manager") {
         PRICE.execOnSubmodule(subKeycode_, data_);
     }
 }

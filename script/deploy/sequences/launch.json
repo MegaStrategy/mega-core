@@ -19,6 +19,25 @@
       "args": {}
     },
     {
+      "name": "OlympusPriceV2",
+      "args": {
+        "decimals": 18,
+        "observationFrequency": 28800
+      }
+    },
+    {
+      "name": "ChainlinkPriceFeeds",
+      "args": {}
+    },
+    {
+      "name": "UniswapV3Price",
+      "args": {}
+    },
+    {
+      "name": "SimplePriceFeedStrategy",
+      "args": {}
+    },
+    {
       "name": "TreasuryCustodian",
       "args": {}
     },
@@ -43,6 +62,10 @@
     },
     {
       "name": "Issuer",
+      "args": {}
+    },
+    {
+      "name": "PriceConfigV2",
       "args": {}
     }
   ]

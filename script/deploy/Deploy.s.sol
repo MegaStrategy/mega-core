@@ -9,11 +9,15 @@ import {WithEnvironment} from "./WithEnvironment.s.sol";
 import {Authority} from "solmate-6.8.0/auth/Auth.sol";
 import {FixedStrikeOptionTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
 
-// solhint-disable-next-line no-global-import
-import "src/Kernel.sol";
+import {Actions, fromKeycode, Kernel, Keycode, Module, toKeycode} from "src/Kernel.sol";
 import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
 import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
+import {OlympusPriceV2} from "src/modules/PRICE/OlympusPrice.v2.sol";
+import {UniswapV3Price} from "src/modules/PRICE/submodules/feeds/UniswapV3Price.sol";
+import {ChainlinkPriceFeeds} from "src/modules/PRICE/submodules/feeds/ChainlinkPriceFeeds.sol";
+import {SimplePriceFeedStrategy} from
+    "src/modules/PRICE/submodules/strategies/SimplePriceFeedStrategy.sol";
 
 import {RolesAdmin} from "src/policies/RolesAdmin.sol";
 import {TreasuryCustodian} from "src/policies/TreasuryCustodian.sol";
@@ -21,6 +25,7 @@ import {Emergency} from "src/policies/Emergency.sol";
 import {Banker} from "src/policies/Banker.sol";
 import {Issuer} from "src/policies/Issuer.sol";
 import {Hedger} from "src/periphery/Hedger.sol";
+import {PriceConfigV2} from "src/policies/PriceConfig.v2.sol";
 
 // solhint-disable max-states-count
 /// @notice Script to deploy the system
@@ -56,10 +61,16 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
     function _setUp(string calldata chain_, string calldata deployFilePath_) internal {
         // Setup contract -> selector mappings
+        // Modules
         selectorMap["OlympusTreasury"] = this._deployTreasury.selector;
         selectorMap["OlympusRoles"] = this._deployRoles.selector;
         selectorMap["Token"] = this._deployToken.selector;
+        selectorMap["OlympusPriceV2"] = this._deployPriceV2.selector;
+        selectorMap["ChainlinkPriceFeeds"] = this._deployChainlinkPriceFeeds.selector;
+        selectorMap["UniswapV3Price"] = this._deployUniswapV3Price.selector;
+        selectorMap["SimplePriceFeedStrategy"] = this._deploySimplePriceFeedStrategy.selector;
 
+        // Policies
         selectorMap["RolesAdmin"] = this._deployRolesAdmin.selector;
         selectorMap["TreasuryCustodian"] = this._deployTreasuryCustodian.selector;
         selectorMap["Emergency"] = this._deployEmergency.selector;
@@ -67,6 +78,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         selectorMap["Issuer"] = this._deployIssuer.selector;
         selectorMap["FixedStrikeOptionTeller"] = this._deployFixedStrikeOptionTeller.selector;
         selectorMap["Hedger"] = this._deployHedger.selector;
+        selectorMap["PriceConfigV2"] = this._deployPriceConfigV2.selector;
 
         // Load env data
         _loadEnv(chain_);
@@ -220,6 +232,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         string memory name = _readDeploymentArgString(name_, "name");
         string memory symbol = _readDeploymentArgString(name_, "symbol");
 
+        // Ensure the args are set
+        require(bytes(name).length > 0, "name must be set");
+        require(bytes(symbol).length > 0, "symbol must be set");
+
         console2.log("    Token name:", name);
         console2.log("    Token symbol:", symbol);
 
@@ -229,6 +245,70 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         console2.log("Token deployed at:", address(token));
 
         return (address(token), "mega.modules.Token");
+    }
+
+    function _deployPriceV2(
+        string memory name_
+    ) public returns (address, string memory) {
+        uint8 decimals = uint8(_readDeploymentArgUint256(name_, "decimals"));
+        uint32 observationFrequency =
+            uint32(_readDeploymentArgUint256(name_, "observationFrequency"));
+
+        // Ensure the args are set
+        require(decimals != 0, "decimals must be set");
+        require(observationFrequency != 0, "observationFrequency must be set");
+
+        console2.log("    Decimals:", decimals);
+        console2.log("    Observation frequency:", observationFrequency);
+
+        // Deploy PriceV2 module
+        vm.broadcast();
+        OlympusPriceV2 priceV2 = new OlympusPriceV2(kernel, decimals, observationFrequency);
+        console2.log("PriceV2 deployed at:", address(priceV2));
+
+        return (address(priceV2), "mega.modules.PriceV2");
+    }
+
+    function _deployChainlinkPriceFeeds(
+        string memory
+    ) public returns (address, string memory) {
+        // No additional arguments for ChainlinkPriceFeeds module
+
+        // Deploy ChainlinkPriceFeeds module
+        vm.broadcast();
+        ChainlinkPriceFeeds chainlinkPriceFeeds =
+            new ChainlinkPriceFeeds(Module(_envAddressNotZero("mega.modules.PriceV2")));
+        console2.log("ChainlinkPriceFeeds deployed at:", address(chainlinkPriceFeeds));
+
+        return (address(chainlinkPriceFeeds), "mega.submodules.PriceV2.ChainlinkPriceFeeds");
+    }
+
+    function _deployUniswapV3Price(
+        string memory
+    ) public returns (address, string memory) {
+        // No additional arguments for UniswapV3Price module
+
+        // Deploy UniswapV3Price module
+        vm.broadcast();
+        UniswapV3Price uniswapV3Price =
+            new UniswapV3Price(Module(_envAddressNotZero("mega.modules.PriceV2")));
+        console2.log("UniswapV3Price deployed at:", address(uniswapV3Price));
+
+        return (address(uniswapV3Price), "mega.submodules.PriceV2.UniswapV3Price");
+    }
+
+    function _deploySimplePriceFeedStrategy(
+        string memory
+    ) public returns (address, string memory) {
+        // No additional arguments for SimplePriceFeedStrategy module
+
+        // Deploy SimplePriceFeedStrategy module
+        vm.broadcast();
+        SimplePriceFeedStrategy simplePriceFeedStrategy =
+            new SimplePriceFeedStrategy(Module(_envAddressNotZero("mega.modules.PriceV2")));
+        console2.log("SimplePriceFeedStrategy deployed at:", address(simplePriceFeedStrategy));
+
+        return (address(simplePriceFeedStrategy), "mega.submodules.PriceV2.SimplePriceFeedStrategy");
     }
 
     function _deployRolesAdmin(
@@ -337,6 +417,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     function _deployHedger(
         string memory name_
     ) public returns (address, string memory) {
+        // TODO create market params
         bytes32 mgstMarket_ = _readDeploymentArgBytes32(name_, "mgstMarket");
         uint24 reserveWethSwapFee_ = uint24(_readDeploymentArgUint256(name_, "reserveWethSwapFee"));
         uint24 mgstWethSwapFee_ = uint24(_readDeploymentArgUint256(name_, "mgstWethSwapFee"));
@@ -364,6 +445,19 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         return (address(hedger), "mega.periphery.Hedger");
     }
 
+    function _deployPriceConfigV2(
+        string memory
+    ) public returns (address, string memory) {
+        // No additional arguments for PriceConfigV2 policy
+
+        // Deploy PriceConfigV2 policy
+        vm.broadcast();
+        PriceConfigV2 priceConfigV2 = new PriceConfigV2(kernel);
+        console2.log("PriceConfigV2 deployed at:", address(priceConfigV2));
+
+        return (address(priceConfigV2), "mega.policies.PriceConfigV2");
+    }
+
     // ========== VERIFICATION ========== //
 
     function kernelInstallation(
@@ -371,15 +465,21 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
+        // Modules
         OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
         OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
         MegaToken token = MegaToken(_getAddressNotZero("mega.modules.Token"));
+        OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.PriceV2"));
+
+        // Policies
         RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
         TreasuryCustodian treasuryCustodian =
             TreasuryCustodian(_getAddressNotZero("mega.policies.TreasuryCustodian"));
         Emergency emergency = Emergency(_getAddressNotZero("mega.policies.Emergency"));
         Banker banker = Banker(_getAddressNotZero("mega.policies.Banker"));
         Issuer issuer = Issuer(_getAddressNotZero("mega.policies.Issuer"));
+        PriceConfigV2 priceConfigV2 =
+            PriceConfigV2(_getAddressNotZero("mega.policies.PriceConfigV2"));
 
         vm.startBroadcast();
 
@@ -389,6 +489,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         kernel.executeAction(Actions.InstallModule, address(ROLES));
         kernel.executeAction(Actions.InstallModule, address(TRSRY));
         kernel.executeAction(Actions.InstallModule, address(token));
+        kernel.executeAction(Actions.InstallModule, address(PRICE));
 
         console2.log("Activating policies");
 
@@ -398,6 +499,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         kernel.executeAction(Actions.ActivatePolicy, address(emergency));
         kernel.executeAction(Actions.ActivatePolicy, address(banker));
         kernel.executeAction(Actions.ActivatePolicy, address(issuer));
+        kernel.executeAction(Actions.ActivatePolicy, address(priceConfigV2));
 
         console2.log("Done");
 
@@ -411,41 +513,60 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
-        MegaToken token = MegaToken(_getAddressNotZero("mega.modules.Token"));
-        OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
+        // Modules
+        // TRSRY
+        {
+            OlympusTreasury TRSRY =
+                OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
+            Module trsryModule = kernel.getModuleForKeycode(toKeycode("TRSRY"));
+            Keycode trsryKeycode = kernel.getKeycodeForModule(TRSRY);
+            require(trsryModule == TRSRY);
+            require(fromKeycode(trsryKeycode) == "TRSRY");
+        }
+
+        // TOKEN
+        {
+            MegaToken token = MegaToken(_getAddressNotZero("mega.modules.Token"));
+            Module tokenModule = kernel.getModuleForKeycode(toKeycode("TOKEN"));
+            Keycode tokenKeycode = kernel.getKeycodeForModule(token);
+            require(tokenModule == token);
+            require(fromKeycode(tokenKeycode) == "TOKEN");
+        }
+
+        // ROLES
+        {
+            OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
+            Module rolesModule = kernel.getModuleForKeycode(toKeycode("ROLES"));
+            Keycode rolesKeycode = kernel.getKeycodeForModule(ROLES);
+            require(rolesModule == ROLES);
+            require(fromKeycode(rolesKeycode) == "ROLES");
+        }
+
+        // PRICEv2
+        {
+            OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.PriceV2"));
+            Module priceModule = kernel.getModuleForKeycode(toKeycode("PRICE"));
+            Keycode priceKeycode = kernel.getKeycodeForModule(PRICE);
+            require(priceModule == PRICE);
+            require(fromKeycode(priceKeycode) == "PRICE");
+        }
+
+        // Policies
         RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
         TreasuryCustodian treasuryCustodian =
             TreasuryCustodian(_getAddressNotZero("mega.policies.TreasuryCustodian"));
         Emergency emergency = Emergency(_getAddressNotZero("mega.policies.Emergency"));
         Banker banker = Banker(_getAddressNotZero("mega.policies.Banker"));
         Issuer issuer = Issuer(_getAddressNotZero("mega.policies.Issuer"));
+        PriceConfigV2 priceConfigV2 =
+            PriceConfigV2(_getAddressNotZero("mega.policies.PriceConfigV2"));
 
-        // Modules
-        // TRSRY
-        Module trsryModule = kernel.getModuleForKeycode(toKeycode("TRSRY"));
-        Keycode trsryKeycode = kernel.getKeycodeForModule(TRSRY);
-        require(trsryModule == TRSRY);
-        require(fromKeycode(trsryKeycode) == "TRSRY");
-
-        // TOKEN
-        Module tokenModule = kernel.getModuleForKeycode(toKeycode("TOKEN"));
-        Keycode tokenKeycode = kernel.getKeycodeForModule(token);
-        require(tokenModule == token);
-        require(fromKeycode(tokenKeycode) == "TOKEN");
-
-        // ROLES
-        Module rolesModule = kernel.getModuleForKeycode(toKeycode("ROLES"));
-        Keycode rolesKeycode = kernel.getKeycodeForModule(ROLES);
-        require(rolesModule == ROLES);
-        require(fromKeycode(rolesKeycode) == "ROLES");
-
-        // Policies
         require(kernel.isPolicyActive(rolesAdmin));
         require(kernel.isPolicyActive(treasuryCustodian));
         require(kernel.isPolicyActive(emergency));
         require(kernel.isPolicyActive(banker));
         require(kernel.isPolicyActive(issuer));
+        require(kernel.isPolicyActive(priceConfigV2));
     }
 
     /// @dev Should be called by the deployer address after deployment
