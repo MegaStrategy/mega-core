@@ -33,18 +33,17 @@ abstract contract BankerTest is Test, WithSalts {
     MockERC20 public stablecoin;
 
     // External contracts (axis)
-    address public constant OWNER = address(0x1);
-    address public constant PROTOCOL = address(0x2);
-    address public constant PERMIT2 = address(0x3);
+    address public constant OWNER = address(0x1111);
+    address public constant PROTOCOL = address(0x2222);
+    address public constant PERMIT2 = address(0x3333);
 
     BatchAuctionHouse public auctionHouse;
     EncryptedMarginalPrice public empa;
 
     // Permissioned addresses
-    address public manager = address(0x4);
-    address public admin = address(0x5);
-
-    address public buyer = address(0x6);
+    address public manager = address(0xAAAA);
+    address public admin = address(0xBBBB);
+    address public buyer = address(0xCCCC);
 
     // System parameters
     uint48 public maxDiscount = 10e2;

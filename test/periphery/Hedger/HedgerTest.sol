@@ -64,11 +64,11 @@ contract HedgerTest is Test, WithSalts {
     address public constant UNISWAP_V3_POSITION_MANAGER =
         address(0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1);
 
-    address public constant OWNER = address(1);
-    address public constant USER = address(2);
-    address public constant MANAGER = address(3);
-    address public constant ADMIN = address(4);
-    address public constant OPERATOR = address(5);
+    address public constant OWNER = address(0xAAAA);
+    address public constant USER = address(0xBBBB);
+    address public constant MANAGER = address(0xCCCC);
+    address public constant ADMIN = address(0xDDDD);
+    address public constant OPERATOR = address(0xEEEE);
 
     uint24 public constant RESERVE_WETH_SWAP_FEE = 500;
     uint24 public constant MGST_WETH_SWAP_FEE = 3000;

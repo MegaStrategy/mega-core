@@ -34,7 +34,7 @@ abstract contract IssuerTest is Test {
     MockERC20 public quoteToken;
 
     // Permissioned addresses
-    address public admin = address(100);
+    address public admin = address(0xAAAA);
 
     function setUp() public {
         // Deploy the option teller
