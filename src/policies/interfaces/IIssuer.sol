@@ -10,9 +10,11 @@ interface IIssuer {
     // ========== EVENTS ========== //
 
     // solhint-disable-next-line event-name-camelcase
-    event oTokenCreated(address indexed oToken);
+    event oTokenCreated(address indexed oToken, address indexed vestingToken);
     // solhint-disable-next-line event-name-camelcase
-    event oTokenIssued(address indexed oToken, address indexed to, uint256 amount);
+    event oTokenIssued(
+        address indexed oToken, address indexed vestingToken, address indexed to, uint256 amount
+    );
 
     // ========== PROTOCOL TOKEN ========== //
 

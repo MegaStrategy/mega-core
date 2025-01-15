@@ -90,9 +90,11 @@ contract IssuerIssueOTest is IssuerTest {
         issuer.issueO(token, recipient, 0);
     }
 
-    function test_success(address to_, uint128 amount_) public givenOTokenCreated {
+    function test_success(
+        uint128 amount_
+    ) public givenOTokenCreated {
         vm.assume(amount_ != 0);
-        vm.assume(to_ != address(0));
+        address to_ = address(0xFFFFFFFF);
 
         vm.prank(admin);
         issuer.issueO(token, to_, amount_);
@@ -102,15 +104,13 @@ contract IssuerIssueOTest is IssuerTest {
     }
 
     function test_vestingEnabled_success(
-        address to_,
         uint128 amount_
     ) public givenOTokenVestingCreated {
         vm.assume(amount_ != 0);
-        vm.assume(to_ != address(0));
+        address to_ = address(0xFFFFFFFF);
 
         // Get the address of the vesting token
-        uint256 vestingTokenId = issuer.vestingTokenId(address(token));
-        (, address vestingToken,,,) = vestingModule.tokenMetadata(vestingTokenId);
+        address vestingToken = issuer.optionTokenToVestingToken(address(token));
 
         // Call function
         vm.prank(admin);

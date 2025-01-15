@@ -46,7 +46,10 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
     mapping(address => bool) public createdBy;
 
     /// @notice The ID of the vesting token created for an oToken
-    mapping(address => uint256) public vestingTokenId;
+    mapping(address => uint256) public optionTokenToVestingTokenId;
+
+    /// @notice The ID of the vesting token created for an oToken
+    mapping(address => address) public optionTokenToVestingToken;
 
     // ========= POLICY SETUP ========= //
 
@@ -153,8 +156,10 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
         createdBy[token] = true;
 
         // Create a vesting token if vesting parameters are provided
+        address vestingToken;
         if (vestingStart_ != 0 && vestingExpiry_ != 0) {
-            (uint256 tokenId,) = vestingModule.deploy(
+            uint256 tokenId;
+            (tokenId, vestingToken) = vestingModule.deploy(
                 address(token),
                 abi.encode(
                     ILinearVesting.VestingParams({start: vestingStart_, expiry: vestingExpiry_})
@@ -163,11 +168,14 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
             );
 
             // Set the vesting token ID
-            vestingTokenId[token] = tokenId;
+            optionTokenToVestingTokenId[token] = tokenId;
+
+            // Set the vesting token
+            optionTokenToVestingToken[token] = vestingToken;
         }
 
         // Emit event
-        emit oTokenCreated(token);
+        emit oTokenCreated(token, vestingToken);
     }
 
     /// @inheritdoc IIssuer
@@ -201,7 +209,7 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
         teller.create(oToken(token_), amount_);
 
         // Vesting disabled
-        if (vestingTokenId[token_] == 0) {
+        if (optionTokenToVestingTokenId[token_] == 0) {
             // Send the oTokens to the recipient
             ERC20(token_).safeTransfer(to_, amount_);
         }
@@ -211,11 +219,11 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
             ERC20(token_).safeApprove(address(vestingModule), amount_);
 
             // Mint the vesting tokens to the recipient
-            vestingModule.mint(to_, vestingTokenId[token_], amount_, true);
+            vestingModule.mint(to_, optionTokenToVestingTokenId[token_], amount_, true);
         }
 
         // Emit event
-        emit oTokenIssued(token_, to_, amount_);
+        emit oTokenIssued(token_, optionTokenToVestingToken[token_], to_, amount_);
     }
 
     // ========== ADMIN ========== //

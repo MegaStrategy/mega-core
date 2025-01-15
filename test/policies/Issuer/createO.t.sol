@@ -107,6 +107,10 @@ contract IssuerCreateOTest is IssuerTest {
         // Check that the created by mapping is set on the issuer
         assertTrue(issuer.createdBy(address(token)));
 
+        // No vesting token should be deployed
+        assertEq(issuer.optionTokenToVestingTokenId(address(token)), 0, "vestingTokenId");
+        assertEq(issuer.optionTokenToVestingToken(address(token)), address(0), "vestingToken");
+
         // Check that the oToken's parameters are correct
         assertEq(address(token.payout()), address(mgst));
         assertEq(address(token.quote()), address(quoteToken));
@@ -159,12 +163,14 @@ contract IssuerCreateOTest is IssuerTest {
         assertTrue(issuer.createdBy(address(token)), "createdBy");
 
         // Check that the vesting token ID is set on the issuer
-        assertEq(issuer.vestingTokenId(address(token)), vestingTokenId, "vestingTokenId");
+        assertEq(
+            issuer.optionTokenToVestingTokenId(address(token)), vestingTokenId, "vestingTokenId"
+        );
 
         // Check that the vesting token's parameters are correct
         (
             bool vestingTokenExists,
-            ,
+            address vestingToken,
             address vestingUnderlyingToken,
             uint256 vestingSupply,
             bytes memory vestingData
@@ -175,6 +181,9 @@ contract IssuerCreateOTest is IssuerTest {
         (uint48 vestingStart, uint48 vestingExpiry) = abi.decode(vestingData, (uint48, uint48));
         assertEq(vestingStart, vestingStart_, "vesting start");
         assertEq(vestingExpiry, vestingExpiry_, "vesting expiry");
+
+        // Check that the vesting token is set on the issuer
+        assertEq(issuer.optionTokenToVestingToken(address(token)), vestingToken, "vestingToken");
 
         // Check that the oToken's parameters are correct
         assertEq(address(token.payout()), address(mgst), "payout");
