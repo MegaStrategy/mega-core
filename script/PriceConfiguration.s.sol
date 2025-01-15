@@ -19,6 +19,8 @@ import {IUniswapV3Pool} from
 import {AggregatorV2V3Interface} from "src/lib/Chainlink/AggregatorV2V3Interface.sol";
 
 contract PriceConfiguration is Script, WithEnvironment {
+    uint48 internal constant DEFAULT_CHAINLINK_UPDATE_THRESHOLD = 24 hours;
+
     /// @notice Installs PRICEv2 submodules
     /// @dev    This must be run by an address with the "admin" role
     function installSubmodules(
@@ -116,8 +118,8 @@ contract PriceConfiguration is Script, WithEnvironment {
                 ChainlinkPriceFeeds.getOneFeedPrice.selector,
                 abi.encode(
                     ChainlinkPriceFeeds.OneFeedParams(
-                        AggregatorV2V3Interface(_envAddressNotZero("external.chainlink.wethUsd")),
-                        24 hours
+                        AggregatorV2V3Interface(_envAddressNotZero("external.chainlink.usdPerEth")),
+                        DEFAULT_CHAINLINK_UPDATE_THRESHOLD
                     )
                 )
             );
@@ -151,8 +153,8 @@ contract PriceConfiguration is Script, WithEnvironment {
                 ChainlinkPriceFeeds.getOneFeedPrice.selector,
                 abi.encode(
                     ChainlinkPriceFeeds.OneFeedParams(
-                        AggregatorV2V3Interface(_envAddressNotZero("external.chainlink.usdcUsd")),
-                        24 hours
+                        AggregatorV2V3Interface(_envAddressNotZero("external.chainlink.usdPerUsdc")),
+                        DEFAULT_CHAINLINK_UPDATE_THRESHOLD
                     )
                 )
             );
