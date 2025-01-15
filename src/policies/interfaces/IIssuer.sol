@@ -24,7 +24,7 @@ interface IIssuer {
 
     // ========== OPTION TOKENS ========== //
 
-    /// @notice Create an option token
+    /// @notice Create an option token with optional vesting
     /// @dev    The implementing function should ensure the following:
     ///         - The caller has the "admin" role
     ///         - The policy is locally active
@@ -32,11 +32,15 @@ interface IIssuer {
     /// @param quoteToken_          The token to quote the option in
     /// @param expiry_              The expiry timestamp of the option, in seconds
     /// @param convertiblePrice_    The price at which the option can be converted
+    /// @param vestingStart_        The start timestamp of the vesting, in seconds (0 if not vesting)
+    /// @param vestingExpiry_       The expiry timestamp of the vesting, in seconds (0 if not vesting)
     /// @return token               The address of the created oToken
     function createO(
         address quoteToken_,
         uint48 expiry_,
-        uint256 convertiblePrice_
+        uint256 convertiblePrice_,
+        uint48 vestingStart_,
+        uint48 vestingExpiry_
     ) external returns (address token);
 
     /// @notice Issue oTokens to an address

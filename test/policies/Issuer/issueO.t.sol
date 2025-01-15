@@ -6,6 +6,7 @@ import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptio
 
 import {IssuerTest} from "./IssuerTest.sol";
 import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
+import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 contract IssuerIssueOTest is IssuerTest {
     // test cases
@@ -23,6 +24,8 @@ contract IssuerIssueOTest is IssuerTest {
     //    [X] it mints the amount of TOKENs
     //    [X] it mints oTokens using the minted TOKENs as collateral (these are held by the teller)
     //    [X] it transfers the oTokens to the recipient
+    // given the oToken was created with vesting
+    //  [X] the vesting token is issued to the recipient
 
     address public token;
     address public recipient = address(200);
@@ -30,7 +33,21 @@ contract IssuerIssueOTest is IssuerTest {
 
     modifier givenOTokenCreated() {
         vm.prank(admin);
-        token = issuer.createO(address(quoteToken), uint48(block.timestamp + 1 days), 1e18);
+        token = issuer.createO(address(quoteToken), uint48(block.timestamp + 1 days), 1e18, 0, 0);
+        _;
+    }
+
+    modifier givenOTokenVestingCreated() {
+        uint48 optionExpiry_ = uint48(block.timestamp + 30 days);
+
+        vm.prank(admin);
+        token = issuer.createO(
+            address(quoteToken),
+            optionExpiry_,
+            1e18,
+            uint48(block.timestamp),
+            uint48(optionExpiry_ - 10 days)
+        );
         _;
     }
 
@@ -79,7 +96,47 @@ contract IssuerIssueOTest is IssuerTest {
 
         vm.prank(admin);
         issuer.issueO(token, to_, amount_);
-        assertEq(mgst.balanceOf(address(teller)), amount_);
-        assertEq(oToken(token).balanceOf(to_), amount_);
+
+        assertEq(mgst.balanceOf(address(teller)), amount_, "teller: MGST balance");
+        assertEq(oToken(token).balanceOf(to_), amount_, "to: oToken balance");
+    }
+
+    function test_vestingEnabled_success(
+        address to_,
+        uint128 amount_
+    ) public givenOTokenVestingCreated {
+        vm.assume(amount_ != 0);
+        vm.assume(to_ != address(0));
+
+        // Get the address of the vesting token
+        uint256 vestingTokenId = issuer.vestingTokenId(address(token));
+        (, address vestingToken,,,) = vestingModule.tokenMetadata(vestingTokenId);
+
+        // Call function
+        vm.prank(admin);
+        issuer.issueO(token, to_, amount_);
+
+        // MGST
+        assertEq(mgst.balanceOf(address(vestingModule)), 0, "vesting module: MGST balance");
+        assertEq(mgst.balanceOf(address(teller)), amount_, "teller: MGST balance");
+        assertEq(mgst.balanceOf(to_), 0, "to: MGST balance");
+
+        // oToken
+        assertEq(
+            oToken(token).balanceOf(address(vestingModule)),
+            amount_,
+            "vesting module: oToken balance"
+        );
+        assertEq(oToken(token).balanceOf(address(teller)), 0, "teller: oToken balance");
+        assertEq(oToken(token).balanceOf(to_), 0, "to: oToken balance");
+
+        // Vesting token
+        assertEq(
+            ERC20(vestingToken).balanceOf(address(vestingModule)),
+            0,
+            "vesting module: vesting token balance"
+        );
+        assertEq(ERC20(vestingToken).balanceOf(address(teller)), 0, "teller: vesting token balance");
+        assertEq(ERC20(vestingToken).balanceOf(to_), amount_, "to: vesting token balance");
     }
 }
