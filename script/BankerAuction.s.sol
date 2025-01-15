@@ -3,19 +3,20 @@ pragma solidity 0.8.19;
 
 import {WithEnvironment} from "./WithEnvironment.s.sol";
 import {console2} from "@forge-std/console2.sol";
-import {CloakConsumer} from "./CloakConsumer.s.sol";
 
-import {Banker} from "../src/policies/Banker.sol";
+import {CloakConsumer} from "./CloakConsumer.s.sol";
 import {Point} from "axis-core-1.0.1/lib/ECIES.sol";
+
+import {IBanker} from "src/policies/interfaces/IBanker.sol";
 
 contract BankerAuctionScript is WithEnvironment, CloakConsumer {
     function _createAuction(
-        Banker.DebtTokenParams memory dtParams_,
-        Banker.AuctionParams memory auctionParams_
+        IBanker.DebtTokenParams memory dtParams_,
+        IBanker.AuctionParams memory auctionParams_
     ) internal {
         // Create the auction
         vm.startBroadcast();
-        Banker(_envAddressNotZero("mega.policies.Banker")).auction(dtParams_, auctionParams_);
+        IBanker(_envAddressNotZero("mega.policies.Banker")).auction(dtParams_, auctionParams_);
         vm.stopBroadcast();
 
         console2.log("Auction created");
@@ -32,14 +33,14 @@ contract BankerAuctionScript is WithEnvironment, CloakConsumer {
         Point memory publicKey = _getPublicKey();
 
         // Load the data from the auction file and construct into the required format
-        Banker.DebtTokenParams memory dtParams;
-        Banker.AuctionParams memory auctionParams;
+        IBanker.DebtTokenParams memory dtParams;
+        IBanker.AuctionParams memory auctionParams;
         {
             console2.log("Loading auction data from ", auctionFilePath_);
             string memory auctionData = vm.readFile(auctionFilePath_);
 
             // Set up debt token params
-            dtParams = Banker.DebtTokenParams({
+            dtParams = IBanker.DebtTokenParams({
                 underlying: address(_envAddressNotZero("external.tokens.USDC")),
                 maturity: uint48(
                     block.timestamp + uint48(vm.parseJsonUint(auctionData, ".auctionParams.maturity"))
@@ -48,7 +49,7 @@ contract BankerAuctionScript is WithEnvironment, CloakConsumer {
             });
 
             // Set up auction params
-            auctionParams = Banker.AuctionParams({
+            auctionParams = IBanker.AuctionParams({
                 start: uint48(
                     block.timestamp + uint48(vm.parseJsonUint(auctionData, ".auctionParams.startDelay"))
                 ),

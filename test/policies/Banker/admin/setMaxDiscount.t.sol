@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
-import {Banker} from "src/policies/Banker.sol";
 
 import {BankerTest} from "../BankerTest.sol";
 
@@ -25,7 +25,7 @@ contract BankerSetMaxDiscountTest is BankerTest {
     }
 
     function test_maxDiscount_greaterThan100Percent_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "discount"));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidParam.selector, "discount"));
 
         vm.prank(admin);
         banker.setMaxDiscount(100e2 + 1);
