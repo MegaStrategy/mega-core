@@ -6,10 +6,11 @@ import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 import {Kernel, Keycode, Permissions, Policy, toKeycode} from "src/Kernel.sol";
 import {PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";
+import {IMegaTokenOracle} from "./interfaces/IMegaTokenOracle.sol";
 
 /// @title MegaTokenOracle
 /// @notice This policy provides an oracle price for the protocol token, compatible with the interface used by the Morpho protocol
-contract MegaTokenOracle is Policy, IOracle {
+contract MegaTokenOracle is Policy, IMegaTokenOracle {
     // =========  ERRORS ========= //
 
     error InvalidParams(string reason_);
@@ -17,6 +18,10 @@ contract MegaTokenOracle is Policy, IOracle {
     // =========  STATE ========= //
 
     address public immutable loanToken;
+
+    uint256 internal _priceScale;
+    uint256 internal _tokenScale;
+    uint256 internal immutable _loanTokenScale;
 
     // Modules
     address public TOKEN;
@@ -29,6 +34,7 @@ contract MegaTokenOracle is Policy, IOracle {
         if (loanToken_ == address(0)) revert InvalidParams("loanToken");
 
         loanToken = loanToken_;
+        _loanTokenScale = 10 ** ERC20(loanToken_).decimals();
     }
 
     /// @inheritdoc Policy
@@ -40,9 +46,8 @@ contract MegaTokenOracle is Policy, IOracle {
         PRICE = PRICEv2(getModuleAddress(dependencies[0]));
         TOKEN = getModuleAddress(dependencies[1]);
 
-        // Validate decimals
-        if (PRICE.decimals() != 18) revert InvalidParams("price decimals");
-        if (ERC20(TOKEN).decimals() != 18) revert InvalidParams("token decimals");
+        _priceScale = 10 ** PRICE.decimals();
+        _tokenScale = 10 ** ERC20(TOKEN).decimals();
 
         return dependencies;
     }
@@ -66,14 +71,28 @@ contract MegaTokenOracle is Policy, IOracle {
         return (major, minor);
     }
 
+    // ========= TOKEN FUNCTIONS ========= //
+
+    /// @inheritdoc IMegaTokenOracle
+    function getCollateralToken() external view override returns (address) {
+        return TOKEN;
+    }
+
+    /// @inheritdoc IMegaTokenOracle
+    function getLoanToken() external view override returns (address) {
+        return loanToken;
+    }
+
     // =========  PRICE FUNCTIONS ========= //
 
     /// @inheritdoc IOracle
     /// @dev        This function returns the price of 1 unit of the protocol token in terms of the loan token, scaled by 1e36.
     function price() external view returns (uint256) {
+        // Scale: PRICE decimals
+        // Adjust the scale to match the collateral token scale
         uint256 collateralPriceInLoanToken = PRICE.getPriceIn(TOKEN, loanToken);
-        uint256 loanTokenScale = 10 ** ERC20(loanToken).decimals();
+        uint256 collateralPrice = collateralPriceInLoanToken * _tokenScale / _priceScale;
 
-        return 1e36 * collateralPriceInLoanToken / loanTokenScale;
+        return 1e36 * collateralPrice / _loanTokenScale;
     }
 }

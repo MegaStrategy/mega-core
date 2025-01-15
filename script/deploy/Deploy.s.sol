@@ -457,12 +457,20 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         address reserve = _getAddressNotZero("external.tokens.USDC");
         address mgst = _getAddressNotZero("external.tokens.MGST");
+        address megaTokenOracle = _getAddressNotZero("mega.policies.MegaTokenOracle");
+
+        // Validate the oracle
+        require(MegaTokenOracle(megaTokenOracle).getLoanToken() == reserve, "loan token mismatch");
+        require(
+            MegaTokenOracle(megaTokenOracle).getCollateralToken() == mgst,
+            "collateral token mismatch"
+        );
 
         // Derive the ID for the MGST<>RESERVE market
         MorphoMarketParams memory mgstMarketParams = MorphoMarketParams({
             loanToken: reserve,
             collateralToken: mgst,
-            oracle: _getAddressNotZero("mega.policies.MegaTokenOracle"),
+            oracle: megaTokenOracle,
             irm: address(0), // Disabled
             lltv: lltv
         });
