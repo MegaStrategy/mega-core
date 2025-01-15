@@ -613,6 +613,8 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         Issuer issuer = Issuer(_getAddressNotZero("mega.policies.Issuer"));
         PriceConfigV2 priceConfigV2 =
             PriceConfigV2(_getAddressNotZero("mega.policies.PriceConfigV2"));
+        MegaTokenOracle megaTokenOracle =
+            MegaTokenOracle(_getAddressNotZero("mega.policies.MegaTokenOracle"));
 
         require(kernel.isPolicyActive(rolesAdmin));
         require(kernel.isPolicyActive(treasuryCustodian));
@@ -620,6 +622,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         require(kernel.isPolicyActive(banker));
         require(kernel.isPolicyActive(issuer));
         require(kernel.isPolicyActive(priceConfigV2));
+        require(kernel.isPolicyActive(megaTokenOracle));
     }
 
     /// @dev Should be called by the deployer address after deployment

@@ -1,10 +1,6 @@
 {
     "sequence": [
         {
-            "name": "MegaTokenOracle",
-            "args": {}
-        },
-        {
             "name": "Hedger",
             "args": {
                 "reserveWethSwapFee": 500,
