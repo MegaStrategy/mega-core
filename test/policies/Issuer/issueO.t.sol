@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Issuer} from "src/policies/Issuer.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptionToken.sol";
 
 import {IssuerTest} from "./IssuerTest.sol";
+import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 
 contract IssuerIssueOTest is IssuerTest {
     // test cases
     // [X] when the caller does not have the admin role
+    //    [X] it reverts
+    // [X] when the policy is not locally active
     //    [X] it reverts
     // [X] when the oToken is not created by the issuer
     //    [X] it reverts
@@ -44,23 +46,30 @@ contract IssuerIssueOTest is IssuerTest {
         issuer.issueO(token, recipient, amount);
     }
 
+    function test_shutdown_reverts() public givenOTokenCreated givenLocallyInactive {
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.Inactive.selector));
+
+        vm.prank(admin);
+        issuer.issueO(token, recipient, amount);
+    }
+
     function test_oTokenNotCreatedByIssuer_reverts() public givenOTokenCreated {
         address _token = address(1000);
 
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSelector(Issuer.InvalidParam.selector, "token"));
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidParam.selector, "token"));
         issuer.issueO(_token, recipient, amount);
     }
 
     function test_toAddressZero_reverts() public givenOTokenCreated {
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSelector(Issuer.InvalidParam.selector, "to"));
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidParam.selector, "to"));
         issuer.issueO(token, address(0), amount);
     }
 
     function test_amountZero_reverts() public givenOTokenCreated {
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSelector(Issuer.InvalidParam.selector, "amount"));
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidParam.selector, "amount"));
         issuer.issueO(token, recipient, 0);
     }
 

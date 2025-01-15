@@ -65,4 +65,10 @@ abstract contract IssuerTest is Test {
         // Set permissioned roles
         rolesAdmin.grantRole(bytes32("admin"), admin);
     }
+
+    modifier givenLocallyInactive() {
+        vm.prank(admin);
+        issuer.shutdown();
+        _;
+    }
 }

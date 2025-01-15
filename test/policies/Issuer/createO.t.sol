@@ -7,9 +7,13 @@ import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptio
 
 import {IssuerTest} from "./IssuerTest.sol";
 
+import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
+
 contract IssuerCreateOTest is IssuerTest {
     // test cases
     // [X] when the caller does not have the admin role
+    //    [X] it reverts
+    // [X] when the policy is not locally active
     //    [X] it reverts
     // [X] when the quote token is the zero address
     //    [X] it reverts
@@ -32,6 +36,13 @@ contract IssuerCreateOTest is IssuerTest {
         vm.expectRevert(
             abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("admin"))
         );
+        issuer.createO(address(quoteToken), uint48(block.timestamp + 1 days), 1e18);
+    }
+
+    function test_shutdown_reverts() public givenLocallyInactive {
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.Inactive.selector));
+
+        vm.prank(admin);
         issuer.createO(address(quoteToken), uint48(block.timestamp + 1 days), 1e18);
     }
 

@@ -15,22 +15,13 @@ import {TransferHelper} from "src/lib/TransferHelper.sol";
 import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptionToken.sol";
 import {IFixedStrikeOptionTeller as oTeller} from "src/lib/oTokens/IFixedStrikeOptionTeller.sol";
 
+import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
+
 /// @title  Issuer
 /// @notice Policy that manages issuance of the protocol token and options tokens
-contract Issuer is Policy, RolesConsumer {
+contract Issuer is Policy, RolesConsumer, IIssuer {
     using Timestamp for uint48;
     using TransferHelper for ERC20;
-
-    // ========== ERRORS ========== //
-
-    error InvalidParam(string name);
-
-    // ========== EVENTS ========== //
-
-    // solhint-disable-next-line event-name-camelcase
-    event oTokenCreated(address indexed oToken);
-    // solhint-disable-next-line event-name-camelcase
-    event oTokenIssued(address indexed oToken, address indexed to, uint256 amount);
 
     // ========== STATE ========== //
 
@@ -39,7 +30,7 @@ contract Issuer is Policy, RolesConsumer {
     TOKENv1 internal TOKEN;
 
     // Local state
-    bool public active;
+    bool public locallyActive;
     oTeller public teller;
 
     /// @notice Whether an oToken was created by this contract
@@ -50,6 +41,9 @@ contract Issuer is Policy, RolesConsumer {
     constructor(Kernel kernel_, address teller_) Policy(kernel_) {
         // Set the teller to create oTokens from
         teller = oTeller(teller_);
+
+        // Enable by default
+        locallyActive = true;
     }
 
     /// @inheritdoc Policy
@@ -80,15 +74,16 @@ contract Issuer is Policy, RolesConsumer {
 
     // ========= MINT ========= //
 
-    /// @notice Mint the protocol token to an address
+    /// @inheritdoc IIssuer
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
+    ///         - The policy is not locally active
     ///         - The amount is zero
     ///         - The to address is zero
-    ///
-    /// @param to_ Address to mint to
-    /// @param amount_ Amount to mint
-    function mint(address to_, uint256 amount_) external onlyRole("admin") {
+    function mint(
+        address to_,
+        uint256 amount_
+    ) external override onlyRole("admin") onlyWhileActive {
         // Amount must be greater than zero
         if (amount_ == 0) revert InvalidParam("amount");
 
@@ -104,22 +99,17 @@ contract Issuer is Policy, RolesConsumer {
 
     // ========== oTokens ========= //
 
-    /// @notice Create an oToken
+    /// @inheritdoc IIssuer
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
     ///         - Validation by the oToken teller fails
     ///
     ///         Note: the expiry timestamp is rounded down to the nearest day
-    ///
-    /// @param quoteToken_          The token to quote the option in
-    /// @param expiry_              The expiry timestamp of the option, in seconds
-    /// @param convertiblePrice_    The price at which the option can be converted
-    /// @return token               The address of the created oToken
     function createO(
         address quoteToken_,
         uint48 expiry_,
         uint256 convertiblePrice_
-    ) external onlyRole("admin") returns (address token) {
+    ) external override onlyRole("admin") onlyWhileActive returns (address token) {
         // Create oToken on oTeller
         // Teller validates the inputs
         token = address(
@@ -141,17 +131,17 @@ contract Issuer is Policy, RolesConsumer {
         emit oTokenCreated(token);
     }
 
-    /// @notice Issue oTokens to an address
+    /// @inheritdoc IIssuer
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
     ///         - `token_` is not an oToken created by this contract
     ///         - `to_` is zero
     ///         - `amount_` is zero
-    ///
-    /// @param token_      The oToken to issue
-    /// @param to_         The address to send the oTokens to
-    /// @param amount_     The amount of oTokens to issue
-    function issueO(address token_, address to_, uint256 amount_) external onlyRole("admin") {
+    function issueO(
+        address token_,
+        address to_,
+        uint256 amount_
+    ) external override onlyRole("admin") onlyWhileActive {
         // Validate that the oToken was created by this contract
         if (!createdBy[token_]) revert InvalidParam("token");
 
@@ -177,6 +167,8 @@ contract Issuer is Policy, RolesConsumer {
         emit oTokenIssued(token_, to_, amount_);
     }
 
+    // ========== ADMIN ========== //
+
     /// @notice Set the oToken teller
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
@@ -186,5 +178,24 @@ contract Issuer is Policy, RolesConsumer {
         address teller_
     ) external onlyRole("admin") {
         teller = oTeller(teller_);
+    }
+
+    /// @notice Enable the contract functionality
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    function activate() external onlyRole("admin") {
+        locallyActive = true;
+    }
+
+    /// @notice Disable the contract functionality
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    function shutdown() external onlyRole("admin") {
+        locallyActive = false;
+    }
+
+    modifier onlyWhileActive() {
+        if (!locallyActive) revert Inactive();
+        _;
     }
 }
