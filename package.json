@@ -34,6 +34,16 @@
             "prettier-plugin-sh",
             "prettier-plugin-sort-json"
         ],
-        "jsonRecursiveSort": true
+        "jsonRecursiveSort": true,
+        "overrides": [
+            {
+                "files": [
+                    "./script/deploy/sequences/**/*.json"
+                ],
+                "options": {
+                    "jsonRecursiveSort": false
+                }
+            }
+        ]
     }
 }
