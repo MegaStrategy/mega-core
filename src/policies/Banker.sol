@@ -39,7 +39,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
     uint8 internal _tokenDecimals;
 
     // Local state
-    bool public active;
+    bool public locallyActive;
 
     // Auction parameters
     uint48 internal constant ONE_HUNDRED_PERCENT = 100e2;
@@ -121,7 +121,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
         uint48 referrerFee_,
         uint256 maxBids_
     ) external onlyRole("admin") {
-        active = true;
+        locallyActive = true;
 
         maxDiscount = maxDiscount_;
         minFillPercent = minFillPercent_;
@@ -130,11 +130,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
     }
 
     function shutdown() external onlyRole("admin") {
-        active = false;
+        locallyActive = false;
     }
 
     modifier onlyWhileActive() {
-        if (!active) revert Inactive();
+        if (!locallyActive) revert Inactive();
         _;
     }
 

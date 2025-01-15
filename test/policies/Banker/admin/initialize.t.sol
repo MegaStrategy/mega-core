@@ -26,7 +26,7 @@ contract BankerInitializeTest is BankerTest {
         vm.prank(admin);
         banker.initialize(maxDiscount, minFillPercent, referrerFee, maxBids);
 
-        assertEq(banker.active(), true, "active");
+        assertEq(banker.locallyActive(), true, "active");
         assertEq(banker.maxDiscount(), maxDiscount, "maxDiscount");
         assertEq(banker.minFillPercent(), minFillPercent, "minFillPercent");
         assertEq(banker.referrerFee(), referrerFee, "referrerFee");
