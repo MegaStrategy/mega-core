@@ -2,6 +2,8 @@ name: CI
 
 on:
     push:
+        branches:
+            - main
     pull_request:
     workflow_dispatch:
 
@@ -28,7 +30,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly
+                  version: stable
 
             - name: Show Forge version
               run: |
