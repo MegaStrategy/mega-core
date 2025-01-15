@@ -1,76 +1,72 @@
 {
-  "sequence": [
-    {
-      "name": "Kernel"
-    },
-    {
-      "name": "OlympusTreasury",
-      "args": {}
-    },
-    {
-      "name": "Token",
-      "args": {
-        "name": "MegaStrategy",
-        "symbol": "MSTE"
-      }
-    },
-    {
-      "name": "OlympusRoles",
-      "args": {}
-    },
-    {
-      "name": "OlympusPriceV2",
-      "args": {
-        "decimals": 18,
-        "observationFrequency": 28800
-      }
-    },
-    {
-      "name": "ChainlinkPriceFeeds",
-      "args": {}
-    },
-    {
-      "name": "UniswapV3Price",
-      "args": {}
-    },
-    {
-      "name": "SimplePriceFeedStrategy",
-      "args": {}
-    },
-    {
-      "name": "TreasuryCustodian",
-      "args": {}
-    },
-    {
-      "name": "RolesAdmin",
-      "args": {}
-    },
-    {
-      "name": "Emergency",
-      "args": {}
-    },
-    {
-      "name": "Banker",
-      "args": {}
-    },
-    {
-      "name": "FixedStrikeOptionTeller",
-      "args": {
-        "guardian": "0x007F3eD580c754A9495881b066e9FC98e406c214",
-        "authority": "0x0000000000000000000000000000000000000000"
-      }
-    },
-    {
-      "name": "Issuer",
-      "args": {}
-    },
-    {
-      "name": "PriceConfigV2",
-      "args": {}
-    },
-    {
-      "name": "MegaTokenOracle",
-      "args": {}
-    }
-  ]
+    "sequence": [
+        {
+            "name": "Kernel"
+        },
+        {
+            "name": "OlympusTreasury",
+            "args": {}
+        },
+        {
+            "name": "Token",
+            "args": {
+                "name": "MegaStrategy",
+                "symbol": "MSTE"
+            }
+        },
+        {
+            "name": "OlympusRoles",
+            "args": {}
+        },
+        {
+            "name": "OlympusPriceV2",
+            "args": {
+                "decimals": 18,
+                "observationFrequency": 28800
+            }
+        },
+        {
+            "name": "ChainlinkPriceFeeds",
+            "args": {}
+        },
+        {
+            "name": "UniswapV3Price",
+            "args": {}
+        },
+        {
+            "name": "SimplePriceFeedStrategy",
+            "args": {}
+        },
+        {
+            "name": "TreasuryCustodian",
+            "args": {}
+        },
+        {
+            "name": "RolesAdmin",
+            "args": {}
+        },
+        {
+            "name": "Emergency",
+            "args": {}
+        },
+        {
+            "name": "Banker",
+            "args": {}
+        },
+        {
+            "name": "FixedStrikeOptionTeller",
+            "args": {
+                "guardian": "0x007F3eD580c754A9495881b066e9FC98e406c214",
+                "authority": "0x0000000000000000000000000000000000000000"
+            }
+        },
+        {
+            "name": "Issuer",
+            "args": {}
+        },
+        {
+            "name": "PriceConfigV2",
+            "args": {}
+        }
+    ]
 }
