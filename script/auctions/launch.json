@@ -13,9 +13,8 @@
     "auctionParams": {
         "capacity": 1000000000000000000000000,
         "duration": 604800,
-        "minBidSize": 10000000000000000,
         "minFillPercent": 5000,
-        "minPrice": 10000000000000000,
+        "price": 1000000000000000000,
         "startDelay": 60
     },
     "callbackParams": {

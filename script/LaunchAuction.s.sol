@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {console2} from "@forge-std/console2.sol";
 import {WithEnvironment} from "./WithEnvironment.s.sol";
-import {CloakConsumer} from "./CloakConsumer.s.sol";
 
 // Libraries
 import {TransferHelper} from "src/lib/TransferHelper.sol";
@@ -13,8 +12,7 @@ import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
 import {IAuctionHouse} from "axis-core-1.0.1/interfaces/IAuctionHouse.sol";
 import {IAuction} from "axis-core-1.0.1/interfaces/modules/IAuction.sol";
-import {IEncryptedMarginalPrice} from
-    "axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
+import {IFixedPriceBatch} from "axis-core-1.0.1/interfaces/modules/auctions/IFixedPriceBatch.sol";
 import {ICallback} from "axis-core-1.0.1/interfaces/ICallback.sol";
 import {IBaseDirectToLiquidity} from "src/lib/axis/IBaseDirectToLiquidity.sol";
 import {IUniswapV3DirectToLiquidity} from "src/lib/axis/IUniswapV3DirectToLiquidity.sol";
@@ -22,7 +20,7 @@ import {IUniswapV3DirectToLiquidity} from "src/lib/axis/IUniswapV3DirectToLiquid
 // Mega contracts
 import {Issuer} from "src/policies/Issuer.sol";
 
-contract LaunchAuction is WithEnvironment, CloakConsumer {
+contract LaunchAuction is WithEnvironment {
     using TransferHelper for ERC20;
 
     function launch(
@@ -83,13 +81,10 @@ contract LaunchAuction is WithEnvironment, CloakConsumer {
             wrapDerivative: false
         });
 
-        // Prepare the EMP parameters
-        IEncryptedMarginalPrice.AuctionDataParams memory empParams = IEncryptedMarginalPrice
-            .AuctionDataParams({
-            minPrice: vm.parseJsonUint(auctionData, ".auctionParams.minPrice"),
-            minFillPercent: uint24(vm.parseJsonUint(auctionData, ".auctionParams.minFillPercent")),
-            minBidSize: vm.parseJsonUint(auctionData, ".auctionParams.minBidSize"),
-            publicKey: _getPublicKey()
+        // Prepare the FPB parameters
+        IFixedPriceBatch.AuctionDataParams memory fpbParams = IFixedPriceBatch.AuctionDataParams({
+            price: vm.parseJsonUint(auctionData, ".auctionParams.price"),
+            minFillPercent: uint24(vm.parseJsonUint(auctionData, ".auctionParams.minFillPercent"))
         });
 
         // Prepare the auction parameters
@@ -100,7 +95,7 @@ contract LaunchAuction is WithEnvironment, CloakConsumer {
             duration: uint48(vm.parseJsonUint(auctionData, ".auctionParams.duration")),
             capacityInQuote: false,
             capacity: capacity,
-            implParams: abi.encode(empParams)
+            implParams: abi.encode(fpbParams)
         });
 
         // Create the auction
