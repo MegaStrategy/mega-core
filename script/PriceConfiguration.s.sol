@@ -84,7 +84,7 @@ contract PriceConfiguration is Script, WithEnvironment {
                 abi.encode(
                     UniswapV3Price.UniswapV3Params({
                         pool: IUniswapV3Pool(_envAddressNotZero("external.pools.mgstWeth")),
-                        observationWindowSeconds: 1 hours
+                        observationWindowSeconds: 15 minutes
                     })
                 )
             );
