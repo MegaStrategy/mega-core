@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Banker} from "src/policies/Banker.sol";
+import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 
@@ -26,7 +26,7 @@ contract BankerRedeemTest is BankerTest {
 
     function test_policyNotActive_reverts() public {
         vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(Banker.Inactive.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.Inactive.selector));
         banker.redeem(debtToken, 1e18);
     }
 
@@ -49,7 +49,7 @@ contract BankerRedeemTest is BankerTest {
         deal(_debtToken, buyer, 1e18);
 
         vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidDebtToken.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidDebtToken.selector));
         banker.redeem(_debtToken, 1e18);
     }
 
@@ -60,14 +60,14 @@ contract BankerRedeemTest is BankerTest {
 
         vm.warp(time);
         vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(Banker.DebtTokenNotMatured.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.DebtTokenNotMatured.selector));
         banker.redeem(debtToken, 1e18);
     }
 
     function test_amountZero_reverts() public givenPolicyIsActive givenDebtTokenCreated {
         vm.warp(debtTokenParams.maturity);
         vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "amount"));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidParam.selector, "amount"));
         banker.redeem(debtToken, 0);
     }
 

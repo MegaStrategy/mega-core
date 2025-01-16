@@ -96,7 +96,7 @@ contract HedgerTest is Test, WithSalts {
         mgst = new MegaToken(kernel, "MGST", "MGST");
         roles = new OlympusRoles(kernel);
         treasury = new OlympusTreasury(kernel);
-        issuer = new Issuer(kernel, address(0)); // No oToken teller needed
+        issuer = new Issuer(kernel, address(0), address(0)); // No oToken teller needed
         rolesAdmin = new RolesAdmin(kernel);
         vm.stopPrank();
 

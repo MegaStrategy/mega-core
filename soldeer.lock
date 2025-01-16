@@ -6,6 +6,19 @@ checksum = "57f2cae4b45b91b0847e58c36ea70aee0fb3212cc09b47279627f0764f87e5ee"
 integrity = "861134d6a3739362ce5ef6541538e23ca1df10ec47151f105057bea0bb710330"
 
 [[dependencies]]
+name = "@uniswap-v3-core"
+version = "1.0.2-solc-0.8-simulate"
+url = "https://soldeer-revisions.s3.amazonaws.com/@uniswap-v3-core/1_0_2-solc-0_8-simulate_22-01-2024_13:19:54_v3-core.zip"
+checksum = "68949c67a4f22044e4c8dc716362b6d79b07e8990e720bec9b116f54b233ef57"
+integrity = "697a089ffe197580b6cfe07f0c4dd8a35da0836fd1d9e522f73efda4b7314e01"
+
+[[dependencies]]
+name = "@uniswap-v3-periphery"
+version = "1.4.2-solc-0.8"
+git = "https://github.com/Uniswap/v3-periphery.git"
+rev = "b325bb0905d922ae61fcc7df85ee802e8df5e96c"
+
+[[dependencies]]
 name = "axis-core"
 version = "1.0.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/axis-core/1_0_1_22-08-2024_01:53:20_axis-core.zip"
@@ -18,6 +31,12 @@ version = "1.0.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/axis-periphery/1_0_0_22-08-2024_19:37:58_axis-periphery.zip"
 checksum = "fb20c7ebe7ab30697b72300c8c9e4cc847de98c35ab8c05b5d71fe3ed59fead0"
 integrity = "289e922ce8d2419e991f94b6a26339377e255931a7e61a3d44725642ff97ba41"
+
+[[dependencies]]
+name = "clones-with-immutable-args"
+version = "1.1.1"
+git = "https://github.com/wighawag/clones-with-immutable-args.git"
+rev = "f5ca191afea933d50a36d101009b5644dc28bc99"
 
 [[dependencies]]
 name = "forge-std"

@@ -15,6 +15,8 @@ import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 import {FixedStrikeOptionTeller as oTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
 import {Authority} from "solmate-6.8.0/auth/Auth.sol";
 
+import {LinearVesting} from "axis-core-1.0.1/modules/derivatives/LinearVesting.sol";
+
 // solhint-disable max-states-count
 abstract contract IssuerTest is Test {
     // Note: block.timestamp starts at 1
@@ -27,6 +29,9 @@ abstract contract IssuerTest is Test {
     Issuer public issuer;
     RolesAdmin public rolesAdmin;
 
+    // Axis contracts
+    LinearVesting public vestingModule;
+
     // External contracts (bond protocol options)
     oTeller public teller;
 
@@ -37,6 +42,9 @@ abstract contract IssuerTest is Test {
     address public admin = address(0xAAAA);
 
     function setUp() public {
+        // Set the block timestamp to some time in 2024
+        vm.warp(1_709_481_600);
+
         // Deploy the option teller
         teller = new oTeller(address(this), Authority(address(0)));
 
@@ -46,13 +54,17 @@ abstract contract IssuerTest is Test {
         // Deploy system contracts
         kernel = new Kernel();
 
+        // Set up the vesting module
+        // We can pass anything to the constructor, even if it isn't correct
+        vestingModule = new LinearVesting(address(kernel));
+
         // Modules
         ROLES = new OlympusRoles(kernel);
         TRSRY = new OlympusTreasury(kernel);
         mgst = new MegaToken(kernel, "MGST", "MGST");
 
         // Policies
-        issuer = new Issuer(kernel, address(teller));
+        issuer = new Issuer(kernel, address(teller), address(vestingModule));
         rolesAdmin = new RolesAdmin(kernel);
 
         // Install the modules and policies in the kernel
@@ -64,5 +76,11 @@ abstract contract IssuerTest is Test {
 
         // Set permissioned roles
         rolesAdmin.grantRole(bytes32("admin"), admin);
+    }
+
+    modifier givenLocallyInactive() {
+        vm.prank(admin);
+        issuer.shutdown();
+        _;
     }
 }
