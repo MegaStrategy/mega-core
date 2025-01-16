@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Issuer} from "src/policies/Issuer.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 
 import {IssuerTest} from "./IssuerTest.sol";
+import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 
 contract IssuerMintTest is IssuerTest {
     // test cases
     // [X] when the caller does not have the admin role
+    //    [X] it reverts
+    // [X] when the policy is not locally active
     //    [X] it reverts
     // [X] when the to address is zero
     //    [X] it reverts
@@ -29,15 +31,22 @@ contract IssuerMintTest is IssuerTest {
         issuer.mint(address(this), 1e18);
     }
 
+    function test_shutdown_reverts() public givenLocallyInactive {
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.Inactive.selector));
+
+        vm.prank(admin);
+        issuer.mint(address(this), 1e18);
+    }
+
     function test_toAddressZero_reverts() public {
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSelector(Issuer.InvalidParam.selector, "to"));
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidParam.selector, "to"));
         issuer.mint(address(0), 1e18);
     }
 
     function test_amountZero_reverts() public {
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSelector(Issuer.InvalidParam.selector, "amount"));
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidParam.selector, "amount"));
         issuer.mint(address(this), 0);
     }
 
@@ -47,6 +56,6 @@ contract IssuerMintTest is IssuerTest {
 
         vm.prank(admin);
         issuer.mint(to_, amount_);
-        assertEq(TOKEN.balanceOf(to_), amount_);
+        assertEq(mgst.balanceOf(to_), amount_);
     }
 }

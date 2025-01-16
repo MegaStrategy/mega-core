@@ -2,6 +2,8 @@ name: CI
 
 on:
     push:
+        branches:
+            - main
     pull_request:
     workflow_dispatch:
 
@@ -28,7 +30,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly
+                  version: stable
 
             - name: Show Forge version
               run: |
@@ -45,10 +47,17 @@ jobs:
 
             - name: Run Forge build
               run: |
-                  forge build --sizes
+                  forge build
               id: build
 
             - name: Run Forge tests
+              env:
+                  FORK_RPC_URL: ${{ secrets.FORK_RPC_URL }}
               run: |
                   forge test -vvv
               id: test
+
+            - name: Build Size
+              run: |
+                  pnpm run size
+              id: size

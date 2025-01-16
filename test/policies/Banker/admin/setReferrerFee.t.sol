@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
-import {Banker} from "src/policies/Banker.sol";
+import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
 import {IFeeManager} from "axis-core-1.0.1/interfaces/IFeeManager.sol";
 
@@ -31,7 +31,7 @@ contract BankerSetReferrerFeeTest is BankerTest {
         vm.prank(OWNER);
         auctionHouse.setFee(toKeycode("EMPA"), IFeeManager.FeeType.MaxReferrer, 10e2);
 
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "referrerFee"));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidParam.selector, "referrerFee"));
 
         vm.prank(admin);
         banker.setReferrerFee(10e2 + 1);

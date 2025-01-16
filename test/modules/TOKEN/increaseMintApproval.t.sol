@@ -24,16 +24,16 @@ contract IncreaseMintApprovalTest is TokenTest {
         vm.expectRevert(abi.encodeWithSelector(Module.Module_PolicyNotPermitted.selector, USER));
 
         vm.prank(USER);
-        mstr.increaseMintApproval(USER, 100);
+        mgst.increaseMintApproval(USER, 100);
     }
 
     function test_moduleNotActive() public givenModuleIsInstalled givenModuleIsInactive {
         // Call
         vm.prank(godmode);
-        mstr.increaseMintApproval(godmode, 100);
+        mgst.increaseMintApproval(godmode, 100);
 
         // Assert
-        assertEq(mstr.mintApproval(godmode), 100, "mintApproval");
+        assertEq(mgst.mintApproval(godmode), 100, "mintApproval");
     }
 
     function test_newAmountExceedsMax(
@@ -52,10 +52,10 @@ contract IncreaseMintApprovalTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.increaseMintApproval(godmode, increaseAmount);
+        mgst.increaseMintApproval(godmode, increaseAmount);
 
         // Assert
-        assertEq(mstr.mintApproval(godmode), type(uint256).max, "mintApproval");
+        assertEq(mgst.mintApproval(godmode), type(uint256).max, "mintApproval");
     }
 
     function test_success(
@@ -69,19 +69,19 @@ contract IncreaseMintApprovalTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.increaseMintApproval(godmode, increaseAmount);
+        mgst.increaseMintApproval(godmode, increaseAmount);
 
         // Assert
-        assertEq(mstr.mintApproval(godmode), 100 + increaseAmount, "mintApproval");
+        assertEq(mgst.mintApproval(godmode), 100 + increaseAmount, "mintApproval");
     }
 
     function test_recipientIsNotCaller() public givenModuleIsInstalled givenModuleIsActive {
         // Call
         vm.prank(godmode);
-        mstr.increaseMintApproval(USER, 100);
+        mgst.increaseMintApproval(USER, 100);
 
         // Assert
-        assertEq(mstr.mintApproval(USER), 100, "mintApproval");
-        assertEq(mstr.mintApproval(godmode), 0, "mintApproval");
+        assertEq(mgst.mintApproval(USER), 100, "mintApproval");
+        assertEq(mgst.mintApproval(godmode), 0, "mintApproval");
     }
 }

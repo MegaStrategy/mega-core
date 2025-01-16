@@ -7,7 +7,6 @@ import {IAuctionHouse, IAuction} from "axis-core-1.0.1/interfaces/IAuctionHouse.
 import {IFeeManager} from "axis-core-1.0.1/interfaces/IFeeManager.sol";
 import {IEncryptedMarginalPrice} from
     "axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
-import {Point} from "axis-core-1.0.1/lib/ECIES.sol";
 import {toKeycode as toAxisKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
 
 import {Kernel, Policy, Keycode, toKeycode, Permissions} from "src/Kernel.sol";
@@ -25,56 +24,12 @@ import {uint2str} from "src/lib/Uint2Str.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {TransferHelper} from "src/lib/TransferHelper.sol";
 
+import {IBanker} from "./interfaces/IBanker.sol";
+
 /// @title  Banker
 /// @notice Policy that launches EMP-style auctions to sell convertible debt tokens
-contract Banker is Policy, RolesConsumer, BaseCallback {
+contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
     using TransferHelper for ERC20;
-
-    // ========== ERRORS ========== //
-
-    error InvalidDebtToken();
-    error InvalidParam(string name);
-    error Inactive();
-    error DebtTokenMatured();
-    error DebtTokenNotMatured();
-    error OnlyLocal();
-
-    // ========== EVENTS ========== //
-
-    event DebtAuction(uint96 lotId);
-    event DebtIssued(address debtToken, address to, uint256 amount);
-    event DebtRepaid(address debtToken, address from, uint256 amount);
-    event DebtConverted(address debtToken, address from, uint256 amount, uint256 mintAmount);
-    event AuctionSucceeded(address debtToken, uint256 refund, address underlying, uint256 proceeds);
-    event MaxDiscountSet(uint256 maxDiscount);
-    event MinFillPercentSet(uint24 minFillPercent);
-    event MaxBidsSet(uint256 maxBids);
-    event ReferrerFeeSet(uint48 referrerFee);
-
-    /// @notice Emitted when a new convertible debt token is created
-    event ConvertibleDebtTokenCreated(
-        address indexed cdt,
-        address indexed underlying,
-        address indexed convertsTo,
-        uint48 maturity,
-        uint256 conversionPrice
-    );
-
-    // ========== DATA STRUCTURES ========== //
-
-    struct DebtTokenParams {
-        address underlying;
-        uint48 maturity;
-        uint256 conversionPrice;
-    }
-
-    struct AuctionParams {
-        uint48 start;
-        uint48 duration;
-        uint256 capacity;
-        Point auctionPublicKey;
-        string infoHash;
-    }
 
     // ========== STATE ========== //
 
@@ -84,7 +39,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     uint8 internal _tokenDecimals;
 
     // Local state
-    bool public active;
+    bool public locallyActive;
 
     // Auction parameters
     uint48 internal constant ONE_HUNDRED_PERCENT = 100e2;
@@ -125,6 +80,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         )
     {}
 
+    /// @inheritdoc Policy
     function configureDependencies() external override returns (Keycode[] memory dependencies) {
         dependencies = new Keycode[](3);
         dependencies[0] = toKeycode("TRSRY");
@@ -138,6 +94,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         _tokenDecimals = TOKEN.decimals();
     }
 
+    /// @inheritdoc Policy
     function requestPermissions()
         external
         view
@@ -164,7 +121,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         uint48 referrerFee_,
         uint256 maxBids_
     ) external onlyRole("admin") {
-        active = true;
+        locallyActive = true;
 
         maxDiscount = maxDiscount_;
         minFillPercent = minFillPercent_;
@@ -173,22 +130,21 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     }
 
     function shutdown() external onlyRole("admin") {
-        active = false;
+        locallyActive = false;
     }
 
     modifier onlyWhileActive() {
-        if (!active) revert Inactive();
+        if (!locallyActive) revert Inactive();
         _;
     }
 
     // ========== AUCTION ========== //
 
+    /// @inheritdoc IBanker
     function auction(
         DebtTokenParams calldata dtParams_,
         AuctionParams calldata aParams_
-    ) external onlyRole("manager") onlyWhileActive {
-        // TODO should we restrict the underlying asset to a predefined list?
-
+    ) external override onlyRole("manager") onlyWhileActive {
         // Inputs are validated when creating the debt token and launching the auction
 
         // Create debt token
@@ -246,6 +202,8 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         // Emit event
         emit DebtAuction(lotId);
     }
+
+    // ========== CALLBACKS ========== //
 
     /// @inheritdoc BaseCallback
     function _onCreate(
@@ -331,11 +289,12 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // ========== FACTORY ========== //
 
+    /// @inheritdoc IBanker
     function createDebtToken(
         address asset_,
         uint48 maturity_,
         uint256 conversionPrice_
-    ) external onlyRole("manager") onlyWhileActive returns (address) {
+    ) external override onlyRole("manager") onlyWhileActive returns (address) {
         return _createDebtToken(DebtTokenParams(asset_, maturity_, conversionPrice_));
     }
 
@@ -387,11 +346,12 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
 
     // ========== ISSUANCE =========== //
 
+    /// @inheritdoc IBanker
     function issue(
         address debtToken_,
         address to_,
         uint256 amount_
-    ) external onlyRole("manager") onlyWhileActive {
+    ) external override onlyRole("manager") onlyWhileActive {
         _issue(debtToken_, to_, amount_);
     }
 
@@ -444,6 +404,8 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
     // For example, in order to do buy backs of the token below the backing
     // value, we need to have paid back all outstanding debts so as to not
     // increase credit risk by exchanging reserves for tokens.
+
+    /// @inheritdoc IBanker
     function redeem(address debtToken_, uint256 amount_) external onlyWhileActive {
         // Validate that the debt token was created by this issuer
         if (!createdBy[debtToken_]) revert InvalidDebtToken();
@@ -476,7 +438,8 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         emit DebtRepaid(debtToken_, msg.sender, amount_);
     }
 
-    function convert(address debtToken_, uint256 amount_) external onlyWhileActive {
+    /// @inheritdoc IBanker
+    function convert(address debtToken_, uint256 amount_) external override onlyWhileActive {
         // Validate the debt token was created by this issuer
         if (!createdBy[debtToken_]) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
@@ -518,17 +481,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback {
         return (amount * 10 ** _tokenDecimals) / conversionPrice;
     }
 
-    /// @notice Get the converted amount of TOKEN for a given amount of debt tokens
-    /// @dev    This function will revert if:
-    ///         - The debt token was not created by this issuer
-    ///
-    /// @param  debtToken_      Address of the debt token
-    /// @param  amount_         Amount of debt tokens to convert
-    /// @return convertedAmount Amount of TOKEN that would be minted for the given amount of debt tokens
+    /// @inheritdoc IBanker
     function getConvertedAmount(
         address debtToken_,
         uint256 amount_
-    ) external view returns (uint256 convertedAmount) {
+    ) external view override returns (uint256 convertedAmount) {
         // Validate that the debt token was created by this issuer
         if (!createdBy[debtToken_]) revert InvalidDebtToken();
 

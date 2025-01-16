@@ -8,29 +8,27 @@ import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
 import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
 import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
 
+// Policies
+import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
+
+// Libraries
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {Timestamp} from "axis-core-1.0.1/lib/Timestamp.sol";
 import {TransferHelper} from "src/lib/TransferHelper.sol";
 
+// Option tokens
 import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptionToken.sol";
 import {IFixedStrikeOptionTeller as oTeller} from "src/lib/oTokens/IFixedStrikeOptionTeller.sol";
 
+// Vesting
+import {ILinearVesting} from "axis-core-1.0.1/interfaces/modules/derivatives/ILinearVesting.sol";
+import {LinearVesting} from "axis-core-1.0.1/modules/derivatives/LinearVesting.sol";
+
 /// @title  Issuer
-/// @notice Policy that manages issuance of MSTR and options tokens
-contract Issuer is Policy, RolesConsumer {
+/// @notice Policy that manages issuance of the protocol token and options tokens
+contract Issuer is Policy, RolesConsumer, IIssuer {
     using Timestamp for uint48;
     using TransferHelper for ERC20;
-
-    // ========== ERRORS ========== //
-
-    error InvalidParam(string name);
-
-    // ========== EVENTS ========== //
-
-    // solhint-disable-next-line event-name-camelcase
-    event oTokenCreated(address indexed oToken);
-    // solhint-disable-next-line event-name-camelcase
-    event oTokenIssued(address indexed oToken, address indexed to, uint256 amount);
 
     // ========== STATE ========== //
 
@@ -39,17 +37,31 @@ contract Issuer is Policy, RolesConsumer {
     TOKENv1 internal TOKEN;
 
     // Local state
-    bool public active;
+    bool public locallyActive;
+
     oTeller public teller;
+    LinearVesting public vestingModule;
 
     /// @notice Whether an oToken was created by this contract
     mapping(address => bool) public createdBy;
 
+    /// @notice The ID of the vesting token created for an oToken
+    mapping(address => uint256) public optionTokenToVestingTokenId;
+
+    /// @notice The ID of the vesting token created for an oToken
+    mapping(address => address) public optionTokenToVestingToken;
+
     // ========= POLICY SETUP ========= //
 
-    constructor(Kernel kernel_, address teller_) Policy(kernel_) {
+    constructor(Kernel kernel_, address teller_, address vestingModule_) Policy(kernel_) {
         // Set the teller to create oTokens from
         teller = oTeller(teller_);
+
+        // Set the vesting module
+        vestingModule = LinearVesting(vestingModule_);
+
+        // Enable by default
+        locallyActive = true;
     }
 
     /// @inheritdoc Policy
@@ -80,15 +92,16 @@ contract Issuer is Policy, RolesConsumer {
 
     // ========= MINT ========= //
 
-    /// @notice Mint MSTR to an address
+    /// @inheritdoc IIssuer
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
+    ///         - The policy is not locally active
     ///         - The amount is zero
     ///         - The to address is zero
-    ///
-    /// @param to_ Address to mint to
-    /// @param amount_ Amount to mint
-    function mint(address to_, uint256 amount_) external onlyRole("admin") {
+    function mint(
+        address to_,
+        uint256 amount_
+    ) external override onlyRole("admin") onlyWhileActive {
         // Amount must be greater than zero
         if (amount_ == 0) revert InvalidParam("amount");
 
@@ -98,33 +111,32 @@ contract Issuer is Policy, RolesConsumer {
         // Increase mint allowance by provided amount
         TOKEN.increaseMintApproval(address(this), amount_);
 
-        // Mint the MSTR
+        // Mint the protocol token
         TOKEN.mint(to_, amount_);
     }
 
     // ========== oTokens ========= //
 
-    /// @notice Create an oToken
+    /// @inheritdoc IIssuer
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
+    ///         - The policy is not locally active
+    ///         - The vesting expiry is >= 1 week before the option token expiry
     ///         - Validation by the oToken teller fails
     ///
     ///         Note: the expiry timestamp is rounded down to the nearest day
-    ///
-    /// @param quoteToken_          The token to quote the option in
-    /// @param expiry_              The expiry timestamp of the option, in seconds
-    /// @param convertiblePrice_    The price at which the option can be converted
-    /// @return token               The address of the created oToken
     function createO(
         address quoteToken_,
         uint48 expiry_,
-        uint256 convertiblePrice_
-    ) external onlyRole("admin") returns (address token) {
+        uint256 convertiblePrice_,
+        uint48 vestingStart_,
+        uint48 vestingExpiry_
+    ) external override onlyRole("admin") onlyWhileActive returns (address token) {
         // Create oToken on oTeller
         // Teller validates the inputs
         token = address(
             teller.deploy(
-                ERC20(address(TOKEN)), // payoutToken_ = MSTR
+                ERC20(address(TOKEN)), // payoutToken_ = protocol token
                 ERC20(quoteToken_), // quoteToken_ = quoteToken
                 uint48(0), // eligible_ = immediately: TODO should we allow setting this?
                 expiry_, // expiry_ = expiry
@@ -137,21 +149,43 @@ contract Issuer is Policy, RolesConsumer {
         // Mark the oToken as created by this contract
         createdBy[token] = true;
 
+        // Create a vesting token if vesting parameters are provided
+        address vestingToken;
+        if (vestingStart_ != 0 && vestingExpiry_ != 0) {
+            // Vesting expiry must be at least 1 week before option token expiry, with a buffer of 1 week
+            if (vestingExpiry_ > expiry_ - 1 weeks) revert InvalidParam("vesting expiry");
+
+            uint256 tokenId;
+            (tokenId, vestingToken) = vestingModule.deploy(
+                address(token),
+                abi.encode(
+                    ILinearVesting.VestingParams({start: vestingStart_, expiry: vestingExpiry_})
+                ),
+                true
+            );
+
+            // Set the vesting token ID
+            optionTokenToVestingTokenId[token] = tokenId;
+
+            // Set the vesting token
+            optionTokenToVestingToken[token] = vestingToken;
+        }
+
         // Emit event
-        emit oTokenCreated(token);
+        emit oTokenCreated(token, vestingToken);
     }
 
-    /// @notice Issue oTokens to an address
+    /// @inheritdoc IIssuer
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
     ///         - `token_` is not an oToken created by this contract
     ///         - `to_` is zero
     ///         - `amount_` is zero
-    ///
-    /// @param token_      The oToken to issue
-    /// @param to_         The address to send the oTokens to
-    /// @param amount_     The amount of oTokens to issue
-    function issueO(address token_, address to_, uint256 amount_) external onlyRole("admin") {
+    function issueO(
+        address token_,
+        address to_,
+        uint256 amount_
+    ) external override onlyRole("admin") onlyWhileActive {
         // Validate that the oToken was created by this contract
         if (!createdBy[token_]) revert InvalidParam("token");
 
@@ -165,17 +199,31 @@ contract Issuer is Policy, RolesConsumer {
         TOKEN.increaseMintApproval(address(this), amount_);
         TOKEN.mint(address(this), amount_);
 
-        // Mint the oToken from the teller
         // Approve the teller to pull the newly minted TOKENs
         ERC20(address(TOKEN)).safeApprove(address(teller), amount_);
+
+        // Mint the oToken from the teller
         teller.create(oToken(token_), amount_);
 
-        // Send the oTokens to the recipient
-        ERC20(token_).safeTransfer(to_, amount_);
+        // Vesting disabled
+        if (optionTokenToVestingTokenId[token_] == 0) {
+            // Send the oTokens to the recipient
+            ERC20(token_).safeTransfer(to_, amount_);
+        }
+        // Vesting enabled
+        else {
+            // Approve the vesting module to pull the newly minted option tokens
+            ERC20(token_).safeApprove(address(vestingModule), amount_);
+
+            // Mint the vesting tokens to the recipient
+            vestingModule.mint(to_, optionTokenToVestingTokenId[token_], amount_, true);
+        }
 
         // Emit event
-        emit oTokenIssued(token_, to_, amount_);
+        emit oTokenIssued(token_, optionTokenToVestingToken[token_], to_, amount_);
     }
+
+    // ========== ADMIN ========== //
 
     /// @notice Set the oToken teller
     /// @dev    This function reverts if:
@@ -186,5 +234,35 @@ contract Issuer is Policy, RolesConsumer {
         address teller_
     ) external onlyRole("admin") {
         teller = oTeller(teller_);
+    }
+
+    /// @notice Set the vesting module
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    ///
+    /// @param vestingModule_ The new vesting module
+    function setVestingModule(
+        address vestingModule_
+    ) external onlyRole("admin") {
+        vestingModule = LinearVesting(vestingModule_);
+    }
+
+    /// @notice Enable the contract functionality
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    function activate() external onlyRole("admin") {
+        locallyActive = true;
+    }
+
+    /// @notice Disable the contract functionality
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    function shutdown() external onlyRole("admin") {
+        locallyActive = false;
+    }
+
+    modifier onlyWhileActive() {
+        if (!locallyActive) revert Inactive();
+        _;
     }
 }

@@ -7,7 +7,7 @@ import {Banker} from "src/policies/Banker.sol";
 import {RolesAdmin} from "src/policies/RolesAdmin.sol";
 import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
 import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
-import {MSTR as MasterStrategy} from "src/modules/TOKEN/MSTR.sol";
+import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 
 import {Test} from "@forge-std/Test.sol";
 import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
@@ -25,7 +25,7 @@ abstract contract BankerTest is Test, WithSalts {
     Kernel public kernel;
     OlympusRoles public ROLES;
     OlympusTreasury public TRSRY;
-    MasterStrategy public MSTR;
+    MegaToken public mgst;
     Banker public banker;
     RolesAdmin public rolesAdmin;
 
@@ -33,18 +33,17 @@ abstract contract BankerTest is Test, WithSalts {
     MockERC20 public stablecoin;
 
     // External contracts (axis)
-    address public constant OWNER = address(0x1);
-    address public constant PROTOCOL = address(0x2);
-    address public constant PERMIT2 = address(0x3);
+    address public constant OWNER = address(0x1111);
+    address public constant PROTOCOL = address(0x2222);
+    address public constant PERMIT2 = address(0x3333);
 
     BatchAuctionHouse public auctionHouse;
     EncryptedMarginalPrice public empa;
 
     // Permissioned addresses
-    address public manager = address(0x4);
-    address public admin = address(0x5);
-
-    address public buyer = address(0x6);
+    address public manager = address(0xAAAA);
+    address public admin = address(0xBBBB);
+    address public buyer = address(0xCCCC);
 
     // System parameters
     uint48 public maxDiscount = 10e2;
@@ -96,7 +95,7 @@ abstract contract BankerTest is Test, WithSalts {
         // Modules
         ROLES = new OlympusRoles(kernel);
         TRSRY = new OlympusTreasury(kernel);
-        MSTR = new MasterStrategy(kernel, "Master Strategy", "MSTR");
+        mgst = new MegaToken(kernel, "MGST", "MGST");
 
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
@@ -108,7 +107,7 @@ abstract contract BankerTest is Test, WithSalts {
         // Install the modules and policies in the Kernel
         kernel.executeAction(Actions.InstallModule, address(ROLES));
         kernel.executeAction(Actions.InstallModule, address(TRSRY));
-        kernel.executeAction(Actions.InstallModule, address(MSTR));
+        kernel.executeAction(Actions.InstallModule, address(mgst));
         kernel.executeAction(Actions.ActivatePolicy, address(rolesAdmin));
         kernel.executeAction(Actions.ActivatePolicy, address(banker));
 

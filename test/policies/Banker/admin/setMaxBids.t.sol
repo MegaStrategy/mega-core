@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
-import {Banker} from "src/policies/Banker.sol";
 
 import {BankerTest} from "../BankerTest.sol";
 
@@ -25,7 +25,7 @@ contract BankerSetMaxBidsTest is BankerTest {
     }
 
     function test_maxBids_zero_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "maxBids"));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidParam.selector, "maxBids"));
 
         // Call
         vm.prank(admin);

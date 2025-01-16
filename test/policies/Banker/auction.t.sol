@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Banker} from "src/policies/Banker.sol";
+import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {IAuction} from "axis-core-1.0.1/interfaces/modules/IAuction.sol";
 import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
@@ -39,7 +39,7 @@ contract BankerAuctionTest is BankerTest {
     //  [X] the DebtAuction event is emitted
 
     function test_policyNotActive_reverts() public {
-        vm.expectRevert(Banker.Inactive.selector);
+        vm.expectRevert(abi.encodeWithSelector(IBanker.Inactive.selector));
 
         // Call
         vm.prank(manager);

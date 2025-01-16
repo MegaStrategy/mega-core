@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Banker} from "src/policies/Banker.sol";
+import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {MockERC20, ERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 
@@ -26,7 +26,7 @@ contract BankerIssueTest is BankerTest {
 
     function test_policyNotActive_reverts() public {
         vm.prank(manager);
-        vm.expectRevert(abi.encodeWithSelector(Banker.Inactive.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.Inactive.selector));
         banker.issue(debtToken, address(this), 1e18);
     }
 
@@ -50,13 +50,13 @@ contract BankerIssueTest is BankerTest {
         address _debtToken = address(new MockERC20("Fake Debt Token", "FDT", 18));
 
         vm.prank(manager);
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidDebtToken.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidDebtToken.selector));
         banker.issue(_debtToken, address(this), 1e18);
     }
 
     function test_amountZero_reverts() public givenPolicyIsActive givenDebtTokenCreated {
         vm.prank(manager);
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "amount"));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidParam.selector, "amount"));
         banker.issue(debtToken, address(this), 0);
     }
 
@@ -68,7 +68,7 @@ contract BankerIssueTest is BankerTest {
 
         vm.warp(time);
         vm.prank(manager);
-        vm.expectRevert(abi.encodeWithSelector(Banker.DebtTokenMatured.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.DebtTokenMatured.selector));
         banker.issue(debtToken, address(this), 1e18);
     }
 
@@ -97,8 +97,8 @@ contract BankerIssueTest is BankerTest {
 
         // Check that the banker contract's mint allowance for the debt token's underlying asset was increased
         assertEq(
-            MSTR.mintApproval(address(banker)),
-            amount_ * 10 ** MSTR.decimals() / debtTokenParams.conversionPrice
+            mgst.mintApproval(address(banker)),
+            amount_ * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
         );
     }
 }

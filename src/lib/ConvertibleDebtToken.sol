@@ -2,11 +2,12 @@
 pragma solidity >=0.8.19;
 
 import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
+import {IOracle} from "morpho-blue-1.0.0/interfaces/IOracle.sol";
 
 /// @title  ConvertibleDebtToken
 /// @notice ERC20 token that represents debt convertible into an underlying asset.
 /// @dev    The token is quite simple, and does not includes features for converting/redeeming the debt.
-contract ConvertibleDebtToken is ERC20 {
+contract ConvertibleDebtToken is ERC20, IOracle {
     // ========== ERRORS ========== //
 
     error AlreadySet();
@@ -164,7 +165,7 @@ contract ConvertibleDebtToken is ERC20 {
     ///         It corresponds to the price of 10**(collateral token decimals) assets of collateral token quoted in
     ///         10**(loan token decimals) assets of loan token with `36 + loan token decimals - collateral token decimals`
     ///         decimals of precision.
-    function price() external view returns (uint256) {
+    function price() external view override returns (uint256) {
         // The price of 1 unit of `underlying` in `convertsTo` is in the inverse of the conversion price
         // scaled to 36 decimals per the Morpho IOracle interface.
         return (1e36 * (10 ** convertsTo.decimals())) / conversionPrice;

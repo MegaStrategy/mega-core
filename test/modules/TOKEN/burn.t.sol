@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {TokenTest} from "./TokenTest.sol";
-import {TOKENv1} from "src/modules/TOKEN/MSTR.sol";
+import {TOKENv1} from "src/modules/TOKEN/MegaToken.sol";
 
 contract BurnTest is TokenTest {
     // when the module is not locally active
@@ -19,14 +19,14 @@ contract BurnTest is TokenTest {
         vm.expectRevert(abi.encodeWithSelector(TOKENv1.TOKEN_NotActive.selector));
 
         vm.prank(USER);
-        mstr.burn(100);
+        mgst.burn(100);
     }
 
     function test_amountIsZero_reverts() public givenModuleIsInstalled givenModuleIsActive {
         vm.expectRevert(abi.encodeWithSelector(TOKENv1.TOKEN_ZeroAmount.selector));
 
         vm.prank(USER);
-        mstr.burn(0);
+        mgst.burn(0);
     }
 
     function test_callerBalanceInsufficient_reverts()
@@ -39,7 +39,7 @@ contract BurnTest is TokenTest {
         vm.expectRevert("ERC20: burn amount exceeds balance");
 
         vm.prank(USER);
-        mstr.burn(1e18 + 1);
+        mgst.burn(1e18 + 1);
     }
 
     function test_success(
@@ -59,10 +59,10 @@ contract BurnTest is TokenTest {
 
         // Call
         vm.prank(USER);
-        mstr.burn(burnAmount);
+        mgst.burn(burnAmount);
 
         // Assert
-        assertEq(mstr.balanceOf(USER), 1e18 - burnAmount, "balance");
-        assertEq(mstr.totalSupply(), 1e18 - burnAmount, "total supply");
+        assertEq(mgst.balanceOf(USER), 1e18 - burnAmount, "balance");
+        assertEq(mgst.totalSupply(), 1e18 - burnAmount, "total supply");
     }
 }

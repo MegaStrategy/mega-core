@@ -24,7 +24,7 @@ contract DecreaseMintApprovalTest is TokenTest {
         vm.expectRevert(abi.encodeWithSelector(Module.Module_PolicyNotPermitted.selector, USER));
 
         vm.prank(USER);
-        mstr.decreaseMintApproval(USER, 100);
+        mgst.decreaseMintApproval(USER, 100);
     }
 
     function test_newAmountLessThanZero(
@@ -38,10 +38,10 @@ contract DecreaseMintApprovalTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.decreaseMintApproval(godmode, decreaseAmount);
+        mgst.decreaseMintApproval(godmode, decreaseAmount);
 
         // Assert
-        assertEq(mstr.mintApproval(godmode), 0, "mintApproval");
+        assertEq(mgst.mintApproval(godmode), 0, "mintApproval");
     }
 
     function test_success(
@@ -55,10 +55,10 @@ contract DecreaseMintApprovalTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.decreaseMintApproval(godmode, decreaseAmount);
+        mgst.decreaseMintApproval(godmode, decreaseAmount);
 
         // Assert
-        assertEq(mstr.mintApproval(godmode), 1e18 - decreaseAmount, "mintApproval");
+        assertEq(mgst.mintApproval(godmode), 1e18 - decreaseAmount, "mintApproval");
     }
 
     function test_recipientIsNotCaller(
@@ -68,7 +68,7 @@ contract DecreaseMintApprovalTest is TokenTest {
 
         // Increase mint approval
         vm.prank(godmode);
-        mstr.increaseMintApproval(USER, 1e18);
+        mgst.increaseMintApproval(USER, 1e18);
 
         // Expect event
         vm.expectEmit();
@@ -76,10 +76,10 @@ contract DecreaseMintApprovalTest is TokenTest {
 
         // Call
         vm.prank(godmode);
-        mstr.decreaseMintApproval(USER, decreaseAmount);
+        mgst.decreaseMintApproval(USER, decreaseAmount);
 
         // Assert
-        assertEq(mstr.mintApproval(USER), 1e18 - decreaseAmount, "mintApproval");
-        assertEq(mstr.mintApproval(godmode), 0, "mintApproval");
+        assertEq(mgst.mintApproval(USER), 1e18 - decreaseAmount, "mintApproval");
+        assertEq(mgst.mintApproval(godmode), 0, "mintApproval");
     }
 }

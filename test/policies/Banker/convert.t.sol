@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Banker} from "src/policies/Banker.sol";
+import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 
@@ -22,7 +22,7 @@ contract BankerConvertTest is BankerTest {
 
     function test_policyNotActive_reverts() public {
         vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(Banker.Inactive.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.Inactive.selector));
         banker.convert(debtToken, 1e18);
     }
 
@@ -36,7 +36,7 @@ contract BankerConvertTest is BankerTest {
                 "Fake Debt Token",
                 "FDT",
                 debtTokenParams.underlying,
-                address(MSTR),
+                address(mgst),
                 debtTokenParams.maturity,
                 debtTokenParams.conversionPrice,
                 OWNER
@@ -45,13 +45,13 @@ contract BankerConvertTest is BankerTest {
         deal(_debtToken, buyer, 1e18);
 
         vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidDebtToken.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidDebtToken.selector));
         banker.convert(_debtToken, 1e18);
     }
 
     function test_amountZero_reverts() public givenPolicyIsActive givenDebtTokenCreated {
         vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "amount"));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidParam.selector, "amount"));
         banker.convert(debtToken, 0);
     }
 
@@ -72,7 +72,7 @@ contract BankerConvertTest is BankerTest {
 
         // Check beginning balances and withdraw approval
         assertEq(ERC20(debtToken).balanceOf(buyer), amount_);
-        assertEq(MSTR.balanceOf(buyer), 0);
+        assertEq(mgst.balanceOf(buyer), 0);
         assertEq(
             TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount_
         );
@@ -86,7 +86,7 @@ contract BankerConvertTest is BankerTest {
         // Check that the balances are updated
         assertEq(ERC20(debtToken).balanceOf(buyer), 0);
         assertEq(
-            MSTR.balanceOf(buyer), amount_ * 10 ** MSTR.decimals() / debtTokenParams.conversionPrice
+            mgst.balanceOf(buyer), amount_ * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
         );
         assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), 0);
     }

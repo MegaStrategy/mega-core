@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Banker} from "src/policies/Banker.sol";
+import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {BaseCallback} from "axis-core-1.0.1/bases/BaseCallback.sol";
 import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
@@ -26,7 +26,7 @@ contract BankerCallbackOnCreateTest is BankerTest {
     // [X] it issues the convertible debt token to the auction house
 
     function test_sellerIsNotBanker_reverts() public givenPolicyIsActive givenDebtTokenCreated {
-        vm.expectRevert(abi.encodeWithSelector(Banker.OnlyLocal.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.OnlyLocal.selector));
 
         // Call
         vm.prank(address(auctionHouse));
@@ -34,7 +34,7 @@ contract BankerCallbackOnCreateTest is BankerTest {
     }
 
     function test_prefundIsFalse_reverts() public givenPolicyIsActive givenDebtTokenCreated {
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "prefund"));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidParam.selector, "prefund"));
 
         vm.prank(address(auctionHouse));
         banker.onCreate(0, address(banker), debtToken, address(0), auctionCapacity, false, "");
@@ -52,7 +52,7 @@ contract BankerCallbackOnCreateTest is BankerTest {
     }
 
     function test_amountIsZero_reverts() public givenPolicyIsActive givenDebtTokenCreated {
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidParam.selector, "amount"));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidParam.selector, "amount"));
 
         vm.prank(address(auctionHouse));
         banker.onCreate(0, address(banker), debtToken, address(0), 0, true, "");
@@ -64,13 +64,13 @@ contract BankerCallbackOnCreateTest is BankerTest {
             "Another Debt Token",
             "ADT",
             address(stablecoin),
-            address(MSTR),
+            address(mgst),
             debtTokenMaturity,
             debtTokenConversionPrice,
             OWNER
         );
 
-        vm.expectRevert(abi.encodeWithSelector(Banker.InvalidDebtToken.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidDebtToken.selector));
 
         vm.prank(address(auctionHouse));
         banker.onCreate(
@@ -84,7 +84,7 @@ contract BankerCallbackOnCreateTest is BankerTest {
         uint48 maturityElapsed = uint48(bound(maturityElapsed_, 0, 1 weeks));
         vm.warp(debtTokenMaturity + maturityElapsed);
 
-        vm.expectRevert(abi.encodeWithSelector(Banker.DebtTokenMatured.selector));
+        vm.expectRevert(abi.encodeWithSelector(IBanker.DebtTokenMatured.selector));
 
         vm.prank(address(auctionHouse));
         banker.onCreate(0, address(banker), debtToken, address(0), auctionCapacity, true, "");
