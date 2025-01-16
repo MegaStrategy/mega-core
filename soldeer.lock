@@ -33,6 +33,12 @@ checksum = "fb20c7ebe7ab30697b72300c8c9e4cc847de98c35ab8c05b5d71fe3ed59fead0"
 integrity = "289e922ce8d2419e991f94b6a26339377e255931a7e61a3d44725642ff97ba41"
 
 [[dependencies]]
+name = "clones-with-immutable-args"
+version = "1.1.1"
+git = "https://github.com/wighawag/clones-with-immutable-args.git"
+rev = "f5ca191afea933d50a36d101009b5644dc28bc99"
+
+[[dependencies]]
 name = "forge-std"
 version = "1.9.4"
 url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_4_25-10-2024_14:36:59_forge-std-1.9.zip"

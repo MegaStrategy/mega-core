@@ -394,8 +394,11 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy Issuer policy
         vm.broadcast();
-        Issuer issuer =
-            new Issuer(kernel, _getAddressNotZero("axis.options.FixedStrikeOptionTeller"));
+        Issuer issuer = new Issuer(
+            kernel,
+            _getAddressNotZero("axis.options.FixedStrikeOptionTeller"),
+            _getAddressNotZero("axis.derivatives.BatchLinearVesting")
+        );
         console2.log("Issuer deployed at:", address(issuer));
 
         return (address(issuer), "mega.policies.Issuer");

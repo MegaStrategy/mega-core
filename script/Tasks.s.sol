@@ -143,7 +143,7 @@ contract TasksScript is Script, WithEnvironment {
         uint48 expiry = uint48(block.timestamp + 1 days);
         vm.startBroadcast();
         address optionToken = Issuer(_envAddressNotZero("mega.policies.Issuer")).createO(
-            address(_envAddressNotZero("external.tokens.WETH")), expiry, 2e18
+            address(_envAddressNotZero("external.tokens.WETH")), expiry, 2e18, 0, 0
         );
         vm.stopBroadcast();
         console2.log("optionToken", optionToken);
