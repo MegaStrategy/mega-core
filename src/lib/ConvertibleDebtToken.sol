@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: TBD
-pragma solidity >=0.8.19;
+pragma solidity >=0.8.0;
 
 import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 import {IOracle} from "morpho-blue-1.0.0/interfaces/IOracle.sol";
