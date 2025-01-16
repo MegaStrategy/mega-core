@@ -132,12 +132,6 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
         uint48 vestingStart_,
         uint48 vestingExpiry_
     ) external override onlyRole("admin") onlyWhileActive returns (address token) {
-        // Validate vesting parameters
-        if (vestingStart_ != 0 && vestingExpiry_ != 0) {
-            // Vesting expiry must be at least 1 week before option token expiry, with a buffer of 1 week
-            if (vestingExpiry_ > expiry_ - 1 weeks) revert InvalidParam("vesting expiry");
-        }
-
         // Create oToken on oTeller
         // Teller validates the inputs
         token = address(
@@ -158,6 +152,9 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
         // Create a vesting token if vesting parameters are provided
         address vestingToken;
         if (vestingStart_ != 0 && vestingExpiry_ != 0) {
+            // Vesting expiry must be at least 1 week before option token expiry, with a buffer of 1 week
+            if (vestingExpiry_ > expiry_ - 1 weeks) revert InvalidParam("vesting expiry");
+
             uint256 tokenId;
             (tokenId, vestingToken) = vestingModule.deploy(
                 address(token),
