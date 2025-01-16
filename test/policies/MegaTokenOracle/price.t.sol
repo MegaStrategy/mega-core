@@ -10,6 +10,7 @@ import {Actions, Kernel} from "src/Kernel.sol";
 import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 import {MegaTokenOracle} from "src/policies/MegaTokenOracle.sol";
+import {IMegaTokenOracle} from "src/policies/interfaces/IMegaTokenOracle.sol";
 
 contract OraclePriceTest is Test {
     Kernel public kernel;
@@ -57,7 +58,7 @@ contract OraclePriceTest is Test {
     // given the loan token decimals are 6
     //  [X] it returns the correct price
     // given PRICE is configured with a decimal scale not 18
-    //  [X] it returns the correct price
+    //  [X] it reverts
 
     // TOKEN is always 18 decimals, so we don't need to scale that price
 
@@ -90,27 +91,16 @@ contract OraclePriceTest is Test {
         assertEq(price, 1e36 * TOKEN_PRICE / 1e6, "price");
     }
 
-    function test_priceDecimalsNot18()
-        public
-        givenPriceDecimals(17)
-        givenLoanToken(18)
-        givenPriceIsSet(address(loanToken), 1e17)
-        givenPriceIsSet(address(TOKEN), 321e17)
-    {
-        uint256 price = tokenOracle.price();
+    function test_priceDecimalsNot18() public givenPriceDecimals(17) {
+        loanToken = new MockERC20("LoanToken", "LT", 18);
+        tokenOracle = new MegaTokenOracle(kernel, address(loanToken));
 
-        assertEq(price, 1e36 * 321e18 / 1e18, "price");
-    }
+        // Expect revert
+        vm.expectRevert(
+            abi.encodeWithSelector(IMegaTokenOracle.InvalidParams.selector, "PRICE decimals")
+        );
 
-    function test_priceDecimalsNot18_loanTokenDecimalsNot18()
-        public
-        givenPriceDecimals(17)
-        givenLoanToken(6)
-        givenPriceIsSet(address(loanToken), 1e17)
-        givenPriceIsSet(address(TOKEN), 321e17)
-    {
-        uint256 price = tokenOracle.price();
-
-        assertEq(price, 1e36 * 321e18 / 1e6, "price");
+        // Call
+        kernel.executeAction(Actions.ActivatePolicy, address(tokenOracle));
     }
 }

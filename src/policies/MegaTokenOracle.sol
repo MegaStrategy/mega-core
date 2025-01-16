@@ -11,10 +11,6 @@ import {IMegaTokenOracle} from "./interfaces/IMegaTokenOracle.sol";
 /// @title MegaTokenOracle
 /// @notice This policy provides an oracle price for the protocol token, compatible with the interface used by the Morpho protocol
 contract MegaTokenOracle is Policy, IMegaTokenOracle {
-    // =========  ERRORS ========= //
-
-    error InvalidParams(string reason_);
-
     // =========  STATE ========= //
 
     address public immutable loanToken;
@@ -46,8 +42,9 @@ contract MegaTokenOracle is Policy, IMegaTokenOracle {
         PRICE = PRICEv2(getModuleAddress(dependencies[0]));
         TOKEN = getModuleAddress(dependencies[1]);
 
-        _priceScale = 10 ** PRICE.decimals();
-        _tokenScale = 10 ** ERC20(TOKEN).decimals();
+        // Check that PRICE is 18 decimals
+        // TOKEN is hard-coded to 18 decimals
+        if (PRICE.decimals() != 18) revert InvalidParams("PRICE decimals");
 
         return dependencies;
     }
@@ -89,10 +86,10 @@ contract MegaTokenOracle is Policy, IMegaTokenOracle {
     /// @dev        This function returns the price of 1 unit of the protocol token in terms of the loan token, scaled by 1e36.
     function price() external view returns (uint256) {
         // Scale: PRICE decimals
-        // Adjust the scale to match the collateral token scale
+        // We know that PRICE decimals == TOKEN decimals == 18
         uint256 collateralPriceInLoanToken = PRICE.getPriceIn(TOKEN, loanToken);
-        uint256 collateralPrice = collateralPriceInLoanToken * _tokenScale / _priceScale;
 
-        return 1e36 * collateralPrice / _loanTokenScale;
+        // Adjust to the expected scale
+        return 1e36 * collateralPriceInLoanToken / _loanTokenScale;
     }
 }
