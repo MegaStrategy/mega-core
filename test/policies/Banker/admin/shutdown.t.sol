@@ -26,7 +26,7 @@ contract BankerShutdownTest is BankerTest {
         banker.shutdown();
 
         // Assert
-        assertEq(banker.active(), false, "policy should be inactive");
+        assertEq(banker.locallyActive(), false, "policy should be inactive");
     }
 
     function test_policyActive() public givenPolicyIsActive {
@@ -34,6 +34,6 @@ contract BankerShutdownTest is BankerTest {
         banker.shutdown();
 
         // Assert
-        assertEq(banker.active(), false, "policy should be inactive");
+        assertEq(banker.locallyActive(), false, "policy should be inactive");
     }
 }
