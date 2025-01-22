@@ -12,7 +12,7 @@ import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 import {Test} from "@forge-std/Test.sol";
 import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 import {WithSalts} from "../../lib/WithSalts.sol";
-
+import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
 import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/auctions/batch/EMP.sol";
 import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
@@ -195,6 +195,15 @@ abstract contract BankerTest is Test, WithSalts {
     }
 
     function _issueDebtToken(address to_, uint256 amount_) internal {
+        // Mint the underlying asset to the recipient
+        stablecoin.mint(to_, amount_);
+
+        // Approve spending of the underlying asset
+        vm.startPrank(to_);
+        stablecoin.approve(address(banker), amount_);
+        vm.stopPrank();
+
+        // Issue debt tokens
         vm.prank(manager);
         banker.issue(debtToken, to_, amount_);
     }
@@ -225,5 +234,50 @@ abstract contract BankerTest is Test, WithSalts {
         (, address baseToken,,,,,,,) = auctionHouse.lotRouting(0);
         debtToken = baseToken;
         _;
+    }
+
+    // ======= ASSERTIONS ======= //
+
+    function _assertBalances(
+        uint256 debtTokenIssued,
+        uint256 debtTokenConverted,
+        uint256 debtTokenRedeemed,
+        uint256 mgstBalance
+    ) internal view {
+        assertEq(
+            ERC20(debtToken).balanceOf(buyer),
+            debtTokenIssued - debtTokenConverted - debtTokenRedeemed,
+            "debtToken balance after"
+        );
+        assertEq(
+            ERC20(debtTokenParams.underlying).balanceOf(buyer),
+            debtTokenRedeemed,
+            "underlying balance after"
+        );
+        assertEq(
+            ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)),
+            debtTokenIssued - debtTokenRedeemed,
+            "treasury balance after"
+        );
+        assertEq(mgst.balanceOf(buyer), mgstBalance, "mgst balance after");
+    }
+
+    function _assertApprovals(
+        uint256 debtTokenIssued,
+        uint256 debtTokenConverted,
+        uint256 debtTokenRedeem,
+        uint256 mgstApprovalBefore,
+        uint256 mgstBalance
+    ) internal view {
+        assertEq(
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)),
+            debtTokenIssued - debtTokenConverted - debtTokenRedeem,
+            "underlying withdraw approval after"
+        );
+        assertEq(
+            mgst.mintApproval(address(banker)),
+            mgstApprovalBefore - mgstBalance,
+            "mgst mint approval after"
+        );
     }
 }

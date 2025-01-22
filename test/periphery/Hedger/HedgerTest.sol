@@ -329,6 +329,14 @@ contract HedgerTest is Test, WithSalts {
     modifier givenDebtTokenIsIssued(
         uint256 amount_
     ) {
+        // Mint the underlying asset to the user
+        reserve.mint(USER, amount_);
+
+        // Approve the banker to spend the underlying asset
+        vm.startPrank(USER);
+        ERC20(address(reserve)).safeApprove(address(banker), amount_);
+        vm.stopPrank();
+
         vm.prank(MANAGER);
         banker.issue(debtToken, USER, amount_);
         _;
@@ -337,6 +345,14 @@ contract HedgerTest is Test, WithSalts {
     modifier givenOperatorDebtTokenIsIssued(
         uint256 amount_
     ) {
+        // Mint the underlying asset to the operator
+        reserve.mint(OPERATOR, amount_);
+
+        // Approve the banker to spend the underlying asset
+        vm.startPrank(OPERATOR);
+        ERC20(address(reserve)).safeApprove(address(banker), amount_);
+        vm.stopPrank();
+
         vm.prank(MANAGER);
         banker.issue(debtToken, OPERATOR, amount_);
         _;

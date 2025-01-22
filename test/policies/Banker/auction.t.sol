@@ -18,8 +18,6 @@ import {IEncryptedMarginalPrice} from
 
 import {BankerTest} from "./BankerTest.sol";
 
-import {console2} from "forge-std/console2.sol";
-
 contract BankerAuctionTest is BankerTest {
     event DebtAuction(uint96 lotId);
 

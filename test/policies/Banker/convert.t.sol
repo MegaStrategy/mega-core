@@ -17,16 +17,16 @@ contract BankerConvertTest is BankerTest {
     //  [X] it reverts
     // given the underlying asset has 6 decimals
     //  given the conversion price is small
-    //   [ ] it does not lose precision
+    //   [X] it does not lose precision
     //  given the conversion price is large
-    //   [ ] it does not lose precision
-    //  [ ] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
-    //  [ ] the converted amount is in terms of the destination token
-    //  [ ] the mint allowance is decreased by the amount converted
+    //   [X] it does not lose precision
+    //  [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
+    //  [X] the converted amount is in terms of the destination token
+    //  [X] the mint allowance is decreased by the amount converted
     // [X] it burns the given amount of debt tokens from the sender
     // [X] it mints the amount divided by the conversion price of TOKEN to the sender
     // [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
-    // [ ] the mint allowance is decreased by the amount converted
+    // [X] the mint allowance is decreased by the amount converted
 
     function test_policyNotActive_reverts() public {
         vm.prank(buyer);
@@ -63,39 +63,217 @@ contract BankerConvertTest is BankerTest {
         banker.convert(debtToken, 0);
     }
 
+    function test_underlyingAssetHasSmallerDecimals_fuzz(
+        uint256 amount_,
+        uint256 amountToConvert_
+    )
+        public
+        givenPolicyIsActive
+        givenUnderlyingAssetDecimals(6)
+        givenDebtTokenConversionPrice(5e6)
+        givenDebtTokenCreated
+    {
+        // 1 to 1,000,000
+        uint256 amount = bound(amount_, 1e6, 1_000_000e6);
+        uint256 amountToConvert = bound(amountToConvert_, 1e6, amount);
+
+        // Issuer debt tokens to the buyer
+        _issueDebtToken(buyer, amount);
+        // Don't warp so the debt token has not matured
+
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+
+        // Call function
+        vm.startPrank(buyer);
+        ERC20(debtToken).approve(address(banker), amountToConvert);
+        banker.convert(debtToken, amountToConvert);
+        vm.stopPrank();
+
+        // Conversion price is 5e6
+        // 5 debt tokens converts to 1 protocol token
+        // converted amount = amount * protocol token scale / conversion price
+        // e.g. amount = 1,000,000
+        // converted amount = 1_000_000e6 * 1e18 / 5e6 = 2e23
+        // = 200,000
+        uint256 expectedConvertedAmount = amountToConvert * 1e18 / 5e6;
+
+        // Check that balances are updated
+        _assertBalances(amount, amountToConvert, 0, expectedConvertedAmount);
+        _assertApprovals(amount, amountToConvert, 0, mintApprovalBefore, expectedConvertedAmount);
+    }
+
+    function test_underlyingAssetHasSmallerDecimals_smallConversionPrice_fuzz(
+        uint256 amount_,
+        uint256 amountToConvert_
+    )
+        public
+        givenPolicyIsActive
+        givenUnderlyingAssetDecimals(6)
+        givenDebtTokenConversionPrice(1)
+        givenDebtTokenCreated
+    {
+        // 1 to 1,000,000
+        uint256 amount = bound(amount_, 1e6, 1_000_000e6);
+        uint256 amountToConvert = bound(amountToConvert_, 1e6, amount);
+
+        // Issuer debt tokens to the buyer
+        _issueDebtToken(buyer, amount);
+        // Don't warp so the debt token has not matured
+
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+
+        // Call function
+        vm.startPrank(buyer);
+        ERC20(debtToken).approve(address(banker), amountToConvert);
+        banker.convert(debtToken, amountToConvert);
+        vm.stopPrank();
+
+        // Conversion price is 1
+        // 5 debt tokens converts to 1 protocol token
+        // converted amount = amount * protocol token scale / conversion price
+        // e.g. amount = 1,000,000
+        // converted amount = 1_000_000e6 * 1e18 / 1 = 1e30
+        // = 1,000,000,000,000
+        uint256 expectedConvertedAmount = amountToConvert * 1e18 / 1;
+
+        // Check that balances are updated
+        _assertBalances(amount, amountToConvert, 0, expectedConvertedAmount);
+        _assertApprovals(amount, amountToConvert, 0, mintApprovalBefore, expectedConvertedAmount);
+    }
+
+    function test_underlyingAssetHasSmallerDecimals_largeConversionPrice_fuzz(
+        uint256 amount_,
+        uint256 amountToConvert_
+    )
+        public
+        givenPolicyIsActive
+        givenUnderlyingAssetDecimals(6)
+        givenDebtTokenConversionPrice(1_000_000e6)
+        givenDebtTokenCreated
+    {
+        // 1 to 1,000,000
+        uint256 amount = bound(amount_, 1e6, 1_000_000e6);
+        uint256 amountToConvert = bound(amountToConvert_, 1e6, amount);
+
+        // Issuer debt tokens to the buyer
+        _issueDebtToken(buyer, amount);
+        // Don't warp so the debt token has not matured
+
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+
+        // Call function
+        vm.startPrank(buyer);
+        ERC20(debtToken).approve(address(banker), amountToConvert);
+        banker.convert(debtToken, amountToConvert);
+        vm.stopPrank();
+
+        // Conversion price is 5e6
+        // 5 debt tokens converts to 1 protocol token
+        // converted amount = amount * protocol token scale / conversion price
+        // e.g. amount = 1,000,000
+        // converted amount = 1_000_000e6 * 1e18 / 1_000_000e6 = 1e18
+        // = 1
+        uint256 expectedConvertedAmount = amountToConvert * 1e18 / 1_000_000e6;
+
+        // Check that balances are updated
+        _assertBalances(amount, amountToConvert, 0, expectedConvertedAmount);
+        _assertApprovals(amount, amountToConvert, 0, mintApprovalBefore, expectedConvertedAmount);
+    }
+
     function test_success(
-        uint128 amount_
+        uint128 amount_,
+        uint128 amountToConvert_
     ) public givenPolicyIsActive givenDebtTokenCreated {
-        vm.assume(
-            amount_
-                >= (
-                    debtTokenParams.conversionPrice
-                        / (10 ** ERC20(debtTokenParams.underlying).decimals())
-                )
-        ); // can't round down to zero
+        // 1 to 1,000,000
+        uint256 amount = bound(amount_, 1e18, 1_000_000e18);
+        uint256 amountToConvert = bound(amountToConvert_, 1e18, amount);
 
         // Issue debt tokens to the buyer
-        _issueDebtToken(buyer, amount_);
+        _issueDebtToken(buyer, amount);
         // Don't warp so the debt token has not matured
 
         // Check beginning balances and withdraw approval
-        assertEq(ERC20(debtToken).balanceOf(buyer), amount_);
-        assertEq(mgst.balanceOf(buyer), 0);
+        assertEq(ERC20(debtToken).balanceOf(buyer), amount, "debtToken balance");
+        assertEq(mgst.balanceOf(buyer), 0, "mgst balance");
         assertEq(
-            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount_
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)),
+            amount,
+            "underlying withdraw approval"
+        );
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+        assertEq(
+            mintApprovalBefore,
+            amount * 10 ** mgst.decimals() / debtTokenParams.conversionPrice,
+            "mgst mint approval"
         );
 
         // Convert the tokens at the conversion price
         vm.startPrank(buyer);
-        ERC20(debtToken).approve(address(banker), amount_);
-        banker.convert(debtToken, amount_);
+        ERC20(debtToken).approve(address(banker), amountToConvert);
+        banker.convert(debtToken, amountToConvert);
         vm.stopPrank();
 
         // Check that the balances are updated
-        assertEq(ERC20(debtToken).balanceOf(buyer), 0);
-        assertEq(
-            mgst.balanceOf(buyer), amount_ * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
-        );
-        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), 0);
+        uint256 expectedConvertedAmount =
+            amountToConvert * 10 ** mgst.decimals() / debtTokenParams.conversionPrice;
+        _assertBalances(amount, amountToConvert, 0, expectedConvertedAmount);
+        _assertApprovals(amount, amountToConvert, 0, mintApprovalBefore, expectedConvertedAmount);
+    }
+
+    function test_smallConversionPrice_fuzz(
+        uint256 amount_,
+        uint256 amountToConvert_
+    ) public givenPolicyIsActive givenDebtTokenConversionPrice(1) givenDebtTokenCreated {
+        // 1 to 1,000,000
+        uint256 amount = bound(amount_, 1e18, 1_000_000e18);
+        uint256 amountToConvert = bound(amountToConvert_, 1e18, amount);
+
+        // Issue debt tokens to the buyer
+        _issueDebtToken(buyer, amount);
+        // Don't warp so the debt token has not matured
+
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+
+        // Call function
+        vm.startPrank(buyer);
+        ERC20(debtToken).approve(address(banker), amountToConvert);
+        banker.convert(debtToken, amountToConvert);
+        vm.stopPrank();
+
+        // Check that balances are updated
+        uint256 expectedConvertedAmount = amountToConvert * 1e18 / 1;
+        _assertBalances(amount, amountToConvert, 0, expectedConvertedAmount);
+        _assertApprovals(amount, amountToConvert, 0, mintApprovalBefore, expectedConvertedAmount);
+    }
+
+    function test_largeConversionPrice_fuzz(
+        uint256 amount_,
+        uint256 amountToConvert_
+    )
+        public
+        givenPolicyIsActive
+        givenDebtTokenConversionPrice(1_000_000e18)
+        givenDebtTokenCreated
+    {
+        // 1 to 1,000,000
+        uint256 amount = bound(amount_, 1e18, 1_000_000e18);
+        uint256 amountToConvert = bound(amountToConvert_, 1e18, amount);
+
+        // Issue debt tokens to the buyer
+        _issueDebtToken(buyer, amount);
+        // Don't warp so the debt token has not matured
+
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+
+        // Call function
+        vm.startPrank(buyer);
+        ERC20(debtToken).approve(address(banker), amountToConvert);
+        banker.convert(debtToken, amountToConvert);
+        vm.stopPrank();
+
+        // Check that balances are updated
+        uint256 expectedConvertedAmount = amountToConvert * 1e18 / 1_000_000e18;
+        _assertBalances(amount, amountToConvert, 0, expectedConvertedAmount);
+        _assertApprovals(amount, amountToConvert, 0, mintApprovalBefore, expectedConvertedAmount);
     }
 }

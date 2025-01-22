@@ -225,7 +225,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
 
         // Issue the debt to the auction house to sell
         // This function validates additional parameters
-        _issue(baseToken_, msg.sender, capacity_);
+        _issue(baseToken_, msg.sender, capacity_, false);
     }
 
     /// @inheritdoc BaseCallback
@@ -347,15 +347,25 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
     // ========== ISSUANCE =========== //
 
     /// @inheritdoc IBanker
+    /// @dev        This function will perform the following:
+    ///             - Transfer the underlying asset from the recipient to the treasury
+    ///             - Issue the debt tokens to the recipient
     function issue(
         address debtToken_,
         address to_,
         uint256 amount_
     ) external override onlyRole("manager") onlyWhileActive {
-        _issue(debtToken_, to_, amount_);
+        // Issue the debt tokens
+        _issue(debtToken_, to_, amount_, true);
     }
 
-    function _issue(address debtToken_, address to_, uint256 amount) internal {
+    /// @notice Issues debt tokens to a recipient
+    function _issue(
+        address debtToken_,
+        address to_,
+        uint256 amount,
+        bool transferUnderlying_
+    ) internal {
         // Validate that the debt token was created by this issuer
         if (!createdBy[debtToken_]) revert InvalidDebtToken();
         ConvertibleDebtToken debtToken = ConvertibleDebtToken(debtToken_);
@@ -368,6 +378,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
 
         // Validate that the debt token has not matured
         if (block.timestamp >= maturity) revert DebtTokenMatured();
+
+        // If needed, transfer the underlying asset from the recipient to the treasury
+        if (transferUnderlying_) {
+            underlying.safeTransferFrom(to_, address(TRSRY), amount);
+        }
 
         // Increase this contract's withdrawal approval for the underlying asset by the amount issued
         // This is to ensure that the debt token can be redeemed
