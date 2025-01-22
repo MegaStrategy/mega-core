@@ -24,6 +24,8 @@ contract BankerRedeemTest is BankerTest {
     //    [X] it transfers the amount of the debt token's underlying asset to the sender
     //    [X] it decreases the contract's mint allowance for the amount divided by conversion price
 
+    // TODO check when decimal = 6
+
     function test_policyNotActive_reverts() public {
         vm.prank(buyer);
         vm.expectRevert(abi.encodeWithSelector(IBanker.Inactive.selector));

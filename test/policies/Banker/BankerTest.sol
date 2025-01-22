@@ -174,6 +174,21 @@ abstract contract BankerTest is Test, WithSalts {
         );
     }
 
+    modifier givenUnderlyingAssetDecimals(
+        uint8 decimals_
+    ) {
+        stablecoin = new MockERC20("Stablecoin", "STBL", decimals_);
+        debtTokenParams.underlying = address(stablecoin);
+        _;
+    }
+
+    modifier givenAuctionCapacity(
+        uint256 capacity_
+    ) {
+        auctionParams.capacity = capacity_;
+        _;
+    }
+
     modifier givenDebtTokenCreated() {
         _createDebtToken();
         _;

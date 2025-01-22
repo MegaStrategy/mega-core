@@ -9,16 +9,24 @@ import {BankerTest} from "./BankerTest.sol";
 
 contract BankerConvertTest is BankerTest {
     // test cases
-    // [X] when the policy is not active
-    //    [X] it reverts
-    // [X] when the debt token was not created by the policy
-    //    [X] it reverts
-    // [X] when the amount is zero
-    //    [X] it reverts
-    // [X] when the parameters are valid
-    //    [X] it burns the given amount of debt tokens from the sender
-    //    [X] it mints the amount divided by the conversion price of TOKEN to the sender
-    //    [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
+    // when the policy is not active
+    //  [X] it reverts
+    // when the debt token was not created by the policy
+    //  [X] it reverts
+    // when the amount is zero
+    //  [X] it reverts
+    // given the underlying asset has 6 decimals
+    //  given the conversion price is small
+    //   [ ] it does not lose precision
+    //  given the conversion price is large
+    //   [ ] it does not lose precision
+    //  [ ] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
+    //  [ ] the converted amount is in terms of the destination token
+    //  [ ] the mint allowance is decreased by the amount converted
+    // [X] it burns the given amount of debt tokens from the sender
+    // [X] it mints the amount divided by the conversion price of TOKEN to the sender
+    // [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
+    // [ ] the mint allowance is decreased by the amount converted
 
     function test_policyNotActive_reverts() public {
         vm.prank(buyer);

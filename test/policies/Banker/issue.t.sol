@@ -24,6 +24,8 @@ contract BankerIssueTest is BankerTest {
     //    [X] it increases the contract's withdraw allowance for the debt token's underlying asset
     //    [X] it increases the contract's mint allowance for TOKEN by amount divided by conversion price
 
+    // TODO check when decimal = 6
+
     function test_policyNotActive_reverts() public {
         vm.prank(manager);
         vm.expectRevert(abi.encodeWithSelector(IBanker.Inactive.selector));
