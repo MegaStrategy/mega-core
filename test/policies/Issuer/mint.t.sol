@@ -8,16 +8,16 @@ import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 
 contract IssuerMintTest is IssuerTest {
     // test cases
-    // [X] when the caller does not have the admin role
-    //    [X] it reverts
-    // [X] when the policy is not locally active
-    //    [X] it reverts
-    // [X] when the to address is zero
-    //    [X] it reverts
-    // [X] when the amount is zero
-    //    [X] it reverts
-    // [X] otherwise
-    //    [X] it mints the given amount of TOKEN to the given address
+    // when the caller does not have the admin role
+    //  [X] it reverts
+    // when the policy is not locally active
+    //  [X] it reverts
+    // when the to address is zero
+    //  [X] it reverts
+    // when the amount is zero
+    //  [X] it reverts
+    // otherwise
+    //  [X] it mints the given amount of TOKEN to the given address
 
     function test_callerNotPermissioned_reverts(
         address caller_

@@ -7,10 +7,10 @@ import {IssuerTest} from "./IssuerTest.sol";
 
 contract IssuerSetTellerTest is IssuerTest {
     // test cases
-    // [X] when the caller does not have the admin role
-    //    [X] it reverts
-    // [X] otherwise
-    //    [X] it sets the teller address
+    // when the caller does not have the admin role
+    //  [X] it reverts
+    // otherwise
+    //  [X] it sets the teller address
 
     function test_callerNotPermissioned_reverts(
         address caller_

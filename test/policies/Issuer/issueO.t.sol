@@ -10,20 +10,20 @@ import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 contract IssuerIssueOTest is IssuerTest {
     // test cases
-    // [X] when the caller does not have the admin role
-    //    [X] it reverts
-    // [X] when the policy is not locally active
-    //    [X] it reverts
-    // [X] when the oToken is not created by the issuer
-    //    [X] it reverts
-    // [X] when the to address is zero
-    //    [X] it reverts
-    // [X] when the amount is zero
-    //    [X] it reverts
-    // [X] otherwise
-    //    [X] it mints the amount of TOKENs
-    //    [X] it mints oTokens using the minted TOKENs as collateral (these are held by the teller)
-    //    [X] it transfers the oTokens to the recipient
+    // when the caller does not have the admin role
+    //  [X] it reverts
+    // when the policy is not locally active
+    //  [X] it reverts
+    // when the oToken is not created by the issuer
+    //  [X] it reverts
+    // when the to address is zero
+    //  [X] it reverts
+    // when the amount is zero
+    //  [X] it reverts
+    // otherwise
+    //  [X] it mints the amount of TOKENs
+    //  [X] it mints oTokens using the minted TOKENs as collateral (these are held by the teller)
+    //  [X] it transfers the oTokens to the recipient
     // given the oToken was created with vesting
     //  [X] the vesting token is issued to the recipient
 
