@@ -132,7 +132,7 @@ contract BankerAuctionTest is BankerTest {
             // minPrice is expected to be 1 quote token per base token, with the discount applied
             // = 1e6 * (100e2 - 10e2) / 100e2
             // = 9e5
-            uint256 expectedMinPrice = 1e6 * (100e2 - maxDiscount) / 100e2;
+            uint256 expectedMinPrice = 1e6 * (100e2 - uint256(maxDiscount)) / 100e2;
             // minBidSize is in terms of quote tokens
             // It assumes the worst case scenario, where the auction has many small bids of quantity maxBids
             // Multiplying the minPrice (QT/BT) by the capacity (BT) gives the quantity of quote tokens at the minPrice
@@ -223,18 +223,14 @@ contract BankerAuctionTest is BankerTest {
         // EMP auction parameters
         {
             // minPrice is expected to be 1 quote token per base token, with the discount applied
-            console2.log("maxDiscount", maxDiscount);
-            uint256 expectedMinPrice = 1e18 * (100e2 - maxDiscount) / 100e2;
-            console2.log("expectedMinPrice", expectedMinPrice);
+            uint256 expectedMinPrice = 1e18 * (100e2 - uint256(maxDiscount)) / 100e2;
             // minBidSize is in terms of quote tokens
             // It assumes the worst case scenario, where the auction has many small bids of quantity maxBids
             // Multiplying the minPrice (QT/BT) by the capacity (BT) gives the quantity of quote tokens at the minPrice
             // It is then divided by the underlying asset decimals to adjust the scale
             uint256 expectedMinBidSize = expectedMinPrice * auctionCapacity / (maxBids * 1e18);
-            console2.log("expectedMinBidSize", expectedMinBidSize);
             // minFilled is the minFillPercent * capacity
             uint256 expectedMinFilled = minFillPercent * auctionCapacity / 100e2;
-            console2.log("expectedMinFilled", expectedMinFilled);
 
             IEncryptedMarginalPrice.AuctionData memory empData = empa.getAuctionData(0);
             assertEq(empData.minPrice, expectedMinPrice, "minPrice");
