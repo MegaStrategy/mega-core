@@ -76,7 +76,13 @@ contract OraclePriceTest is Test {
     {
         uint256 price = tokenOracle.price();
 
-        assertEq(price, 1e36 * TOKEN_PRICE / LOAN_TOKEN_PRICE, "price");
+        // Collateral (TOKEN) price = 321e18 (PRICE decimals = 18)
+        // Loan token price = 1e18 (PRICE decimals = 18)
+        // Price = # loan tokens per collateral token = 321e18
+        // Scale = 36 + loan decimals - collateral decimals
+        // = 36 + 18 - 18 = 36
+
+        assertEq(price, 321e36, "price");
     }
 
     function test_loanDecimals6()
@@ -88,7 +94,14 @@ contract OraclePriceTest is Test {
     {
         uint256 price = tokenOracle.price();
 
-        assertEq(price, 1e36 * TOKEN_PRICE / 1e6, "price");
+        // Collateral (TOKEN) price = 321e18 (PRICE decimals = 18)
+        // Loan token price = 1e18 (PRICE decimals = 18)
+        // Price = # loan tokens per collateral token = 321e18
+        // Scale = 36 + loan decimals - collateral decimals
+        // = 36 + 6 - 18 = 24
+        // Price = 321e24
+
+        assertEq(price, 321e24, "price");
     }
 
     function test_priceDecimalsNot18() public givenPriceDecimals(17) {

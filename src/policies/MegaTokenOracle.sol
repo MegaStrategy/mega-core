@@ -13,11 +13,10 @@ import {IMegaTokenOracle} from "./interfaces/IMegaTokenOracle.sol";
 contract MegaTokenOracle is Policy, IMegaTokenOracle {
     // =========  STATE ========= //
 
-    address public immutable loanToken;
-
     uint256 internal _priceScale;
     uint256 internal _tokenScale;
-    uint256 internal immutable _loanTokenScale;
+    address internal immutable _LOAN_TOKEN;
+    uint256 internal immutable _LOAN_TOKEN_SCALE;
 
     // Modules
     address public TOKEN;
@@ -29,8 +28,8 @@ contract MegaTokenOracle is Policy, IMegaTokenOracle {
         // Validate
         if (loanToken_ == address(0)) revert InvalidParams("loanToken");
 
-        loanToken = loanToken_;
-        _loanTokenScale = 10 ** ERC20(loanToken_).decimals();
+        _LOAN_TOKEN = loanToken_;
+        _LOAN_TOKEN_SCALE = 10 ** ERC20(loanToken_).decimals();
     }
 
     /// @inheritdoc Policy
@@ -77,7 +76,7 @@ contract MegaTokenOracle is Policy, IMegaTokenOracle {
 
     /// @inheritdoc IMegaTokenOracle
     function getLoanToken() external view override returns (address) {
-        return loanToken;
+        return _LOAN_TOKEN;
     }
 
     // =========  PRICE FUNCTIONS ========= //
@@ -87,9 +86,12 @@ contract MegaTokenOracle is Policy, IMegaTokenOracle {
     function price() external view returns (uint256) {
         // Scale: PRICE decimals
         // We know that PRICE decimals == TOKEN decimals == 18
-        uint256 collateralPriceInLoanToken = PRICE.getPriceIn(TOKEN, loanToken);
+        uint256 collateralPriceInLoanToken = PRICE.getPriceIn(TOKEN, _LOAN_TOKEN);
 
         // Adjust to the expected scale
-        return 1e36 * collateralPriceInLoanToken / _loanTokenScale;
+        // Scale = 36 + loan decimals - collateral decimals (always 18)
+        // = 18 + loan decimals
+        // Price is always in 18 decimals, so we just need to add the loan decimal scale
+        return _LOAN_TOKEN_SCALE * collateralPriceInLoanToken;
     }
 }
