@@ -8,9 +8,9 @@ import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptio
 import {FixedStrikeOptionTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
 
 import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
 contract IssuerReclaimOTest is IssuerTest {
+    // solhint-disable-next-line event-name-camelcase
     event oTokenReclaimed(address indexed token, uint256 amount);
 
     // test cases

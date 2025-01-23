@@ -15,6 +15,7 @@ interface IIssuer {
     event oTokenIssued(
         address indexed oToken, address indexed vestingToken, address indexed to, uint256 amount
     );
+    // solhint-disable-next-line event-name-camelcase
     event oTokenReclaimed(address indexed oToken, uint256 amount);
 
     // ========== PROTOCOL TOKEN ========== //
