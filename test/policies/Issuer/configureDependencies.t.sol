@@ -20,7 +20,7 @@ contract MockTreasuryModule is OlympusTreasury {
     ) OlympusTreasury(kernel_) {}
 }
 
-contract IssuerUpgradeTokenModuleTest is IssuerTest {
+contract IssuerConfigureDependenciesTest is IssuerTest {
     // given token module is changed
     //  [X] it reverts
     // given another module is changed
