@@ -87,8 +87,17 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
         dependencies[1] = toKeycode("TOKEN");
         dependencies[2] = toKeycode("ROLES");
 
+        // Determine the address of the TOKEN module
+        address tokenModule = getModuleAddress(dependencies[1]);
+
+        // Changing the TOKEN module is not supported, otherwise convertible debt token holders will not be able to convert their tokens
+        if (address(TOKEN) != address(0) && tokenModule != address(TOKEN)) {
+            revert InvalidState();
+        }
+
+        // Cache the module addresses
         TRSRY = TRSRYv1(getModuleAddress(dependencies[0]));
-        TOKEN = TOKENv1(getModuleAddress(dependencies[1]));
+        TOKEN = TOKENv1(tokenModule);
         ROLES = ROLESv1(getModuleAddress(dependencies[2]));
 
         _tokenDecimals = TOKEN.decimals();
@@ -518,6 +527,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
         (,,, uint256 conversionPrice) = ConvertibleDebtToken(debtToken_).getTokenData();
         convertedAmount = _getConvertedAmount(amount_, conversionPrice, false);
         return convertedAmount;
+    }
+
+    /// @inheritdoc IBanker
+    function getConvertedToken() external view override returns (address) {
+        return address(TOKEN);
     }
 
     /// @notice     Computes the name and symbol of a vesting token

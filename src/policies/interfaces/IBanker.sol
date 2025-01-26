@@ -6,6 +6,7 @@ import {Point} from "axis-core-1.0.1/lib/ECIES.sol";
 interface IBanker {
     // ========== ERRORS ========== //
 
+    error InvalidState();
     error InvalidDebtToken();
     error InvalidParam(string name);
     error Inactive();
@@ -134,4 +135,7 @@ interface IBanker {
         address debtToken_,
         uint256 amount_
     ) external view returns (uint256);
+
+    /// @notice Returns the address of the token that is converted to
+    function getConvertedToken() external view returns (address);
 }
