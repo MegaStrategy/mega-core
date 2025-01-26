@@ -390,7 +390,8 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
 
         // Increase this contract's mint approval for the amount divided by the conversion rate
         // This is to ensure that the debt token can be converted
-        uint256 mintAmount = _getConvertedAmount(amount, conversionPrice);
+        // This is rounded up, to avoid a situation where the conversion is not possible
+        uint256 mintAmount = _getConvertedAmount(amount, conversionPrice, true);
         TOKEN.increaseMintApproval(address(this), mintAmount);
 
         // Mint the debt tokens to the recipient
@@ -443,7 +444,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
         TRSRY.withdrawReserves(msg.sender, underlying, amount_);
 
         // Calculate the amount of tokens that could have been minted against the debt tokens
-        uint256 mintAmount = _getConvertedAmount(amount_, conversionPrice);
+        uint256 mintAmount = _getConvertedAmount(amount_, conversionPrice, false);
 
         // Decrease the mint approval for the mint amount
         // We do this since the debt token has been burned to avoid an extra dangling mint allowance
@@ -470,7 +471,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
         debtToken.burnFrom(msg.sender, amount_);
 
         // Calculate the amount of TOKEN to mint
-        uint256 mintAmount = _getConvertedAmount(amount_, conversionPrice);
+        uint256 mintAmount = _getConvertedAmount(amount_, conversionPrice, false);
 
         // Mint the TOKEN to the sender
         TOKEN.mint(msg.sender, mintAmount);
@@ -486,14 +487,24 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
     // ========== HELPERS =========== //
 
     /// @notice Convert an amount of underlying asset to TOKEN at the conversion price
-    /// @dev The conversion rate is the price of TOKEN in the underlying asset that the tokens can be converted at
-    ///      e.g. if the underlying asset has 18 decimals, the conversion rate is 15e18, and the amount is 75e18,
-    ///      then they will receive 5e18 TOKEN.
+    /// @dev    The conversion rate is the price of TOKEN in the underlying asset that the tokens can be converted at
+    ///         e.g. if the underlying asset has 18 decimals, the conversion rate is 15e18, and the amount is 75e18,
+    ///         then they will receive 5e18 TOKEN.
+    ///
+    /// @param  amount_             The amount of underlying asset to convert
+    /// @param  conversionPrice_    The conversion price of TOKEN in the underlying asset
+    /// @param  roundUp_            Whether to round up the converted amount
+    /// @return convertedAmount     The amount of TOKEN that will be minted
     function _getConvertedAmount(
-        uint256 amount,
-        uint256 conversionPrice
-    ) internal view returns (uint256) {
-        return (amount * 10 ** _tokenDecimals) / conversionPrice;
+        uint256 amount_,
+        uint256 conversionPrice_,
+        bool roundUp_
+    ) internal view returns (uint256 convertedAmount) {
+        if (roundUp_) {
+            return mulDivUp(amount_, 10 ** _tokenDecimals, conversionPrice_);
+        }
+
+        return (amount_ * 10 ** _tokenDecimals) / conversionPrice_;
     }
 
     /// @inheritdoc IBanker
@@ -505,7 +516,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
         if (!createdBy[debtToken_]) revert InvalidDebtToken();
 
         (,,, uint256 conversionPrice) = ConvertibleDebtToken(debtToken_).getTokenData();
-        convertedAmount = _getConvertedAmount(amount_, conversionPrice);
+        convertedAmount = _getConvertedAmount(amount_, conversionPrice, false);
         return convertedAmount;
     }
 
