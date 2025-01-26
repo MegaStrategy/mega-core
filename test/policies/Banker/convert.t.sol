@@ -23,6 +23,8 @@ contract BankerConvertTest is BankerTest {
     //  [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
     //  [X] the converted amount is in terms of the destination token
     //  [X] the mint allowance is decreased by the amount converted
+    // when multiple issue rounds are converted at once
+    //  [X] the converted amount does not exceed the mint allowance
     // [X] it burns the given amount of debt tokens from the sender
     // [X] it mints the amount divided by the conversion price of TOKEN to the sender
     // [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
@@ -178,6 +180,35 @@ contract BankerConvertTest is BankerTest {
         // Check that balances are updated
         _assertBalances(amount, amountToConvert, 0, expectedConvertedAmount);
         _assertApprovals(amount, amountToConvert, 0, mintApprovalBefore, expectedConvertedAmount);
+    }
+
+    function test_multipleIssue(
+        uint256 amountOne_,
+        uint256 amountTwo_
+    ) public givenPolicyIsActive givenDebtTokenCreated {
+        uint256 amountOne = bound(amountOne_, 1e18, 1_000_000e18);
+        uint256 amountTwo = bound(amountTwo_, 1e18, 1_000_000e18);
+
+        _issueDebtToken(buyer, amountOne);
+        _issueDebtToken(buyer, amountTwo);
+
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+
+        vm.startPrank(buyer);
+        ERC20(debtToken).approve(address(banker), amountOne + amountTwo);
+        banker.convert(debtToken, amountOne + amountTwo);
+        vm.stopPrank();
+
+        uint256 expectedConvertedAmount =
+            (amountOne + amountTwo) * 1e18 / debtTokenParams.conversionPrice;
+        _assertBalances(amountOne + amountTwo, amountOne + amountTwo, 0, expectedConvertedAmount);
+        _assertApprovals(
+            amountOne + amountTwo,
+            amountOne + amountTwo,
+            0,
+            mintApprovalBefore,
+            expectedConvertedAmount
+        );
     }
 
     function test_success(
