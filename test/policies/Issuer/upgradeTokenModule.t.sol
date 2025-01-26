@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BankerTest} from "../BankerTest.sol";
+import {IssuerTest} from "./IssuerTest.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 import {Kernel} from "src/Kernel.sol";
 import {Actions} from "src/Kernel.sol";
-import {IBanker} from "src/policies/interfaces/IBanker.sol";
+import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
 
 contract MockTokenModule is MegaToken {
@@ -20,24 +20,24 @@ contract MockTreasuryModule is OlympusTreasury {
     ) OlympusTreasury(kernel_) {}
 }
 
-contract BankerUpgradeTokenModuleTest is BankerTest {
+contract IssuerUpgradeTokenModuleTest is IssuerTest {
     // given token module is changed
     //  [X] it reverts
     // given another module is changed
     //  [X] it succeeds
 
-    function test_tokenModuleChanged_reverts() public givenPolicyIsActive {
+    function test_tokenModuleChanged_reverts() public {
         // Create a new token module
         MockTokenModule newModule = new MockTokenModule(kernel);
 
         // Expect revert
-        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidState.selector));
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidState.selector));
 
         // Install the new module
         kernel.executeAction(Actions.UpgradeModule, address(newModule));
     }
 
-    function test_treasuryModuleChanged() public givenPolicyIsActive {
+    function test_treasuryModuleChanged() public {
         // Create a new TRSRY module
         MockTreasuryModule newModule = new MockTreasuryModule(kernel);
 
@@ -46,7 +46,7 @@ contract BankerUpgradeTokenModuleTest is BankerTest {
 
         // Assert that the TOKEN module address is the same
         assertEq(
-            banker.getConvertedToken(), address(mgst), "TOKEN module address should be the same"
+            issuer.getUnderlyingToken(), address(mgst), "TOKEN module address should be the same"
         );
     }
 }

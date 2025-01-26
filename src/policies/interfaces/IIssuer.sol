@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: Unlicensed
+// SPDX-License-Identifier: TBD
 pragma solidity >=0.8.0;
 
 interface IIssuer {
     // ========== ERRORS ========== //
 
+    error InvalidState();
     error InvalidParam(string name);
     error Inactive();
 
@@ -109,4 +110,7 @@ interface IIssuer {
     function sweepToTreasury(
         address token_
     ) external;
+
+    /// @notice Returns the protocol token that options convert to
+    function getUnderlyingToken() external view returns (address);
 }
