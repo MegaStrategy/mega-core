@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
-
+import {FullMath} from "src/lib/FullMath.sol";
 import {BankerTest} from "./BankerTest.sol";
 
 contract BankerConvertTest is BankerTest {
@@ -234,7 +234,7 @@ contract BankerConvertTest is BankerTest {
         uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
         assertEq(
             mintApprovalBefore,
-            amount * 10 ** mgst.decimals() / debtTokenParams.conversionPrice,
+            FullMath.mulDivUp(amount, 10 ** mgst.decimals(), debtTokenParams.conversionPrice),
             "mgst mint approval"
         );
 

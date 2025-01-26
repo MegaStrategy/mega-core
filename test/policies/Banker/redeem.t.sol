@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
-
+import {FullMath} from "src/lib/FullMath.sol";
 import {BankerTest} from "./BankerTest.sol";
 
 contract BankerRedeemTest is BankerTest {
@@ -113,13 +113,21 @@ contract BankerRedeemTest is BankerTest {
         _issueDebtToken(buyer, amount);
 
         // Confirm beginning balances
-        assertEq(ERC20(debtToken).balanceOf(buyer), amount);
-        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), 0);
-        assertEq(ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), amount);
-        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount);
+        assertEq(ERC20(debtToken).balanceOf(buyer), amount, "debt token balance");
+        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), 0, "underlying balance");
+        assertEq(
+            ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), amount, "treasury balance"
+        );
+        assertEq(
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)),
+            amount,
+            "underlying withdraw allowance"
+        );
         uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
         assertEq(
-            mintApprovalBefore, amount * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
+            mintApprovalBefore,
+            FullMath.mulDivUp(amount, 10 ** mgst.decimals(), debtTokenParams.conversionPrice),
+            "mgst mint allowance"
         );
 
         // Warp to maturity
@@ -149,13 +157,21 @@ contract BankerRedeemTest is BankerTest {
         _issueDebtToken(buyer, amount);
 
         // Confirm beginning balances
-        assertEq(ERC20(debtToken).balanceOf(buyer), amount);
-        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), 0);
-        assertEq(ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), amount);
-        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount);
+        assertEq(ERC20(debtToken).balanceOf(buyer), amount, "debt token balance");
+        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), 0, "underlying balance");
+        assertEq(
+            ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), amount, "treasury balance"
+        );
+        assertEq(
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)),
+            amount,
+            "underlying withdraw allowance"
+        );
         uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
         assertEq(
-            mintApprovalBefore, amount * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
+            mintApprovalBefore,
+            FullMath.mulDivUp(amount, 10 ** mgst.decimals(), debtTokenParams.conversionPrice),
+            "mgst mint allowance"
         );
 
         // Warp to maturity

@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {MockERC20, ERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
-
+import {FullMath} from "src/lib/FullMath.sol";
 import {BankerTest} from "./BankerTest.sol";
 
 contract BankerIssueTest is BankerTest {
@@ -124,7 +124,11 @@ contract BankerIssueTest is BankerTest {
         );
 
         // Check that the contract's mint allowance for TOKEN was increased
-        assertEq(mgst.mintApproval(address(banker)), amount * 1e18 / 5e6, "mgst mint allowance");
+        assertEq(
+            mgst.mintApproval(address(banker)),
+            FullMath.mulDivUp(amount, 1e18, 5e6),
+            "mgst mint allowance"
+        );
     }
 
     function test_success(
@@ -155,13 +159,16 @@ contract BankerIssueTest is BankerTest {
 
         // Check that the banker contract's withdrawal allowance for the debt token's underlying asset was increased
         assertEq(
-            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount_
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)),
+            amount_,
+            "underlying withdraw allowance"
         );
 
         // Check that the banker contract's mint allowance for the debt token's underlying asset was increased
         assertEq(
             mgst.mintApproval(address(banker)),
-            amount_ * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
+            FullMath.mulDivUp(amount_, 10 ** mgst.decimals(), debtTokenParams.conversionPrice),
+            "mgst mint allowance"
         );
     }
 }
