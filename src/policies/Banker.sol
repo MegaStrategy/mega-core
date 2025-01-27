@@ -88,21 +88,17 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
         dependencies[2] = toKeycode("ROLES");
 
         // Determine the address of the TOKEN module
-        address trsryModule = getModuleAddress(dependencies[0]);
         address tokenModule = getModuleAddress(dependencies[1]);
 
-        // Changing the TRSRY module is not supported, otherwise convertible debt token holders will not be able to redeem their tokens
-        if (address(TRSRY) != address(0) && trsryModule != address(TRSRY)) {
-            revert InvalidState();
-        }
-
-        // Changing the TOKEN module is not supported, otherwise convertible debt token holders will not be able to convert their tokens
+        // Once configured, the TOKEN module is immutable
+        // Other modules can be changed
+        // However, some (such as TRSRY) will require migration of approvals
         if (address(TOKEN) != address(0) && tokenModule != address(TOKEN)) {
             revert InvalidState();
         }
 
         // Cache the module addresses
-        TRSRY = TRSRYv1(trsryModule);
+        TRSRY = TRSRYv1(getModuleAddress(dependencies[0]));
         TOKEN = TOKENv1(tokenModule);
         ROLES = ROLESv1(getModuleAddress(dependencies[2]));
 

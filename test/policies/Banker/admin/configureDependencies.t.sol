@@ -39,7 +39,7 @@ contract BankerConfigureDependenciesTest is BankerTest {
     // given TOKEN module is changed
     //  [X] it reverts
     // given TRSRY module is changed
-    //  [X] it reverts
+    //  [X] it succeeds
     // [X] it succeeds
 
     function test_tokenModuleChanged_reverts() public givenPolicyIsActive {
@@ -57,11 +57,13 @@ contract BankerConfigureDependenciesTest is BankerTest {
         // Create a new TRSRY module
         MockTreasuryModule newModule = new MockTreasuryModule(kernel);
 
-        // Expect revert
-        vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidState.selector));
-
         // Upgrade the module
         kernel.executeAction(Actions.UpgradeModule, address(newModule));
+
+        // No revert
+        assertEq(
+            banker.getConvertedToken(), address(mgst), "TOKEN module address should be the same"
+        );
     }
 
     function test_otherModuleChanged() public givenPolicyIsActive {
