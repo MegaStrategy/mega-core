@@ -126,21 +126,38 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
 
     // ========== INITIALIZATION ========== //
 
+    /// @notice Enable the contract functionality
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    ///         - The policy is already active
     function initialize(
         uint48 maxDiscount_,
         uint24 minFillPercent_,
         uint48 referrerFee_,
         uint256 maxBids_
     ) external onlyRole("admin") {
+        // Validate that the policy is not already active
+        if (locallyActive) revert InvalidState();
+
+        // Set the policy to active
         locallyActive = true;
 
+        // Set the parameters
         maxDiscount = maxDiscount_;
         minFillPercent = minFillPercent_;
         referrerFee = referrerFee_;
         maxBids = maxBids_;
     }
 
+    /// @notice Disable the contract functionality
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the admin role
+    ///         - The policy is already inactive
     function shutdown() external onlyRole("admin") {
+        // Validate that the policy is active
+        if (!locallyActive) revert InvalidState();
+
+        // Set the policy to inactive
         locallyActive = false;
     }
 

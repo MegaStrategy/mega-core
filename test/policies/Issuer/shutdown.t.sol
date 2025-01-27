@@ -3,9 +3,12 @@ pragma solidity 0.8.19;
 
 import {IssuerTest} from "./IssuerTest.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
+import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 
 contract IssuerShutdownTest is IssuerTest {
     // when the caller does not have the admin role
+    //  [X] it reverts
+    // given the contract is already inactive
     //  [X] it reverts
     // [X] it disables the contract
 
@@ -19,6 +22,15 @@ contract IssuerShutdownTest is IssuerTest {
         );
 
         vm.prank(caller_);
+        issuer.shutdown();
+    }
+
+    function test_policyNotActive_reverts() public givenLocallyInactive {
+        // Expect revert
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidState.selector));
+
+        // Call
+        vm.prank(admin);
         issuer.shutdown();
     }
 
