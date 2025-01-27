@@ -267,8 +267,6 @@ abstract contract BankerTest is Test, WithSalts {
                 bidPrivateKey
             );
             Point memory bidPubKey = ECIES.calcPubKey(Point(1, 2), bidPrivateKey);
-            console2.log("bid pub key x", bidPubKey.x);
-            console2.log("bid pub key y", bidPubKey.y);
 
             empBidParams = IEncryptedMarginalPrice.BidParams({
                 encryptedAmountOut: encryptedAmountOut,
@@ -290,25 +288,6 @@ abstract contract BankerTest is Test, WithSalts {
         vm.startPrank(buyer);
         auctionHouse.bid(bidParams, bytes(""));
         vm.stopPrank();
-
-        // Try and decrypt the bid
-        console2.log("auction private key", auctionPrivateKey);
-        uint256 message = ECIES.decrypt(
-            empBidParams.encryptedAmountOut,
-            empBidParams.bidPublicKey,
-            auctionPrivateKey,
-            uint256(keccak256(abi.encodePacked(uint96(0), buyer, uint96(amountIn_))))
-        );
-        uint256 maskedValue = uint128(message);
-        uint256 seed = uint128(message >> 128);
-        uint256 amountOut;
-        unchecked {
-            amountOut = uint256(maskedValue + seed);
-        }
-        console2.log("decrypted amount out", amountOut);
-        console2.log("input amount out", amountOut_);
-
-        // assertEq(amountOut, amountOut_, "decrypted amount out");
         _;
     }
 

@@ -206,7 +206,9 @@ contract BankerRedeemTest is BankerTest {
         // Get the balance before
         uint256 debtTokenBalanceBefore = ERC20(debtToken).balanceOf(buyer);
         uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
-        assertEq(debtTokenBalanceBefore, auctionParams.capacity, "debt token balance before conversion");
+        assertEq(
+            debtTokenBalanceBefore, auctionParams.capacity, "debt token balance before conversion"
+        );
 
         // Warp to maturity
         vm.warp(debtTokenParams.maturity);
