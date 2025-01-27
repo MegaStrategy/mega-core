@@ -23,9 +23,9 @@ contract BankerRedeemTest is BankerTest {
     //  [X] it decreases the contract's withdraw allowance for the debt token's underlying asset
     //  [X] it decreases the contract's mint allowance for TOKEN
     // given the debt tokens are issued through an auction
-    //  [ ] it burns the given amount of debt tokens from the sender
-    //  [ ] it transfers the amount of the debt token's underlying asset to the sender
-    //  [ ] it decreases the contract's mint allowance for the amount divided by conversion price
+    //  [X] it burns the given amount of debt tokens from the sender
+    //  [X] it transfers the amount of the debt token's underlying asset to the sender
+    //  [X] it decreases the contract's mint allowance for the amount divided by conversion price
     // when the parameters are valid, the token has matured, and the treasury has enough funds
     //  [X] it burns the given amount of debt tokens from the sender
     //  [X] it transfers the amount of the debt token's underlying asset to the sender
@@ -191,5 +191,42 @@ contract BankerRedeemTest is BankerTest {
         uint256 expectedConvertedAmount = amountToRedeem * 1e18 / debtTokenParams.conversionPrice;
         _assertBalances(amount, 0, amountToRedeem, 0);
         _assertApprovals(amount, 0, amountToRedeem, mintApprovalBefore, expectedConvertedAmount);
+    }
+
+    function test_auctionLifecycle()
+        public
+        givenPolicyIsActive
+        givenAuctionIsCreated
+        givenAuctionHasStarted
+        givenAuctionHasBid(100e18, 5e18)
+        givenAuctionHasConcluded
+        givenAuctionHasSettled
+        givenBidIsClaimed(1)
+    {
+        // Get the balance before
+        uint256 debtTokenBalanceBefore = ERC20(debtToken).balanceOf(buyer);
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+        assertEq(debtTokenBalanceBefore, auctionParams.capacity, "debt token balance before conversion");
+
+        // Warp to maturity
+        vm.warp(debtTokenParams.maturity);
+
+        // Redeem debt tokens
+        vm.startPrank(buyer);
+        ERC20(debtToken).approve(address(banker), debtTokenBalanceBefore);
+        banker.redeem(debtToken, debtTokenBalanceBefore);
+        vm.stopPrank();
+
+        // Check that the balances are updated
+        uint256 expectedConvertedAmount =
+            debtTokenBalanceBefore * 10 ** mgst.decimals() / debtTokenParams.conversionPrice;
+        _assertBalances(debtTokenBalanceBefore, 0, debtTokenBalanceBefore, 0);
+        _assertApprovals(
+            debtTokenBalanceBefore,
+            0,
+            debtTokenBalanceBefore,
+            mintApprovalBefore,
+            expectedConvertedAmount
+        );
     }
 }
