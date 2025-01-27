@@ -138,6 +138,13 @@ contract ConvertibleDebtToken is ERC20, IOracle {
 
     // ========== MANAGEMENT ========== //
 
+    /// @notice Set the conversion price of the token.
+    /// @dev    This function reverts if:
+    ///         - The caller is not the `ISSUER`
+    ///         - The conversion price has already been set
+    ///         - The new conversion price is zero
+    ///
+    /// @param  conversionPrice_ The conversion price of the token.
     function setConversionPrice(
         uint256 conversionPrice_
     ) external onlyIssuer {
@@ -145,7 +152,13 @@ contract ConvertibleDebtToken is ERC20, IOracle {
         // It can only be set once
         if (conversionPrice != 0) revert AlreadySet();
 
+        // Validate that the new conversion price is not zero
+        if (conversionPrice_ == 0) revert InvalidParam("conversionPrice");
+
+        // Set the conversion price
         conversionPrice = conversionPrice_;
+
+        // Emit the event
         emit ConversionPriceSet(conversionPrice_);
     }
 

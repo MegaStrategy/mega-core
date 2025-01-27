@@ -6,12 +6,13 @@ import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 
 contract SetConversionPriceTest is ConvertibleDebtTokenTest {
     // ========== TESTS ========== //
-    // [X] when the caller is not the issuer
-    //    [X] it reverts
-    // [X] when the conversion price is already set (not zero)
-    //    [X] it reverts
-    // [X] when the conversion price is zero
-    //    [X] it sets the conversion price to the input
+    // when the caller is not the issuer
+    //  [X] it reverts
+    // given the conversion price is already set (not zero)
+    //  [X] it reverts
+    // when the conversion price is zero
+    //  [X] it reverts
+    // it sets the conversion price
 
     function test_caller_notIssuer(
         address caller_
@@ -36,5 +37,20 @@ contract SetConversionPriceTest is ConvertibleDebtTokenTest {
         vm.prank(OWNER);
         cdt.setConversionPrice(conversionPrice_);
         vm.assertEq(cdt.conversionPrice(), conversionPrice_);
+    }
+
+    function test_conversionPriceIsZero_reverts()
+        public
+        givenConversionPriceIsSet(0)
+        givenTokenIsCreated
+    {
+        // Expect revert
+        vm.expectRevert(
+            abi.encodeWithSelector(ConvertibleDebtToken.InvalidParam.selector, "conversionPrice")
+        );
+
+        // Call
+        vm.prank(OWNER);
+        cdt.setConversionPrice(0);
     }
 }
