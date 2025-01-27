@@ -1,3 +1,4 @@
+@axis-core-1.0.1/=dependencies/axis-core-1.0.1/src/
 @clones-with-immutable-args-1.1.1=dependencies/clones-with-immutable-args-1.1.1/src
 @forge-std/=dependencies/forge-std-1.9.4/src/
 @openzeppelin-contracts-4.9.2/=dependencies/@openzeppelin-contracts-4.9.6/
@@ -10,6 +11,7 @@
 @uniswap/v3-core/=dependencies/@uniswap-v3-core-1.0.2-solc-0.8-simulate/
 axis-core-1.0.1/=dependencies/axis-core-1.0.1/src/
 axis-periphery-1.0.0/=dependencies/axis-periphery-1.0.0/src/
+axis-utils-1.0.0/=dependencies/axis-utils-1.0.0/packages/axis-utils/src/
 forge-std/=dependencies/forge-std-1.9.4/src/
 morpho-blue-1.0.0/=dependencies/morpho-blue-1.0.0/src/
 solady-0.0.261/=dependencies/solady-0.0.261/src/

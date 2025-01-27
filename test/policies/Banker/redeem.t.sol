@@ -22,6 +22,10 @@ contract BankerRedeemTest is BankerTest {
     // given the underlying asset has 6 decimals
     //  [X] it decreases the contract's withdraw allowance for the debt token's underlying asset
     //  [X] it decreases the contract's mint allowance for TOKEN
+    // given the debt tokens are issued through an auction
+    //  [ ] it burns the given amount of debt tokens from the sender
+    //  [ ] it transfers the amount of the debt token's underlying asset to the sender
+    //  [ ] it decreases the contract's mint allowance for the amount divided by conversion price
     // when the parameters are valid, the token has matured, and the treasury has enough funds
     //  [X] it burns the given amount of debt tokens from the sender
     //  [X] it transfers the amount of the debt token's underlying asset to the sender

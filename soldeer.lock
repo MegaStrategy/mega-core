@@ -33,6 +33,12 @@ checksum = "fb20c7ebe7ab30697b72300c8c9e4cc847de98c35ab8c05b5d71fe3ed59fead0"
 integrity = "289e922ce8d2419e991f94b6a26339377e255931a7e61a3d44725642ff97ba41"
 
 [[dependencies]]
+name = "axis-utils"
+version = "1.0.0"
+git = "https://github.com/Axis-Fi/axis-utils.git"
+rev = "d4122f4a0adb115d9862b6606a6501d6eaad2f48"
+
+[[dependencies]]
 name = "clones-with-immutable-args"
 version = "1.1.1"
 git = "https://github.com/wighawag/clones-with-immutable-args.git"

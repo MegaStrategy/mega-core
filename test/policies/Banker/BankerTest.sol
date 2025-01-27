@@ -14,9 +14,16 @@ import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 import {WithSalts} from "../../lib/WithSalts.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
+import {IBatchAuctionHouse} from "axis-core-1.0.1/interfaces/IBatchAuctionHouse.sol";
+import {IEncryptedMarginalPrice} from
+    "axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
 import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/auctions/batch/EMP.sol";
 import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
 import {Point, ECIES} from "axis-core-1.0.1/lib/ECIES.sol";
+import {EncryptedMarginalPriceBid} from "axis-utils-1.0.0/lib/EncryptedMarginalPriceBid.sol";
+import {IAuction} from "axis-core-1.0.1/interfaces/modules/IAuction.sol";
+
+import {console2} from "@forge-std/console2.sol";
 
 // solhint-disable max-states-count
 
@@ -233,6 +240,147 @@ abstract contract BankerTest is Test, WithSalts {
         // Set the debt token based on the auction
         (, address baseToken,,,,,,,) = auctionHouse.lotRouting(0);
         debtToken = baseToken;
+        _;
+    }
+
+    /// @dev    Copied from axis-core
+    function _formatBid(
+        uint256 amountOut_,
+        uint128 bidSeed_
+    ) internal pure returns (uint256) {
+        uint256 formattedAmountOut;
+        {
+            uint128 subtracted;
+            unchecked {
+                subtracted = uint128(amountOut_) - bidSeed_;
+            }
+            formattedAmountOut = uint256(bytes32(abi.encodePacked(bidSeed_, subtracted)));
+        }
+
+        return formattedAmountOut;
+    }
+
+    /// @dev    Copied from axis-core
+    function _encryptBid(
+        uint96 lotId_,
+        address bidder_,
+        uint256 amountIn_,
+        uint256 amountOut_,
+        uint128 bidSeed_,
+        uint256 bidPrivateKey_,
+        Point memory auctionPubKey_
+    ) internal view returns (uint256) {
+        // Format the amount out
+        uint256 formattedAmountOut = _formatBid(amountOut_, bidSeed_);
+
+        Point memory sharedSecretKey = ECIES.calcPubKey(auctionPubKey_, bidPrivateKey_);
+        uint256 salt = uint256(keccak256(abi.encodePacked(lotId_, bidder_, uint96(amountIn_))));
+        uint256 symmetricKey = uint256(keccak256(abi.encodePacked(sharedSecretKey.x, salt)));
+
+        return formattedAmountOut ^ symmetricKey;
+    }
+
+    modifier givenAuctionHasBid(uint96 amountIn_, uint96 amountOut_) {
+        // Fund the buyer
+        stablecoin.mint(buyer, amountIn_);
+
+        // Approve spending of the underlying asset
+        vm.startPrank(buyer);
+        stablecoin.approve(address(auctionHouse), amountIn_);
+        vm.stopPrank();
+
+        // Get the auction public key
+        Point memory auctionPubKey;
+        {
+            IEncryptedMarginalPrice.AuctionData memory auctionData = empa.getAuctionData(0);
+
+            auctionPubKey = auctionData.publicKey;
+        }
+
+        // Encrypt the bid
+        IEncryptedMarginalPrice.BidParams memory empBidParams;
+        {
+            uint256 bidPrivateKey = 12_345e18;
+            uint256 encryptedAmountOut = _encryptBid(
+                0,
+                buyer,
+                amountIn_,
+                amountOut_,
+                uint128(222e18), // bid seed
+                bidPrivateKey,
+                auctionPubKey
+            );
+            Point memory bidPubKey = ECIES.calcPubKey(auctionPubKey, bidPrivateKey);
+
+            empBidParams = IEncryptedMarginalPrice.BidParams({
+                encryptedAmountOut: encryptedAmountOut,
+                bidPublicKey: bidPubKey
+            });
+        }
+
+        // Prepare bid
+        IBatchAuctionHouse.BidParams memory bidParams = IBatchAuctionHouse.BidParams({
+            lotId: 0,
+            bidder: buyer,
+            referrer: address(0),
+            amount: amountIn_,
+            auctionData: abi.encode(empBidParams),
+            permit2Data: bytes("")
+        });
+
+        // Bid
+        vm.prank(buyer);
+        auctionHouse.bid(bidParams, bytes(""));
+
+        // Try and decrypt the bid
+        console2.log("auction private key", auctionPrivateKey);
+        uint256 decryptedAmountOut = ECIES.decrypt(
+            empBidParams.encryptedAmountOut,
+            empBidParams.bidPublicKey,
+            auctionPrivateKey,
+            uint256(keccak256(abi.encodePacked(uint96(0), buyer, amountIn_)))
+        );
+        assertEq(decryptedAmountOut, amountOut_, "decrypted amount out");
+        _;
+    }
+
+    modifier givenAuctionHasStarted() {
+        // Get the conclusion timestamp
+        IAuction.Lot memory lot = empa.getLot(0);
+
+        // Warp to the conclusion timestamp
+        vm.warp(lot.start);
+        _;
+    }
+
+    modifier givenAuctionHasConcluded() {
+        // Get the conclusion timestamp
+        IAuction.Lot memory lot = empa.getLot(0);
+
+        // Warp to the conclusion timestamp
+        vm.warp(lot.conclusion);
+        _;
+    }
+
+    modifier givenAuctionHasSettled() {
+        // Submit the private key (and decrypt the bids)
+        bytes32[] memory sortHints = new bytes32[](10);
+        empa.submitPrivateKey(0, auctionPrivateKey, 10, sortHints);
+
+        // Settle the auction
+        auctionHouse.settle(0, 10, bytes(""));
+        _;
+    }
+
+    modifier givenBidIsClaimed(
+        uint64 bidId_
+    ) {
+        uint64[] memory bidIds = new uint64[](1);
+        bidIds[0] = bidId_;
+
+        // Claim the bid
+        vm.prank(buyer);
+        auctionHouse.claimBids(0, bidIds);
         _;
     }
 

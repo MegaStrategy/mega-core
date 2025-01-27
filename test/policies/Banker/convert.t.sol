@@ -25,6 +25,11 @@ contract BankerConvertTest is BankerTest {
     //  [X] the mint allowance is decreased by the amount converted
     // when multiple issue rounds are converted at once
     //  [X] the converted amount does not exceed the mint allowance
+    // given the debt tokens are issued through an auction
+    //  [ ] it burns the given amount of debt tokens from the sender
+    //  [ ] it mints the amount divided by the conversion price of TOKEN to the sender
+    //  [ ] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
+    //  [ ] the mint allowance is decreased by the amount converted
     // [X] it burns the given amount of debt tokens from the sender
     // [X] it mints the amount divided by the conversion price of TOKEN to the sender
     // [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
@@ -306,5 +311,38 @@ contract BankerConvertTest is BankerTest {
         uint256 expectedConvertedAmount = amountToConvert * 1e18 / 1_000_000e18;
         _assertBalances(amount, amountToConvert, 0, expectedConvertedAmount);
         _assertApprovals(amount, amountToConvert, 0, mintApprovalBefore, expectedConvertedAmount);
+    }
+
+    function test_auctionLifecycle()
+        public
+        givenPolicyIsActive
+        givenAuctionIsCreated
+        givenAuctionHasStarted
+        givenAuctionHasBid(100e18, 5e18)
+        givenAuctionHasConcluded
+        givenAuctionHasSettled
+        givenBidIsClaimed(1)
+    {
+        // Get the balance before
+        uint256 debtTokenBalanceBefore = ERC20(debtToken).balanceOf(buyer);
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+
+        // Convert the tokens at the conversion price
+        vm.startPrank(buyer);
+        ERC20(debtToken).approve(address(banker), debtTokenBalanceBefore);
+        banker.convert(debtToken, debtTokenBalanceBefore);
+        vm.stopPrank();
+
+        // Check that the balances are updated
+        uint256 expectedConvertedAmount =
+            debtTokenBalanceBefore * 10 ** mgst.decimals() / debtTokenParams.conversionPrice;
+        _assertBalances(debtTokenBalanceBefore, debtTokenBalanceBefore, 0, expectedConvertedAmount);
+        _assertApprovals(
+            debtTokenBalanceBefore,
+            debtTokenBalanceBefore,
+            0,
+            mintApprovalBefore,
+            expectedConvertedAmount
+        );
     }
 }
