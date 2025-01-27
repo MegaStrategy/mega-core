@@ -33,6 +33,11 @@ contract ConvertibleDebtToken is ERC20, IOracle {
     uint48 public maturity;
 
     /// @notice The conversion price of the token expressed as the amount of `underlying` per `convertsTo`, in underlying decimals.
+    /// @dev    A couple of examples help to clarify this value:
+    ///         - If both `underlying` and `convertsTo` have 18 decimals and `underlying` is a stablecoin where 1 of `convertsTo` is worth 5 of `underlying`, then the conversion price is 5e18.
+    ///         - If `underlying` has 6 decimals and `convertsTo` has 18 decimals and 1 of `convertsTo` is worth 5 of `underlying`, then the conversion price is 5e6.
+    ///
+    ///         It is noted that this approach limits the precision of the conversion price in situations where the underlying asset has a small number of decimals and a high value compared to the `convertsTo` asset.
     uint256 public conversionPrice;
 
     // ========== CONSTRUCTOR ========== //

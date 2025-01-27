@@ -41,7 +41,7 @@ interface IBanker {
     ///
     /// @param  underlying      The underlying asset for the debt token
     /// @param  maturity        The maturity timestamp of the debt token
-    /// @param  conversionPrice The price at which the debt token can be converted to the underlying asset. Amount of underlying to MGST in underlying decimals.
+    /// @param  conversionPrice The price at which the debt token can be converted to the underlying asset. See `ConvertibleDebtToken.conversionPrice` for more details.
     struct DebtTokenParams {
         address underlying;
         uint48 maturity;
