@@ -243,41 +243,7 @@ abstract contract BankerTest is Test, WithSalts {
         _;
     }
 
-    /// @dev    Copied from axis-core
-    function _formatBid(uint256 amountOut_, uint128 bidSeed_) internal pure returns (uint256) {
-        uint256 formattedAmountOut;
-        {
-            uint128 subtracted;
-            unchecked {
-                subtracted = uint128(amountOut_) - bidSeed_;
-            }
-            formattedAmountOut = uint256(bytes32(abi.encodePacked(bidSeed_, subtracted)));
-        }
-
-        return formattedAmountOut;
-    }
-
-    /// @dev    Copied from axis-core
-    function _encryptBid(
-        uint96 lotId_,
-        address bidder_,
-        uint256 amountIn_,
-        uint256 amountOut_,
-        uint128 bidSeed_,
-        uint256 bidPrivateKey_,
-        Point memory auctionPubKey_
-    ) internal view returns (uint256) {
-        // Format the amount out
-        uint256 formattedAmountOut = _formatBid(amountOut_, bidSeed_);
-
-        Point memory sharedSecretKey = ECIES.calcPubKey(auctionPubKey_, bidPrivateKey_);
-        uint256 salt = uint256(keccak256(abi.encodePacked(lotId_, bidder_, uint96(amountIn_))));
-        uint256 symmetricKey = uint256(keccak256(abi.encodePacked(sharedSecretKey.x, salt)));
-
-        return formattedAmountOut ^ symmetricKey;
-    }
-
-    modifier givenAuctionHasBid(uint256 amountIn_, uint256 amountOut_) {
+    modifier givenAuctionHasBid(uint96 amountIn_, uint96 amountOut_) {
         // Fund the buyer
         stablecoin.mint(buyer, amountIn_);
 
@@ -290,14 +256,15 @@ abstract contract BankerTest is Test, WithSalts {
         IEncryptedMarginalPrice.BidParams memory empBidParams;
         {
             uint256 bidPrivateKey = 112_233_445_566_778;
-            uint256 encryptedAmountOut = _encryptBid(
+            uint128 bidSeed = uint128(12_345_678_901_234_567_890_123_456_789_012_345_678);
+            uint256 encryptedAmountOut = EncryptedMarginalPriceBid.encryptAmountOut(
                 0,
                 buyer,
                 amountIn_,
                 amountOut_,
-                uint128(12_345_678_901_234_567_890_123_456_789_012_345_678), // bid seed
-                bidPrivateKey,
-                auctionParams.auctionPublicKey
+                auctionParams.auctionPublicKey,
+                bidSeed,
+                bidPrivateKey
             );
             Point memory bidPubKey = ECIES.calcPubKey(Point(1, 2), bidPrivateKey);
             console2.log("bid pub key x", bidPubKey.x);
