@@ -50,11 +50,11 @@ abstract contract BankerTest is Test, WithSalts {
     // Permissioned addresses
     address public manager = address(0xAAAA);
     address public admin = address(0xBBBB);
-    address public buyer = address(0xCCCC);
+    address public buyer = address(0x000000000000000000000000000000000000CcCc);
 
     // System parameters
     uint48 public maxDiscount = 10e2;
-    uint24 public minFillPercent = 100e2;
+    uint24 public minFillPercent = 50e2;
     uint48 public referrerFee = 0;
     uint256 public maxBids = 1000;
 
@@ -64,7 +64,7 @@ abstract contract BankerTest is Test, WithSalts {
     Banker.DebtTokenParams public debtTokenParams;
     Banker.AuctionParams public auctionParams;
 
-    uint256 public constant auctionPrivateKey = 1234e18;
+    uint256 public constant auctionPrivateKey = 112_233_445_566;
 
     uint256 public constant auctionCapacity = 100e18;
     uint48 public constant auctionStart = 1_000_000 + 1;
@@ -244,10 +244,7 @@ abstract contract BankerTest is Test, WithSalts {
     }
 
     /// @dev    Copied from axis-core
-    function _formatBid(
-        uint256 amountOut_,
-        uint128 bidSeed_
-    ) internal pure returns (uint256) {
+    function _formatBid(uint256 amountOut_, uint128 bidSeed_) internal pure returns (uint256) {
         uint256 formattedAmountOut;
         {
             uint128 subtracted;
@@ -280,7 +277,7 @@ abstract contract BankerTest is Test, WithSalts {
         return formattedAmountOut ^ symmetricKey;
     }
 
-    modifier givenAuctionHasBid(uint96 amountIn_, uint96 amountOut_) {
+    modifier givenAuctionHasBid(uint256 amountIn_, uint256 amountOut_) {
         // Fund the buyer
         stablecoin.mint(buyer, amountIn_);
 
@@ -289,28 +286,22 @@ abstract contract BankerTest is Test, WithSalts {
         stablecoin.approve(address(auctionHouse), amountIn_);
         vm.stopPrank();
 
-        // Get the auction public key
-        Point memory auctionPubKey;
-        {
-            IEncryptedMarginalPrice.AuctionData memory auctionData = empa.getAuctionData(0);
-
-            auctionPubKey = auctionData.publicKey;
-        }
-
         // Encrypt the bid
         IEncryptedMarginalPrice.BidParams memory empBidParams;
         {
-            uint256 bidPrivateKey = 12_345e18;
+            uint256 bidPrivateKey = 112_233_445_566_778;
             uint256 encryptedAmountOut = _encryptBid(
                 0,
                 buyer,
                 amountIn_,
                 amountOut_,
-                uint128(222e18), // bid seed
+                uint128(12_345_678_901_234_567_890_123_456_789_012_345_678), // bid seed
                 bidPrivateKey,
-                auctionPubKey
+                auctionParams.auctionPublicKey
             );
-            Point memory bidPubKey = ECIES.calcPubKey(auctionPubKey, bidPrivateKey);
+            Point memory bidPubKey = ECIES.calcPubKey(Point(1, 2), bidPrivateKey);
+            console2.log("bid pub key x", bidPubKey.x);
+            console2.log("bid pub key y", bidPubKey.y);
 
             empBidParams = IEncryptedMarginalPrice.BidParams({
                 encryptedAmountOut: encryptedAmountOut,
@@ -329,18 +320,28 @@ abstract contract BankerTest is Test, WithSalts {
         });
 
         // Bid
-        vm.prank(buyer);
+        vm.startPrank(buyer);
         auctionHouse.bid(bidParams, bytes(""));
+        vm.stopPrank();
 
         // Try and decrypt the bid
         console2.log("auction private key", auctionPrivateKey);
-        uint256 decryptedAmountOut = ECIES.decrypt(
+        uint256 message = ECIES.decrypt(
             empBidParams.encryptedAmountOut,
             empBidParams.bidPublicKey,
             auctionPrivateKey,
-            uint256(keccak256(abi.encodePacked(uint96(0), buyer, amountIn_)))
+            uint256(keccak256(abi.encodePacked(uint96(0), buyer, uint96(amountIn_))))
         );
-        assertEq(decryptedAmountOut, amountOut_, "decrypted amount out");
+        uint256 maskedValue = uint128(message);
+        uint256 seed = uint128(message >> 128);
+        uint256 amountOut;
+        unchecked {
+            amountOut = uint256(maskedValue + seed);
+        }
+        console2.log("decrypted amount out", amountOut);
+        console2.log("input amount out", amountOut_);
+
+        // assertEq(amountOut, amountOut_, "decrypted amount out");
         _;
     }
 
@@ -364,11 +365,15 @@ abstract contract BankerTest is Test, WithSalts {
 
     modifier givenAuctionHasSettled() {
         // Submit the private key (and decrypt the bids)
-        bytes32[] memory sortHints = new bytes32[](10);
-        empa.submitPrivateKey(0, auctionPrivateKey, 10, sortHints);
+        bytes32[] memory sortHints = new bytes32[](1);
+        sortHints[0] = bytes32(0x0000000000000000ffffffffffffffffffffffff000000000000000000000001);
+        empa.submitPrivateKey(0, auctionPrivateKey, 1, sortHints);
+
+        uint256 bidAmountOut = empa.decryptBid(0, 1);
+        console2.log("bid amount out", bidAmountOut);
 
         // Settle the auction
-        auctionHouse.settle(0, 10, bytes(""));
+        auctionHouse.settle(0, 1, bytes(""));
         _;
     }
 

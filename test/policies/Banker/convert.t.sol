@@ -26,10 +26,10 @@ contract BankerConvertTest is BankerTest {
     // when multiple issue rounds are converted at once
     //  [X] the converted amount does not exceed the mint allowance
     // given the debt tokens are issued through an auction
-    //  [ ] it burns the given amount of debt tokens from the sender
-    //  [ ] it mints the amount divided by the conversion price of TOKEN to the sender
-    //  [ ] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
-    //  [ ] the mint allowance is decreased by the amount converted
+    //  [X] it burns the given amount of debt tokens from the sender
+    //  [X] it mints the amount divided by the conversion price of TOKEN to the sender
+    //  [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
+    //  [X] the mint allowance is decreased by the amount converted
     // [X] it burns the given amount of debt tokens from the sender
     // [X] it mints the amount divided by the conversion price of TOKEN to the sender
     // [X] it decreases the contract's withdraw allowance for the debt token's underlying asset by amount
