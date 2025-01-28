@@ -40,6 +40,7 @@ abstract contract IssuerTest is Test {
 
     // Permissioned addresses
     address public admin = address(0xAAAA);
+    address public manager = address(0xBBBB);
 
     function setUp() public {
         // Set the block timestamp to some time in 2024
@@ -76,6 +77,7 @@ abstract contract IssuerTest is Test {
 
         // Set permissioned roles
         rolesAdmin.grantRole(bytes32("admin"), admin);
+        rolesAdmin.grantRole(bytes32("manager"), manager);
     }
 
     modifier givenLocallyInactive() {

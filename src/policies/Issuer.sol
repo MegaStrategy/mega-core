@@ -145,7 +145,7 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
                 ERC20(quoteToken_), // quoteToken_ = quoteToken
                 uint48(0), // eligible_ = immediately: TODO should we allow setting this?
                 expiry_, // expiry_ = expiry
-                address(this), // receiver_ = this (where funds go when options are exercised). Cleanup is handled by reclaimO()
+                address(this), // receiver_ = this (where proceeds and unexercised tokens are sent). Cleanup is handled by sweepToTreasury() and reclaimO().
                 true, // call_ = true
                 convertiblePrice_ // strikePrice_ = convertiblePrice
             )
@@ -230,33 +230,54 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
 
     /// @inheritdoc IIssuer
     /// @dev    This function reverts if:
-    ///         - The caller does not have the admin role
+    ///         - The caller does not have the manager role
     ///         - The policy is not locally active
     function reclaimO(
         address token_
-    ) external override onlyRole("admin") onlyWhileActive {
+    ) external override onlyRole("manager") onlyWhileActive {
+        // Validate that the oToken was created by this contract
+        if (!createdBy[token_]) revert InvalidParam("token");
+
+        // Reclaim the oToken from the teller
+        // This will revert if the oToken has not expired
+        teller.reclaim(oToken(token_));
+
+        // Get the after balances
+        // This contract doesn't hold any funds, so the balances are the result of the reclaim
+        uint256 protocolTokenAfter = TOKEN.balanceOf(address(this));
+
+        // Burn the protocol tokens
+        TOKEN.burn(protocolTokenAfter);
+
+        // Transfer the quote tokens to the treasury
+        // quoteToken.safeTransfer(address(TRSRY), quoteTokenAfter);
+
+        // Emit event
+        emit oTokenReclaimed(token_, protocolTokenAfter);
+    }
+
+    /// @inheritdoc IIssuer
+    /// @dev    This function reverts if:
+    ///         - The caller does not have the manager role
+    ///         - The policy is not locally active
+    ///         - The oToken was not created by this contract
+    function sweepToTreasury(
+        address token_
+    ) external onlyRole("manager") onlyWhileActive {
         // Validate that the oToken was created by this contract
         if (!createdBy[token_]) revert InvalidParam("token");
 
         // Load option parameters
         (,, ERC20 quoteToken,,,,,) = oToken(token_).getOptionParameters();
 
-        // Reclaim the oToken from the teller
-        teller.reclaim(oToken(token_));
-
-        // Get the after balances
-        // This contract doesn't hold any funds, so the balances are the result of the reclaim
-        uint256 protocolTokenAfter = TOKEN.balanceOf(address(this));
-        uint256 quoteTokenAfter = quoteToken.balanceOf(address(this));
-
-        // Burn the protocol tokens
-        TOKEN.burn(protocolTokenAfter);
+        uint256 quoteTokenBalance = quoteToken.balanceOf(address(this));
+        if (quoteTokenBalance == 0) return;
 
         // Transfer the quote tokens to the treasury
-        quoteToken.safeTransfer(address(TRSRY), quoteTokenAfter);
+        quoteToken.safeTransfer(address(TRSRY), quoteTokenBalance);
 
         // Emit event
-        emit oTokenReclaimed(token_, protocolTokenAfter);
+        emit SweptToTreasury(token_, address(quoteToken), quoteTokenBalance);
     }
 
     // ========== ADMIN ========== //

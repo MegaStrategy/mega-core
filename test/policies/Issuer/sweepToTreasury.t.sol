@@ -5,13 +5,11 @@ import {IssuerTest} from "./IssuerTest.sol";
 
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptionToken.sol";
-import {FixedStrikeOptionTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
 
 import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 
-contract IssuerReclaimOTest is IssuerTest {
-    // solhint-disable-next-line event-name-camelcase
-    event oTokenReclaimed(address indexed token, uint256 amount);
+contract IssuerSweepToTreasuryTest is IssuerTest {
+    event SweptToTreasury(address indexed oToken, address indexed proceedsToken, uint256 amount);
 
     // test cases
     // when the caller does not have the manager role
@@ -20,15 +18,10 @@ contract IssuerReclaimOTest is IssuerTest {
     //  [X] it reverts
     // when the oToken was not created by this contract
     //  [X] it reverts
-    // when the oToken has not expired
-    //  [X] it reverts
     // when oTokens were exercised
-    //  [X] it burns the protocol tokens that were reclaimed
     //  [X] it transfers the quote tokens to the treasury
-    //  [X] it emits an oTokenReclaimed event
-    // [X] it burns the protocol tokens that were reclaimed
-    // [X] it does not transfer quote token to the treasury
-    // [X] it emits an oTokenReclaimed event
+    //  [X] it emits a SweptToTreasury event
+    // [X] it does nothing
 
     address public token;
     address public recipient = address(200);
@@ -49,20 +42,20 @@ contract IssuerReclaimOTest is IssuerTest {
     function test_callerNotPermissioned_reverts(
         address caller_
     ) public givenOTokenCreated {
-        vm.assume(caller_ != manager);
+        vm.assume(caller_ != admin);
 
         vm.prank(caller_);
         vm.expectRevert(
             abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("manager"))
         );
-        issuer.reclaimO(token);
+        issuer.sweepToTreasury(token);
     }
 
     function test_shutdown_reverts() public givenOTokenCreated givenLocallyInactive {
         vm.expectRevert(abi.encodeWithSelector(IIssuer.Inactive.selector));
 
         vm.prank(manager);
-        issuer.reclaimO(token);
+        issuer.sweepToTreasury(token);
     }
 
     function test_oTokenNotCreatedByIssuer_reverts() public givenOTokenCreated {
@@ -70,18 +63,7 @@ contract IssuerReclaimOTest is IssuerTest {
 
         vm.prank(manager);
         vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidParam.selector, "token"));
-        issuer.reclaimO(_token);
-    }
-
-    function test_oTokenNotExpired_reverts() public givenOTokenCreated {
-        // Expect revert
-        vm.expectRevert(
-            abi.encodeWithSelector(FixedStrikeOptionTeller.Teller_NotExpired.selector, expiry)
-        );
-
-        // Reclaim the oToken
-        vm.prank(manager);
-        issuer.reclaimO(token);
+        issuer.sweepToTreasury(_token);
     }
 
     function test_oTokensExercised_reclaim() public givenOTokenCreated {
@@ -107,32 +89,29 @@ contract IssuerReclaimOTest is IssuerTest {
         vm.prank(recipient);
         teller.exercise(oToken(token), exercisedAmount);
 
-        uint256 reclaimedAmount = amount - exercisedAmount;
-
         uint256 mgstTotalSupplyBefore = mgst.totalSupply();
-
-        // Warp to expiry
-        vm.warp(expiry);
 
         // Expect event
         vm.expectEmit(true, true, true, true);
-        emit oTokenReclaimed(token, reclaimedAmount);
+        emit SweptToTreasury(token, address(quoteToken), quoteAmount);
 
-        // Reclaim the oToken
+        // Sweep the proceeds
         vm.prank(manager);
-        issuer.reclaimO(token);
+        issuer.sweepToTreasury(token);
 
         // Check the balances
-        assertEq(mgst.balanceOf(address(teller)), 0, "teller: MGST balance");
+        assertEq(
+            mgst.balanceOf(address(teller)),
+            mgstTotalSupplyBefore - exercisedAmount,
+            "teller: MGST balance"
+        );
         assertEq(mgst.balanceOf(address(issuer)), 0, "issuer: MGST balance");
         assertEq(mgst.balanceOf(address(TRSRY)), 0, "treasury: MGST balance");
-        assertEq(mgst.totalSupply(), mgstTotalSupplyBefore - reclaimedAmount, "MGST total supply");
+        assertEq(mgst.totalSupply(), mgstTotalSupplyBefore, "MGST total supply");
 
         assertEq(quoteToken.balanceOf(address(teller)), 0, "teller: quoteToken balance");
-        assertEq(
-            quoteToken.balanceOf(address(issuer)), exercisedAmount, "issuer: quoteToken balance"
-        );
-        assertEq(quoteToken.balanceOf(address(TRSRY)), 0, "treasury: quoteToken balance");
+        assertEq(quoteToken.balanceOf(address(issuer)), 0, "issuer: quoteToken balance");
+        assertEq(quoteToken.balanceOf(address(TRSRY)), quoteAmount, "treasury: quoteToken balance");
     }
 
     function test_reclaim() public givenOTokenCreated {
@@ -140,32 +119,20 @@ contract IssuerReclaimOTest is IssuerTest {
         vm.prank(admin);
         issuer.issueO(token, recipient, amount);
 
-        uint256 exercisedAmount = 0;
-        uint256 reclaimedAmount = amount - exercisedAmount;
-
         uint256 mgstTotalSupplyBefore = mgst.totalSupply();
-
-        // Warp to expiry
-        vm.warp(expiry);
-
-        // Expect event
-        vm.expectEmit(true, true, true, true);
-        emit oTokenReclaimed(token, reclaimedAmount);
 
         // Reclaim the oToken
         vm.prank(manager);
-        issuer.reclaimO(token);
+        issuer.sweepToTreasury(token);
 
         // Check the balances
-        assertEq(mgst.balanceOf(address(teller)), 0, "teller: MGST balance");
+        assertEq(mgst.balanceOf(address(teller)), mgstTotalSupplyBefore, "teller: MGST balance");
         assertEq(mgst.balanceOf(address(issuer)), 0, "issuer: MGST balance");
         assertEq(mgst.balanceOf(address(TRSRY)), 0, "treasury: MGST balance");
-        assertEq(mgst.totalSupply(), mgstTotalSupplyBefore - reclaimedAmount, "MGST total supply");
+        assertEq(mgst.totalSupply(), mgstTotalSupplyBefore, "MGST total supply");
 
         assertEq(quoteToken.balanceOf(address(teller)), 0, "teller: quoteToken balance");
-        assertEq(
-            quoteToken.balanceOf(address(issuer)), exercisedAmount, "issuer: quoteToken balance"
-        );
+        assertEq(quoteToken.balanceOf(address(issuer)), 0, "issuer: quoteToken balance");
         assertEq(quoteToken.balanceOf(address(TRSRY)), 0, "treasury: quoteToken balance");
     }
 }

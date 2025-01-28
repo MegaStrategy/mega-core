@@ -17,6 +17,7 @@ interface IIssuer {
     );
     // solhint-disable-next-line event-name-camelcase
     event oTokenReclaimed(address indexed oToken, uint256 amount);
+    event SweptToTreasury(address indexed oToken, address indexed proceedsToken, uint256 amount);
 
     // ========== PROTOCOL TOKEN ========== //
 
@@ -81,18 +82,32 @@ interface IIssuer {
 
     /// @notice Reclaim expired oTokens
     /// @dev    The implementing function should ensure the following:
-    ///         - The caller has the "admin" role
+    ///         - The caller has the "manager" role
     ///         - The policy is locally active
     ///
     ///         The implementing function should perform the following:
     ///         - Validate the oToken was created by this contract
     ///         - Reclaim the oToken from the teller
-    ///         - Transfer proceeds to the treasury
     ///         - Burn any protocol tokens that were reclaimed
     ///         - Emit an event
     ///
     /// @param  token_  The address of the oToken
     function reclaimO(
+        address token_
+    ) external;
+
+    /// @notice Sweep proceeds to the treasury
+    /// @dev    The implementing function should ensure the following:
+    ///         - The caller has the "manager" role
+    ///         - The policy is locally active
+    ///
+    ///         The implementing function should perform the following:
+    ///         - Validate the oToken was created by this contract
+    ///         - Transfer proceeds to the treasury
+    ///         - Emit an event
+    ///
+    /// @param  token_  The address of the oToken
+    function sweepToTreasury(
         address token_
     ) external;
 }
