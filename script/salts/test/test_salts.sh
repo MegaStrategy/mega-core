@@ -3,6 +3,9 @@
 # Usage:
 # ./test_salts.sh --saltKey <salt key> --env <.env>
 
+# Exit if any command fails
+set -e
+
 # Iterate through named arguments
 # Source: https://unix.stackexchange.com/a/388038
 while [ $# -gt 0 ]; do
@@ -50,3 +53,6 @@ fi
 
 # Generate bytecode
 forge script ./script/salts/test/TestSalts.s.sol:TestSalts --sig "generate(string,string)()" $CHAIN $saltKey
+
+# Lint
+pnpm run lint
