@@ -17,7 +17,7 @@ interface IIssuer {
     );
     // solhint-disable-next-line event-name-camelcase
     event oTokenReclaimed(address indexed oToken, uint256 amount);
-    event SweptToTreasury(address indexed oToken, address indexed proceedsToken, uint256 amount);
+    event SweptToTreasury(address indexed token, uint256 amount);
 
     // ========== PROTOCOL TOKEN ========== //
 
@@ -102,11 +102,10 @@ interface IIssuer {
     ///         - The policy is locally active
     ///
     ///         The implementing function should perform the following:
-    ///         - Validate the oToken was created by this contract
     ///         - Transfer proceeds to the treasury
     ///         - Emit an event
     ///
-    /// @param  token_  The address of the oToken
+    /// @param  token_  The address of the token
     function sweepToTreasury(
         address token_
     ) external;

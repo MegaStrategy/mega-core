@@ -260,24 +260,17 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
     /// @dev    This function reverts if:
     ///         - The caller does not have the manager role
     ///         - The policy is not locally active
-    ///         - The oToken was not created by this contract
     function sweepToTreasury(
         address token_
     ) external onlyRole("manager") onlyWhileActive {
-        // Validate that the oToken was created by this contract
-        if (!createdBy[token_]) revert InvalidParam("token");
-
-        // Load option parameters
-        (,, ERC20 quoteToken,,,,,) = oToken(token_).getOptionParameters();
-
-        uint256 quoteTokenBalance = quoteToken.balanceOf(address(this));
-        if (quoteTokenBalance == 0) return;
+        uint256 tokenBalance = ERC20(token_).balanceOf(address(this));
+        if (tokenBalance == 0) return;
 
         // Transfer the quote tokens to the treasury
-        quoteToken.safeTransfer(address(TRSRY), quoteTokenBalance);
+        ERC20(token_).safeTransfer(address(TRSRY), tokenBalance);
 
         // Emit event
-        emit SweptToTreasury(token_, address(quoteToken), quoteTokenBalance);
+        emit SweptToTreasury(token_, tokenBalance);
     }
 
     // ========== ADMIN ========== //
