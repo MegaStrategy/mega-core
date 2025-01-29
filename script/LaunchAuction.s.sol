@@ -11,6 +11,7 @@ import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 // Axis dependencies
 import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
 import {IAuctionHouse} from "axis-core-1.0.1/interfaces/IAuctionHouse.sol";
+import {IFeeManager} from "axis-core-1.0.1/interfaces/IFeeManager.sol";
 import {IAuction} from "axis-core-1.0.1/interfaces/modules/IAuction.sol";
 import {IFixedPriceBatch} from "axis-core-1.0.1/interfaces/modules/auctions/IFixedPriceBatch.sol";
 import {ICallback} from "axis-core-1.0.1/interfaces/ICallback.sol";
@@ -25,11 +26,18 @@ import {Issuer} from "src/policies/Issuer.sol";
 contract LaunchAuction is WithEnvironment {
     using TransferHelper for ERC20;
 
+    function _parseJsonAddress(
+        string memory data_,
+        string memory path_
+    ) internal pure returns (address) {
+        return vm.parseJsonAddress(data_, path_);
+    }
+
     function _parseJsonAddressNotZero(
         string memory data_,
         string memory path_
     ) internal pure returns (address) {
-        address jsonAddress = vm.parseJsonAddress(data_, path_);
+        address jsonAddress = _parseJsonAddress(data_, path_);
         if (jsonAddress == address(0)) {
             // solhint-disable-next-line custom-errors
             revert(string.concat("Address is zero at path ", path_));
@@ -48,20 +56,46 @@ contract LaunchAuction is WithEnvironment {
         console2.log("Loading auction data from ", auctionFilePath_);
         string memory auctionData = vm.readFile(auctionFilePath_);
 
-        uint256 capacity = vm.parseJsonUint(auctionData, ".auctionParams.capacity");
+        // Determine the amount of tokens to mint to the caller
+        // Capacity + curator fee + DTL
+        uint256 totalMint;
+        {
+            uint256 capacity = vm.parseJsonUint(auctionData, ".auctionParams.capacity");
+
+            // Curator fee
+            address curator = _parseJsonAddress(auctionData, ".auctionParams.curator");
+            uint256 curatorFee;
+            if (curator != address(0)) {
+                uint48 curatorFeePercent = IFeeManager(_envAddressNotZero("axis.BatchAuctionHouse"))
+                    .getCuratorFee(toKeycode("FPBA"), curator);
+                curatorFee = capacity * uint256(curatorFeePercent) / uint256(100e2);
+            }
+
+            // DTL liquidity
+            uint24 poolPercent =
+                uint24(vm.parseJsonUint(auctionData, ".callbackParams.poolPercent"));
+            uint256 dtlLiquidity = capacity * uint256(poolPercent) / uint256(100e2);
+
+            // Total mint
+            totalMint = capacity + curatorFee + dtlLiquidity;
+            console2.log("Total mint", totalMint);
+            console2.log("  Capacity", capacity);
+            console2.log("  Curator fee", curatorFee);
+            console2.log("  DTL liquidity", dtlLiquidity);
+        }
 
         // Mint tokens to the caller
         // This requires the caller to have the "admin" role
         vm.startBroadcast();
         console2.log("Minting tokens to the caller", msg.sender);
-        Issuer(_envAddressNotZero("mega.policies.Issuer")).mint(msg.sender, capacity);
+        Issuer(_envAddressNotZero("mega.policies.Issuer")).mint(msg.sender, totalMint);
         vm.stopBroadcast();
 
         // Approve the AuctionHouse to transfer the tokens
         vm.startBroadcast();
         console2.log("Approving the AuctionHouse to transfer the tokens");
         ERC20(_envAddressNotZero("mega.modules.Token")).safeApprove(
-            _envAddressNotZero("axis.BatchAuctionHouse"), capacity
+            _envAddressNotZero("axis.BatchAuctionHouse"), totalMint
         );
         vm.stopBroadcast();
 
@@ -87,10 +121,12 @@ contract LaunchAuction is WithEnvironment {
             auctionType: toKeycode("FPBA"),
             baseToken: _envAddressNotZero("mega.modules.Token"),
             quoteToken: _envAddressNotZero("external.tokens.WETH"),
-            curator: _parseJsonAddressNotZero(auctionData, ".auctionParams.curator"),
+            curator: _parseJsonAddress(auctionData, ".auctionParams.curator"), // Curator, zero address is allowed
             referrerFee: 0,
             callbacks: ICallback(
-                _envAddressNotZero("axis.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist")
+                _envAddressNotZero(
+                    "axis.callbacks.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist"
+                )
             ),
             callbackData: abi.encode(dtlParams),
             derivativeType: toKeycode(""),
@@ -111,7 +147,7 @@ contract LaunchAuction is WithEnvironment {
             ),
             duration: uint48(vm.parseJsonUint(auctionData, ".auctionParams.duration")),
             capacityInQuote: false,
-            capacity: capacity,
+            capacity: vm.parseJsonUint(auctionData, ".auctionParams.capacity"),
             implParams: abi.encode(fpbParams)
         });
 
@@ -133,7 +169,9 @@ contract LaunchAuction is WithEnvironment {
     /// @dev    Must be run as the seller
     function setMerkleRoot(uint96 lotId_, bytes32 merkleRoot_) public {
         IUniswapV3DTLWithAllocatedAllowlist dtl = IUniswapV3DTLWithAllocatedAllowlist(
-            _envAddressNotZero("axis.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist")
+            _envAddressNotZero(
+                "axis.callbacks.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist"
+            )
         );
 
         console2.log("Setting the Merkle root for the allowlist on lot id", lotId_);

@@ -46,19 +46,6 @@ if [ -z "$RPC_URL" ]; then
     exit 1
 fi
 
-# Set the CLOAK_API_URL to the testnet version if TESTNET is true
-if [ "$TESTNET" = "true" ]; then
-    CLOAK_API_URL="https://api-testnet-v3.up.railway.app/"
-else
-    CLOAK_API_URL="https://api-production-8b39.up.railway.app/"
-fi
-
-# Check if the CLOAK_API_URL ends with a slash
-if [ "${CLOAK_API_URL: -1}" != "/" ]; then
-    # Append a slash to the CLOAK_API_URL
-    CLOAK_API_URL="$CLOAK_API_URL/"
-fi
-
 # Check if the cast account was specified
 if [ -z "$account" ]; then
     echo "Error: Cast account was not specified using --account. Set up using 'cast wallet'."
@@ -73,7 +60,6 @@ echo ""
 echo "Chain: $CHAIN"
 echo "RPC URL: $RPC_URL"
 echo "Testnet: $TESTNET"
-echo "Cloak API URL: $CLOAK_API_URL"
 echo "Sender: $CAST_ADDRESS"
 
 # Set BROADCAST_FLAG based on BROADCAST
@@ -132,6 +118,8 @@ mkdir -p tmp
 AUCTION_INFO=$(jq -r '.auctionInfo' $LAUNCH_FILE)
 echo "$AUCTION_INFO" > tmp/auctionInfo.json
 
+# TODO allowlist
+
 # Upload the data to IPFS
 echo ""
 echo "Uploading data to IPFS"
@@ -151,7 +139,7 @@ fi
 # Run
 echo ""
 echo "Running the auction creation script"
-CLOAK_API_URL=$CLOAK_API_URL forge script script/LaunchAuction.s.sol --sig "launch(string,string,string)()" $CHAIN $LAUNCH_FILE $IPFS_HASH --rpc-url $RPC_URL --account $account --sender $CAST_ADDRESS $BROADCAST_FLAG -vvv
+forge script script/LaunchAuction.s.sol --sig "launch(string,string,string)()" $CHAIN $LAUNCH_FILE $IPFS_HASH --rpc-url $RPC_URL --account $account --sender $CAST_ADDRESS $BROADCAST_FLAG -vvv
 
 # Determine the dApp URL
 DAPP_URL="https://app.axis.finance/"
