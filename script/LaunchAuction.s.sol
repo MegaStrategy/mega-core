@@ -16,6 +16,8 @@ import {IFixedPriceBatch} from "axis-core-1.0.1/interfaces/modules/auctions/IFix
 import {ICallback} from "axis-core-1.0.1/interfaces/ICallback.sol";
 import {IBaseDirectToLiquidity} from "src/lib/axis/IBaseDirectToLiquidity.sol";
 import {IUniswapV3DirectToLiquidity} from "src/lib/axis/IUniswapV3DirectToLiquidity.sol";
+import {IUniswapV3DTLWithAllocatedAllowlist} from
+    "axis-periphery-1.0.0/callbacks/liquidity/IUniswapV3DTLWithAllocatedAllowlist.sol";
 
 // Mega contracts
 import {Issuer} from "src/policies/Issuer.sol";
@@ -123,6 +125,22 @@ contract LaunchAuction is WithEnvironment {
 
         console2.log("Auction created with lot ID", lotId);
 
-        // TODO Set the Merkle root for the allowlist
+        // Next steps:
+        // - Set the Merkle root for the allowlist
+    }
+
+    /// @notice Sets the Merkle root for the allowlist on the given lot id
+    /// @dev    Must be run as the seller
+    function setMerkleRoot(uint96 lotId_, bytes32 merkleRoot_) public {
+        IUniswapV3DTLWithAllocatedAllowlist dtl =
+        IUniswapV3DTLWithAllocatedAllowlist(
+            _envAddressNotZero("axis.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist")
+        );
+
+        console2.log("Setting the Merkle root for the allowlist on lot id", lotId_);
+
+        vm.startBroadcast();
+        dtl.setMerkleRoot(lotId_, merkleRoot_);
+        vm.stopBroadcast();
     }
 }

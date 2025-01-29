@@ -31,7 +31,7 @@ ignore = [
 forge-std = "1.9.4"
 solady = "0.0.261"
 axis-core = "1.0.1"
-axis-periphery = "1.0.0"
+axis-periphery = { version = "1.0.0", git = "https://github.com/Axis-Fi/axis-periphery.git", rev = "4c9f69e77fc59f1ba84fd620a3cfbb9ee42f650a" }
 axis-utils = { version = "1.0.0", git = "https://github.com/Axis-Fi/axis-utils.git", rev = "d4122f4a0adb115d9862b6606a6501d6eaad2f48" }
 "@openzeppelin-contracts" = "4.9.6"
 solmate = "6.8.0"
