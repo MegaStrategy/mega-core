@@ -74,7 +74,9 @@ contract LaunchAuction is WithEnvironment {
             quoteToken: _envAddressNotZero("external.tokens.WETH"),
             curator: address(0),
             referrerFee: 0,
-            callbacks: ICallback(_envAddressNotZero("axis.BatchUniswapV3DirectToLiquidity")),
+            callbacks: ICallback(
+                _envAddressNotZero("axis.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist")
+            ),
             callbackData: abi.encode(dtlParams),
             derivativeType: toKeycode(""),
             derivativeParams: "",
@@ -107,5 +109,7 @@ contract LaunchAuction is WithEnvironment {
         vm.stopBroadcast();
 
         console2.log("Auction created with lot ID", lotId);
+
+        // TODO Set the Merkle root for the allowlist
     }
 }
