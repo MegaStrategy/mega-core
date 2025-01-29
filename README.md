@@ -89,8 +89,7 @@ The following must be performed to deploy and activate the system:
 4. Grant admin and manager roles using the `Tasks.s.sol` script
     - e.g. `forge script ./script/Tasks.s.sol --sig "addAdmin(string,address)()" base-sepolia <ADMIN_ADDRESS> --rpc-url <RPC_URL> --account <CAST_ACCOUNT> --sender <SIGNER_ADDRESS> --slow -vvv --broadcast`
 5. Install the PRICE submodules by calling `installSubmodules()` in the `PriceConfiguration.s.sol` script
-6. Configure the PRICE module using the `configureAssets()` function in the `PriceConfiguration.s.sol` script
-7. Initialize the Banker using the `Tasks.s.sol` script
+6. Initialize the Banker using the `Tasks.s.sol` script
 
 #### Launch Auction
 
@@ -99,6 +98,12 @@ After deployment, a launch auction needs to be created in order to accept wETH d
 This can be performed using the `shell/createLaunchAuction.sh` script.
 
 The launch auction is configured to use a callback that has an allocated allowlist. The `setMerkleRoot()` function in the `LaunchAuction.s.sol` script must be called after auction creation to set the merkle root.
+
+#### Post-Launch Auction
+
+After the launch auction has been completed, the following can be performed:
+
+1. Configure the PRICE module using the `configureAssets()` function in the `PriceConfiguration.s.sol` script. (This relies on the Uniswap V3 pool for MGST-WETH existing, which is only created and initialised when the auction settles.)
 
 #### Convertible Debt Auctions
 
