@@ -132,8 +132,7 @@ contract LaunchAuction is WithEnvironment {
     /// @notice Sets the Merkle root for the allowlist on the given lot id
     /// @dev    Must be run as the seller
     function setMerkleRoot(uint96 lotId_, bytes32 merkleRoot_) public {
-        IUniswapV3DTLWithAllocatedAllowlist dtl =
-        IUniswapV3DTLWithAllocatedAllowlist(
+        IUniswapV3DTLWithAllocatedAllowlist dtl = IUniswapV3DTLWithAllocatedAllowlist(
             _envAddressNotZero("axis.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist")
         );
 
