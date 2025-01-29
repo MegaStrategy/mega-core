@@ -8,8 +8,8 @@ import {RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
 
-// Generic contract to allow authorized contracts to interact with treasury
-// Use cases include setting and removing approvals, as well as allocating assets for yield
+/// @notice Generic contract to allow authorized contracts to interact with treasury
+///         Use cases include setting and removing approvals, as well as allocating assets for yield
 contract TreasuryCustodian is Policy, RolesConsumer {
     // =========  EVENTS ========= //
 
@@ -71,7 +71,7 @@ contract TreasuryCustodian is Policy, RolesConsumer {
         address for_,
         ERC20 token_,
         uint256 amount_
-    ) external onlyRole("custodian") {
+    ) external onlyRole("admin") {
         TRSRY.increaseWithdrawApproval(for_, token_, amount_);
     }
 
@@ -80,7 +80,7 @@ contract TreasuryCustodian is Policy, RolesConsumer {
         address for_,
         ERC20 token_,
         uint256 amount_
-    ) external onlyRole("custodian") {
+    ) external onlyRole("admin") {
         TRSRY.decreaseWithdrawApproval(for_, token_, amount_);
     }
 
@@ -90,7 +90,7 @@ contract TreasuryCustodian is Policy, RolesConsumer {
         address to_,
         ERC20 token_,
         uint256 amount_
-    ) external onlyRole("custodian") {
+    ) external onlyRole("admin") {
         TRSRY.withdrawReserves(to_, token_, amount_);
     }
 
@@ -99,7 +99,7 @@ contract TreasuryCustodian is Policy, RolesConsumer {
         address for_,
         ERC20 token_,
         uint256 amount_
-    ) external onlyRole("custodian") {
+    ) external onlyRole("admin") {
         TRSRY.increaseDebtorApproval(for_, token_, amount_);
     }
 
@@ -108,7 +108,7 @@ contract TreasuryCustodian is Policy, RolesConsumer {
         address for_,
         ERC20 token_,
         uint256 amount_
-    ) external onlyRole("custodian") {
+    ) external onlyRole("admin") {
         TRSRY.decreaseDebtorApproval(for_, token_, amount_);
     }
 
@@ -117,7 +117,7 @@ contract TreasuryCustodian is Policy, RolesConsumer {
         ERC20 token_,
         address debtor_,
         uint256 amount_
-    ) external onlyRole("custodian") {
+    ) external onlyRole("admin") {
         uint256 debt = TRSRY.reserveDebt(token_, debtor_);
         TRSRY.setDebt(debtor_, token_, debt + amount_);
     }
@@ -127,7 +127,7 @@ contract TreasuryCustodian is Policy, RolesConsumer {
         ERC20 token_,
         address debtor_,
         uint256 amount_
-    ) external onlyRole("custodian") {
+    ) external onlyRole("admin") {
         uint256 debt = TRSRY.reserveDebt(token_, debtor_);
         TRSRY.setDebt(debtor_, token_, debt - amount_);
     }
@@ -136,7 +136,7 @@ contract TreasuryCustodian is Policy, RolesConsumer {
     function revokePolicyApprovals(
         address policy_,
         ERC20[] memory tokens_
-    ) external onlyRole("custodian") {
+    ) external onlyRole("admin") {
         if (Policy(policy_).isActive()) revert Custodian_PolicyStillActive();
 
         uint256 len = tokens_.length;
