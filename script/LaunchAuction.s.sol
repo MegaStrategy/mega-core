@@ -69,7 +69,7 @@ contract LaunchAuction is WithEnvironment {
 
         // Prepare the routing parameters
         IAuctionHouse.RoutingParams memory routing = IAuctionHouse.RoutingParams({
-            auctionType: toKeycode("EMPA"),
+            auctionType: toKeycode("FPBA"),
             baseToken: _envAddressNotZero("mega.modules.Token"),
             quoteToken: _envAddressNotZero("external.tokens.WETH"),
             curator: address(0),
