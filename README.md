@@ -95,9 +95,13 @@ The following must be performed to deploy and activate the system:
 
 After deployment, a launch auction needs to be created in order to accept wETH deposits in return for MGST.
 
-This can be performed using the `shell/createLaunchAuction.sh` script.
+Follow these steps to create the launch auction:
 
-The launch auction is configured to use a callback that has an allocated allowlist. The `setMerkleRoot()` function in the `LaunchAuction.s.sol` script must be called after auction creation to set the merkle root.
+1. Set the auction details in the `script/auctions/launch.json` file.
+2. Create a CSV file with the allowlist addresses and allocations.
+3. Generate the merkle root from the CSV file using the [oz-merkle-tree tool](https://github.com/Axis-Fi/axis-utils/tree/master/packages/oz-merkle-tree)
+4. Run the `createLaunchAuction.sh` script: `./shell/createLaunchAuction.sh --account <CAST_ACCOUNT> --allowlist <PATH_TO_ALLOWLIST_CSV> --testnet <true|false> --broadcast <true|false>`
+5. The `setMerkleRoot()` function in the `LaunchAuction.s.sol` script must be called after auction creation to set the merkle root.
 
 #### Post-Launch Auction
 

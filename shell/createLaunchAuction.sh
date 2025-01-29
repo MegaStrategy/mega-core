@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Creates an auction through the LaunchAuction script
-# Usage: ./createLaunchAuction.sh --account <cast account> --testnet <true|false> --broadcast <true|false> --env <env file>
+# Usage: ./createLaunchAuction.sh --account <cast account> --allowlist <allowlist file> --testnet <true|false> --broadcast <true|false> --env <env file>
 #
 # Environment variables:
 # RPC_URL
@@ -49,6 +49,24 @@ fi
 # Check if the cast account was specified
 if [ -z "$account" ]; then
     echo "Error: Cast account was not specified using --account. Set up using 'cast wallet'."
+    exit 1
+fi
+
+# Check if the allowlist file was specified
+if [ -z "$allowlist" ]; then
+    echo "Error: Allowlist CSV file was not specified using --allowlist"
+    exit 1
+fi
+
+# Check if the allowlist exists
+if [ ! -f "$allowlist" ]; then
+    echo "Error: Allowlist file $allowlist does not exist"
+    exit 1
+fi
+
+# Check if the allowlist is a CSV file
+if ! head -n 1 $allowlist | grep -qE '^address,amount$'; then
+    echo "Error: Allowlist file $allowlist is not a valid CSV file with columns 'address' and 'amount'"
     exit 1
 fi
 
@@ -116,9 +134,24 @@ echo ""
 echo "Extracting auction info from $LAUNCH_FILE for upload to IPFS"
 mkdir -p tmp
 AUCTION_INFO=$(jq -r '.auctionInfo' $LAUNCH_FILE)
+
+# Generate the allowlist from CSV
+echo ""
+echo "Formatting and validating allowlist from file $allowlist"
+ALLOWLIST_JSON=$(awk -F, 'BEGIN {print "["} NR>1 && NF>1 {printf("%s[\"%s\",\"%s\"]", (NR==2)?"":",\n", $1, $2)} END {print "]"}' $allowlist)
+
+# Set the "allowlist" key in the auction info
+AUCTION_INFO=$(echo "$AUCTION_INFO" | jq --argjson allowlist "$ALLOWLIST_JSON" '.allowlist = $allowlist')
+
+# Write the auction info to a file
+echo ""
+echo "Writing auction info to tmp/auctionInfo.json"
 echo "$AUCTION_INFO" > tmp/auctionInfo.json
 
-# TODO allowlist
+# Validate and format the auction info JSON file
+echo ""
+echo "Validating and formatting auction info JSON file"
+AUCTION_INFO=$(jq -s . tmp/auctionInfo.json)
 
 # Upload the data to IPFS
 echo ""
