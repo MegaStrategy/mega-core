@@ -274,7 +274,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         OlympusPriceV2 priceV2 = new OlympusPriceV2(kernel, decimals, observationFrequency);
         console2.log("PriceV2 deployed at:", address(priceV2));
 
-        return (address(priceV2), "mega.modules.PriceV2");
+        return (address(priceV2), "mega.modules.OlympusPriceV2");
     }
 
     function _deployChainlinkPriceFeeds(
@@ -285,7 +285,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Deploy ChainlinkPriceFeeds module
         vm.broadcast();
         ChainlinkPriceFeeds chainlinkPriceFeeds =
-            new ChainlinkPriceFeeds(Module(_envAddressNotZero("mega.modules.PriceV2")));
+            new ChainlinkPriceFeeds(Module(_getAddressNotZero("mega.modules.OlympusPriceV2")));
         console2.log("ChainlinkPriceFeeds deployed at:", address(chainlinkPriceFeeds));
 
         return (address(chainlinkPriceFeeds), "mega.submodules.PriceV2.ChainlinkPriceFeeds");
@@ -299,7 +299,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Deploy UniswapV3Price module
         vm.broadcast();
         UniswapV3Price uniswapV3Price =
-            new UniswapV3Price(Module(_envAddressNotZero("mega.modules.PriceV2")));
+            new UniswapV3Price(Module(_getAddressNotZero("mega.modules.OlympusPriceV2")));
         console2.log("UniswapV3Price deployed at:", address(uniswapV3Price));
 
         return (address(uniswapV3Price), "mega.submodules.PriceV2.UniswapV3Price");
@@ -313,7 +313,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Deploy SimplePriceFeedStrategy module
         vm.broadcast();
         SimplePriceFeedStrategy simplePriceFeedStrategy =
-            new SimplePriceFeedStrategy(Module(_envAddressNotZero("mega.modules.PriceV2")));
+            new SimplePriceFeedStrategy(Module(_getAddressNotZero("mega.modules.OlympusPriceV2")));
         console2.log("SimplePriceFeedStrategy deployed at:", address(simplePriceFeedStrategy));
 
         return (address(simplePriceFeedStrategy), "mega.submodules.PriceV2.SimplePriceFeedStrategy");
@@ -521,7 +521,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
         OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
         MegaToken token = MegaToken(_getAddressNotZero("mega.modules.Token"));
-        OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.PriceV2"));
+        OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.OlympusPriceV2"));
 
         // Policies
         RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
@@ -600,7 +600,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // PRICEv2
         {
-            OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.PriceV2"));
+            OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.OlympusPriceV2"));
             Module priceModule = kernel.getModuleForKeycode(toKeycode("PRICE"));
             Keycode priceKeycode = kernel.getKeycodeForModule(PRICE);
             require(priceModule == PRICE);
