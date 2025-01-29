@@ -23,6 +23,19 @@ import {Issuer} from "src/policies/Issuer.sol";
 contract LaunchAuction is WithEnvironment {
     using TransferHelper for ERC20;
 
+    function _parseJsonAddressNotZero(
+        string memory data_,
+        string memory path_
+    ) internal pure returns (address) {
+        address jsonAddress = vm.parseJsonAddress(data_, path_);
+        if (jsonAddress == address(0)) {
+            // solhint-disable-next-line custom-errors
+            revert(string.concat("Address is zero at path ", path_));
+        }
+
+        return jsonAddress;
+    }
+
     function launch(
         string calldata chain_,
         string calldata auctionFilePath_,
@@ -72,7 +85,7 @@ contract LaunchAuction is WithEnvironment {
             auctionType: toKeycode("FPBA"),
             baseToken: _envAddressNotZero("mega.modules.Token"),
             quoteToken: _envAddressNotZero("external.tokens.WETH"),
-            curator: address(0),
+            curator: _parseJsonAddressNotZero(auctionData, ".auctionParams.curator"),
             referrerFee: 0,
             callbacks: ICallback(
                 _envAddressNotZero("axis.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist")
