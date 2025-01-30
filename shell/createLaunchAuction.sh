@@ -10,59 +10,23 @@
 # Exit if any error occurs
 set -e
 
-# Iterate through named arguments
-# Source: https://unix.stackexchange.com/a/388038
-while [ $# -gt 0 ]; do
-    if [[ $1 == *"--"* ]]; then
-        v="${1/--/}"
-        declare $v="$2"
-    fi
+# Load named arguments
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+source $SCRIPT_DIR/lib/arguments.sh
+load_named_args "$@"
 
-    shift
-done
-
-# Get the name of the .env file or use the default
-ENV_FILE=${env:-".env"}
-echo "Sourcing environment variables from $ENV_FILE"
-
-# Load environment file
-set -a # Automatically export all variables
-source $ENV_FILE
-set +a # Disable automatic export
+# Load environment variables
+load_env
 
 # Set sane defaults
 BROADCAST=${broadcast:-false}
 TESTNET=${testnet:-false}
 
-# Check if CHAIN is set
-if [ -z "$CHAIN" ]; then
-    echo "Error: CHAIN environment variable is not set"
-    exit 1
-fi
-
-# Check if RPC_URL is set
-if [ -z "$RPC_URL" ]; then
-    echo "Error: RPC_URL environment variable is not set"
-    exit 1
-fi
-
-# Check if the cast account was specified
-if [ -z "$account" ]; then
-    echo "Error: Cast account was not specified using --account. Set up using 'cast wallet'."
-    exit 1
-fi
-
-# Check if the allowlist file was specified
-if [ -z "$allowlist" ]; then
-    echo "Error: Allowlist CSV file was not specified using --allowlist"
-    exit 1
-fi
-
-# Check if the allowlist exists
-if [ ! -f "$allowlist" ]; then
-    echo "Error: Allowlist file $allowlist does not exist"
-    exit 1
-fi
+# Validate named arguments
+echo ""
+echo "Validating arguments"
+validate_text "$account" "No account specified. Provide the cast wallet after the --account flag."
+validate_file "$allowlist" "No allowlist specified or it does not exist. Provide the path to the allowlist CSV file after the --allowlist flag."
 
 # Check if the allowlist is a CSV file
 if ! head -n 1 $allowlist | grep -qE '^address,amount$'; then
@@ -70,24 +34,28 @@ if ! head -n 1 $allowlist | grep -qE '^address,amount$'; then
     exit 1
 fi
 
+# Validate environment variables
+echo ""
+echo "Validating environment variables"
+validate_text "$CHAIN" "No chain specified. Specify the CHAIN in the $ENV_FILE file."
+validate_text "$RPC_URL" "No RPC URL specified. Specify the RPC_URL in the $ENV_FILE file."
+
 # Get the address of the cast wallet
+echo ""
 echo "Getting address for cast account $account"
 CAST_ADDRESS=$(cast wallet address --account $account)
+
 echo ""
+echo "Summary:"
+echo "  Deploy from account: $account"
+echo "  Sender: $CAST_ADDRESS"
+echo "  Chain: $CHAIN"
+echo "  RPC URL: $RPC_URL"
+echo "  Testnet: $TESTNET"
 
-echo "Chain: $CHAIN"
-echo "RPC URL: $RPC_URL"
-echo "Testnet: $TESTNET"
-echo "Sender: $CAST_ADDRESS"
-
-# Set BROADCAST_FLAG based on BROADCAST
-BROADCAST_FLAG=""
-if [ "$BROADCAST" = "true" ]; then
-    BROADCAST_FLAG="--broadcast"
-    echo "Broadcast: true"
-else
-    echo "Broadcast: false"
-fi
+# Validate and set forge script flags
+source $SCRIPT_DIR/lib/forge.sh
+set_broadcast_flag $BROADCAST
 
 LAUNCH_FILE="script/auctions/launch.json"
 
