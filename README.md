@@ -100,8 +100,8 @@ Follow these steps to create the launch auction:
 1. Set the auction details in the `script/auctions/launch.json` file.
 2. Create a CSV file with the allowlist addresses and allocations.
 3. Generate the merkle root from the CSV file using the [oz-merkle-tree tool](https://github.com/Axis-Fi/axis-utils/tree/master/packages/oz-merkle-tree)
-4. Run the `createLaunchAuction.sh` script: `./shell/createLaunchAuction.sh --account <CAST_ACCOUNT> --allowlist <PATH_TO_ALLOWLIST_CSV> --testnet <true|false> --broadcast <true|false>`
-5. The `setMerkleRoot()` function in the `LaunchAuction.s.sol` script must be called after auction creation to set the merkle root.
+4. Run the `createLaunchAuction.sh` script: `./shell/createLaunchAuction.sh --account <CAST_ACCOUNT> --allowlist <PATH_TO_ALLOWLIST_CSV> --testnet <true|false> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
+5. The `setMerkleRoot()` function in the `LaunchAuction.s.sol` script must be called after auction creation to set the merkle root: `./shell/setLaunchAuctionMerkleRoot.sh --account <CAST_ACCOUNT> --lotId <LOT_ID> --merkleRoot <MERKLE_ROOT> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
 
 #### Post-Launch Auction
 
