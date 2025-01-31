@@ -58,7 +58,8 @@ contract LaunchAuction is WithEnvironment {
 
         // Determine the amount of tokens to mint to the caller
         // Capacity + curator fee + DTL
-        uint256 totalMint;
+        uint256 auctionHouseAmount;
+        uint256 dtlAmount;
         {
             uint256 capacity = vm.parseJsonUint(auctionData, ".auctionParams.capacity");
 
@@ -74,28 +75,39 @@ contract LaunchAuction is WithEnvironment {
             // DTL liquidity
             uint24 poolPercent =
                 uint24(vm.parseJsonUint(auctionData, ".callbackParams.poolPercent"));
-            uint256 dtlLiquidity = capacity * uint256(poolPercent) / uint256(100e2);
+            dtlAmount = capacity * uint256(poolPercent) / uint256(100e2);
 
-            // Total mint
-            totalMint = capacity + curatorFee + dtlLiquidity;
-            console2.log("Total mint", totalMint);
+            auctionHouseAmount = capacity + curatorFee;
             console2.log("  Capacity", capacity);
             console2.log("  Curator fee", curatorFee);
-            console2.log("  DTL liquidity", dtlLiquidity);
+            console2.log("  DTL liquidity", dtlAmount);
         }
 
         // Mint tokens to the caller
         // This requires the caller to have the "admin" role
         vm.startBroadcast();
         console2.log("Minting tokens to the caller", msg.sender);
-        Issuer(_envAddressNotZero("mega.policies.Issuer")).mint(msg.sender, totalMint);
+        Issuer(_envAddressNotZero("mega.policies.Issuer")).mint(
+            msg.sender, auctionHouseAmount + dtlAmount
+        );
         vm.stopBroadcast();
 
         // Approve the AuctionHouse to transfer the tokens
         vm.startBroadcast();
         console2.log("Approving the AuctionHouse to transfer the tokens");
         ERC20(_envAddressNotZero("mega.modules.Token")).safeApprove(
-            _envAddressNotZero("axis.BatchAuctionHouse"), totalMint
+            _envAddressNotZero("axis.BatchAuctionHouse"), auctionHouseAmount
+        );
+        vm.stopBroadcast();
+
+        // Approve the DTL callback to transfer the tokens
+        vm.startBroadcast();
+        console2.log("Approving the DTL callback to transfer the tokens");
+        ERC20(_envAddressNotZero("mega.modules.Token")).safeApprove(
+            _envAddressNotZero(
+                "axis.callbacks.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist"
+            ),
+            dtlAmount
         );
         vm.stopBroadcast();
 
