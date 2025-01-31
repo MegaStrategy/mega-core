@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: TBD
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
 import {IERC20} from "@openzeppelin-contracts-4.9.6/token/ERC20/IERC20.sol";
