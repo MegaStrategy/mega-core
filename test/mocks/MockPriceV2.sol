@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Unlicensed
+// SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
 import {PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";
