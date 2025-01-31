@@ -36,6 +36,7 @@ abstract contract TOKENv1 is ERC20Votes, Module {
     }
 
     /// @notice Mint to an address.
+    /// @dev    This function is gated to permissioned callers only.
     function mint(address to_, uint256 amount_) external virtual;
 
     /// @notice Burn tokens from sender.

@@ -37,23 +37,39 @@ contract MegaToken is TOKENv1 {
     //============================================================================================//
 
     /// @inheritdoc TOKENv1
+    /// @dev        This function reverts if:
+    ///             - The caller is not permissioned
+    ///             - The token is not active
+    ///             - The amount is zero
+    ///             - The caller does not have enough mint approval
     function mint(address to_, uint256 amount_) external override permissioned onlyWhileActive {
+        // Validate that the amount is not zero
         if (amount_ == 0) revert TOKEN_ZeroAmount();
 
+        // Validate that the caller has enough mint approval
         uint256 approval = mintApproval[msg.sender];
         if (approval < amount_) revert TOKEN_NotApproved();
 
+        // Decrease the mint approval
         unchecked {
             mintApproval[msg.sender] = approval - amount_;
         }
 
+        // Mint the tokens
         _mint(to_, amount_);
 
+        // Emit the event
         emit Mint(msg.sender, to_, amount_);
     }
 
     /// @inheritdoc TOKENv1
+    /// @dev        This function reverts if:
+    ///             - The caller is not permissioned
+    ///             - The token is not active
+    ///             - The amount is zero
+    ///             - The caller does not have enough spending allowance from the owner
     function burnFrom(address from_, uint256 amount_) external override onlyWhileActive {
+        // Validate that the amount is not zero
         if (amount_ == 0) revert TOKEN_ZeroAmount();
 
         // Spend the allowance of the caller
@@ -66,6 +82,9 @@ contract MegaToken is TOKENv1 {
     }
 
     /// @inheritdoc TOKENv1
+    /// @dev        This function reverts if:
+    ///             - The token is not active
+    ///             - The amount is zero
     function burn(
         uint256 amount_
     ) external override onlyWhileActive {

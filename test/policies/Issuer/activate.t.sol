@@ -3,9 +3,12 @@ pragma solidity 0.8.19;
 
 import {IssuerTest} from "./IssuerTest.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
+import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 
 contract IssuerActivateTest is IssuerTest {
     // when the caller does not have the admin role
+    //  [X] it reverts
+    // given the contract is already active
     //  [X] it reverts
     // [X] it enables the contract
 
@@ -22,7 +25,16 @@ contract IssuerActivateTest is IssuerTest {
         issuer.activate();
     }
 
-    function test_activate() public {
+    function test_policyAlreadyActive_reverts() public {
+        // Expect revert
+        vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidState.selector));
+
+        // Call
+        vm.prank(admin);
+        issuer.activate();
+    }
+
+    function test_activate() public givenLocallyInactive {
         vm.prank(admin);
         issuer.activate();
 

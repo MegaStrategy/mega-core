@@ -313,14 +313,24 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
     /// @notice Enable the contract functionality
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
+    ///         - The policy is already active
     function activate() external onlyRole("admin") {
+        // Validate that the policy is not already active
+        if (locallyActive) revert InvalidState();
+
+        // Set the policy to active
         locallyActive = true;
     }
 
     /// @notice Disable the contract functionality
     /// @dev    This function reverts if:
     ///         - The caller does not have the admin role
+    ///         - The policy is already inactive
     function shutdown() external onlyRole("admin") {
+        // Validate that the policy is not already inactive
+        if (!locallyActive) revert InvalidState();
+
+        // Set the policy to inactive
         locallyActive = false;
     }
 
