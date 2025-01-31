@@ -13,23 +13,25 @@ contract BankerCreateTokenTest is BankerTest {
     using Timestamp for uint48;
 
     // test cases
-    // [X] when the policy is not active
-    //     [X] it reverts
-    // [X] when the caller is not permissioned
-    //     [X] it reverts
-    // [X] when the asset is the zero address
-    //     [X] it reverts
-    // [X] when the asset is not a valid ERC20
-    //     [X] it reverts
-    // [X] when the maturity is not in the future
-    //     [X] it reverts
-    // [X] when the conversion price is zero
-    //     [X] it reverts
-    // [X] when the parameters are valid
-    //     [X] it creates a ConvertibleDebtToken with the given parameters
-    //     [X] it stores the debt token address in the createdBy mapping
-    //     [X] the token name is Convertible + underlying name + Series N
-    //     [X] the token symbol is cv + the underlying symbol + -N
+    // when the policy is not active
+    //  [X] it reverts
+    // when the caller is not permissioned
+    //  [X] it reverts
+    // when the asset is the zero address
+    //  [X] it reverts
+    // when the asset is not a valid ERC20
+    //  [X] it reverts
+    // when the maturity is not in the future
+    //  [X] it reverts
+    // when the conversion price is zero
+    //  [X] it reverts
+    // given the underlying asset has 6 decimals
+    //  [X] the debt token has the underlying asset decimals
+    //  [X] the debt token has the conversion price set according to the parameters
+    // [X] it creates a ConvertibleDebtToken with the given parameters
+    // [X] it stores the debt token address in the createdBy mapping
+    // [X] the token name is Convertible + underlying name + Series N
+    // [X] the token symbol is cv + the underlying symbol + -N
 
     function test_policyNotActive_reverts() public {
         vm.prank(manager);
@@ -91,6 +93,23 @@ contract BankerCreateTokenTest is BankerTest {
         banker.createDebtToken(debtTokenParams.underlying, debtTokenParams.maturity, 0);
     }
 
+    function test_underlyingAssetHasSmallerDecimals()
+        public
+        givenPolicyIsActive
+        givenUnderlyingAssetDecimals(6)
+    {
+        uint48 maturity = uint48(block.timestamp + 1);
+        uint256 conversionPrice = 5e6;
+
+        vm.prank(manager);
+        address debtToken =
+            banker.createDebtToken(debtTokenParams.underlying, maturity, conversionPrice);
+
+        ConvertibleDebtToken cdt = ConvertibleDebtToken(debtToken);
+        assertEq(cdt.decimals(), 6, "debt token decimals");
+        assertEq(cdt.conversionPrice(), conversionPrice, "conversionPrice");
+    }
+
     function test_success(uint256 maturity_, uint256 conversionPrice_) public givenPolicyIsActive {
         uint48 maturity = uint48(bound(maturity_, block.timestamp + 1, type(uint48).max));
         uint256 conversionPrice = bound(conversionPrice_, 1, type(uint256).max);
@@ -101,9 +120,10 @@ contract BankerCreateTokenTest is BankerTest {
 
         // Confirm the debt token's parameters are correct
         ConvertibleDebtToken cdt = ConvertibleDebtToken(debtToken);
-        assertEq(address(cdt.underlying()), debtTokenParams.underlying);
-        assertEq(cdt.maturity(), maturity);
-        assertEq(cdt.conversionPrice(), conversionPrice);
+        assertEq(address(cdt.underlying()), debtTokenParams.underlying, "underlying");
+        assertEq(cdt.maturity(), maturity, "maturity");
+        assertEq(cdt.conversionPrice(), conversionPrice, "conversionPrice");
+        assertEq(cdt.decimals(), 18, "debt token decimals");
 
         // Check the name and symbol of the debt token
         string memory expectedName = string(
@@ -115,10 +135,10 @@ contract BankerCreateTokenTest is BankerTest {
         string memory expectedSymbol =
             string(abi.encodePacked("cv", ERC20(debtTokenParams.underlying).symbol(), "-1"));
 
-        assertEq(cdt.name(), expectedName);
-        assertEq(cdt.symbol(), expectedSymbol);
+        assertEq(cdt.name(), expectedName, "name");
+        assertEq(cdt.symbol(), expectedSymbol, "symbol");
 
         // Check the debt token was stored in the createdBy mapping
-        assertTrue(banker.createdBy(debtToken));
+        assertTrue(banker.createdBy(debtToken), "createdBy");
     }
 }

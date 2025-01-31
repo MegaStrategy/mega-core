@@ -4,25 +4,28 @@ pragma solidity 0.8.19;
 import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
-
+import {FullMath} from "src/lib/FullMath.sol";
 import {BankerTest} from "./BankerTest.sol";
 
 contract BankerRedeemTest is BankerTest {
     // test cases
-    // [X] when the policy is not active
-    //    [X] it reverts
-    // [X] when the debt token was not created by the policy
-    //    [X] it reverts
-    // [X] when the debt token has not matured
-    //    [X] it reverts
-    // [X] when the amount is zero
-    //    [X] it reverts
-    // [X] when the treasury doesn't have enough of the underlying asset to repay the debt
-    //    [X] it reverts
-    // [X] when the parameters are valid, the token has matured, and the treasury has enough funds
-    //    [X] it burns the given amount of debt tokens from the sender
-    //    [X] it transfers the amount of the debt token's underlying asset to the sender
-    //    [X] it decreases the contract's mint allowance for the amount divided by conversion price
+    // when the policy is not active
+    //  [X] it reverts
+    // when the debt token was not created by the policy
+    //  [X] it reverts
+    // when the debt token has not matured
+    //  [X] it reverts
+    // when the amount is zero
+    //  [X] it reverts
+    // when the treasury doesn't have enough of the underlying asset to repay the debt
+    //  [X] it reverts
+    // given the underlying asset has 6 decimals
+    //  [X] it decreases the contract's withdraw allowance for the debt token's underlying asset
+    //  [X] it decreases the contract's mint allowance for TOKEN
+    // when the parameters are valid, the token has matured, and the treasury has enough funds
+    //  [X] it burns the given amount of debt tokens from the sender
+    //  [X] it transfers the amount of the debt token's underlying asset to the sender
+    //  [X] it decreases the contract's mint allowance for the amount divided by conversion price
 
     function test_policyNotActive_reverts() public {
         vm.prank(buyer);
@@ -80,7 +83,7 @@ contract BankerRedeemTest is BankerTest {
         // Issue debt tokens to the buyer
         _issueDebtToken(buyer, amount_);
 
-        // Fund the treasury with the given amount
+        // Override the treasury's balance
         _fundTreasury(treasuryFunds_);
 
         vm.warp(debtTokenParams.maturity);
@@ -92,28 +95,39 @@ contract BankerRedeemTest is BankerTest {
         vm.stopPrank();
     }
 
-    function test_success(
-        uint128 amount_,
-        uint128 treasuryFunds_
-    ) public givenPolicyIsActive givenDebtTokenCreated {
-        vm.assume(amount_ > 0 && treasuryFunds_ >= amount_);
+    function test_underlyingAssetHasSmallerDecimals(
+        uint256 amount_,
+        uint256 amountToRedeem_
+    )
+        public
+        givenPolicyIsActive
+        givenUnderlyingAssetDecimals(6)
+        givenDebtTokenConversionPrice(5e6)
+        givenDebtTokenCreated
+    {
+        // 1 to 1,000,000
+        uint256 amount = bound(amount_, 1e6, 1_000_000e6);
+        uint256 amountToRedeem = bound(amountToRedeem_, 1e6, amount);
 
         // Issue debt tokens to the buyer
-        _issueDebtToken(buyer, amount_);
-
-        // Fund the treasury with the given amount
-        _fundTreasury(treasuryFunds_);
+        _issueDebtToken(buyer, amount);
 
         // Confirm beginning balances
-        assertEq(ERC20(debtToken).balanceOf(buyer), amount_);
-        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), 0);
-        assertEq(ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), treasuryFunds_);
+        assertEq(ERC20(debtToken).balanceOf(buyer), amount, "debt token balance");
+        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), 0, "underlying balance");
         assertEq(
-            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), amount_
+            ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), amount, "treasury balance"
         );
         assertEq(
-            mgst.mintApproval(address(banker)),
-            amount_ * 10 ** mgst.decimals() / debtTokenParams.conversionPrice
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)),
+            amount,
+            "underlying withdraw allowance"
+        );
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+        assertEq(
+            mintApprovalBefore,
+            FullMath.mulDivUp(amount, 10 ** mgst.decimals(), debtTokenParams.conversionPrice),
+            "mgst mint allowance"
         );
 
         // Warp to maturity
@@ -121,17 +135,57 @@ contract BankerRedeemTest is BankerTest {
 
         // Redeem debt tokens
         vm.startPrank(buyer);
-        ERC20(debtToken).approve(address(banker), amount_);
-        banker.redeem(debtToken, amount_);
+        ERC20(debtToken).approve(address(banker), amountToRedeem);
+        banker.redeem(debtToken, amountToRedeem);
         vm.stopPrank();
 
         // Check ending balances
-        assertEq(ERC20(debtToken).balanceOf(buyer), 0);
-        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), amount_);
+        uint256 expectedConvertedAmount = amountToRedeem * 1e18 / 5e6;
+        _assertBalances(amount, 0, amountToRedeem, 0);
+        _assertApprovals(amount, 0, amountToRedeem, mintApprovalBefore, expectedConvertedAmount);
+    }
+
+    function test_success(
+        uint256 amount_,
+        uint256 amountToRedeem_
+    ) public givenPolicyIsActive givenDebtTokenCreated {
+        // 1 to 1,000,000
+        uint256 amount = bound(amount_, 1e18, 1_000_000e18);
+        uint256 amountToRedeem = bound(amountToRedeem_, 1e18, amount);
+
+        // Issue debt tokens to the buyer
+        _issueDebtToken(buyer, amount);
+
+        // Confirm beginning balances
+        assertEq(ERC20(debtToken).balanceOf(buyer), amount, "debt token balance");
+        assertEq(ERC20(debtTokenParams.underlying).balanceOf(buyer), 0, "underlying balance");
         assertEq(
-            ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), treasuryFunds_ - amount_
+            ERC20(debtTokenParams.underlying).balanceOf(address(TRSRY)), amount, "treasury balance"
         );
-        assertEq(TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)), 0);
-        assertEq(mgst.mintApproval(address(banker)), 0);
+        assertEq(
+            TRSRY.withdrawApproval(address(banker), ERC20(debtTokenParams.underlying)),
+            amount,
+            "underlying withdraw allowance"
+        );
+        uint256 mintApprovalBefore = mgst.mintApproval(address(banker));
+        assertEq(
+            mintApprovalBefore,
+            FullMath.mulDivUp(amount, 10 ** mgst.decimals(), debtTokenParams.conversionPrice),
+            "mgst mint allowance"
+        );
+
+        // Warp to maturity
+        vm.warp(debtTokenParams.maturity);
+
+        // Redeem debt tokens
+        vm.startPrank(buyer);
+        ERC20(debtToken).approve(address(banker), amountToRedeem);
+        banker.redeem(debtToken, amountToRedeem);
+        vm.stopPrank();
+
+        // Check ending balances
+        uint256 expectedConvertedAmount = amountToRedeem * 1e18 / debtTokenParams.conversionPrice;
+        _assertBalances(amount, 0, amountToRedeem, 0);
+        _assertApprovals(amount, 0, amountToRedeem, mintApprovalBefore, expectedConvertedAmount);
     }
 }
