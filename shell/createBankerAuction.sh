@@ -10,53 +10,29 @@
 # Exit if any error occurs
 set -e
 
-# Iterate through named arguments
-# Source: https://unix.stackexchange.com/a/388038
-while [ $# -gt 0 ]; do
-    if [[ $1 == *"--"* ]]; then
-        v="${1/--/}"
-        declare $v="$2"
-    fi
+# Load named arguments
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+source $SCRIPT_DIR/lib/arguments.sh
+load_named_args "$@"
 
-    shift
-done
-
-# Get the name of the .env file or use the default
-ENV_FILE=${env:-".env"}
-echo "Sourcing environment variables from $ENV_FILE"
-
-# Load environment file
-set -a # Automatically export all variables
-source $ENV_FILE
-set +a # Disable automatic export
+# Load environment variables
+load_env
 
 # Set sane defaults
 BROADCAST=${broadcast:-false}
 TESTNET=${testnet:-false}
 
-# Check if the input argument exists
-if [ -z "$input" ]; then
-    echo "Error: --input argument is required to specify the auction input file"
-    exit 1
-fi
+# Validate named arguments
+echo ""
+echo "Validating arguments"
+validate_text "$input" "No auction input file specified. Provide the path to the auction input file after the --input flag."
+validate_text "$account" "No account specified. Provide the cast wallet after the --account flag."
 
-# Check if the input file exists
-if [ ! -f "$input" ]; then
-    echo "Error: auction input file $input does not exist"
-    exit 1
-fi
-
-# Check if CHAIN is set
-if [ -z "$CHAIN" ]; then
-    echo "Error: CHAIN environment variable is not set"
-    exit 1
-fi
-
-# Check if RPC_URL is set
-if [ -z "$RPC_URL" ]; then
-    echo "Error: RPC_URL environment variable is not set"
-    exit 1
-fi
+# Validate environment variables
+echo ""
+echo "Validating environment variables"
+validate_text "$CHAIN" "No chain specified. Specify the CHAIN in the $ENV_FILE file."
+validate_text "$RPC_URL" "No RPC URL specified. Specify the RPC_URL in the $ENV_FILE file."
 
 # Set the CLOAK_API_URL to the testnet version if TESTNET is true
 if [ "$TESTNET" = "true" ]; then
@@ -71,32 +47,24 @@ if [ "${CLOAK_API_URL: -1}" != "/" ]; then
     CLOAK_API_URL="$CLOAK_API_URL/"
 fi
 
-# Check if the cast account was specified
-if [ -z "$account" ]; then
-    echo "Error: Cast account was not specified using --account. Set up using 'cast wallet'."
-    exit 1
-fi
-
 # Get the address of the cast wallet
+echo ""
 echo "Getting address for cast account $account"
 CAST_ADDRESS=$(cast wallet address --account $account)
+
 echo ""
+echo "Summary:"
+echo "  Deploy from account: $account"
+echo "  Sender: $CAST_ADDRESS"
+echo "  Chain: $CHAIN"
+echo "  RPC URL: $RPC_URL"
+echo "  Auction input file: $input"
+echo "  Testnet: $TESTNET"
+echo "  Cloak API URL: $CLOAK_API_URL"
 
-echo "Auction input file: $input"
-echo "Chain: $CHAIN"
-echo "RPC URL: $RPC_URL"
-echo "Testnet: $TESTNET"
-echo "Cloak API URL: $CLOAK_API_URL"
-echo "Sender: $CAST_ADDRESS"
-
-# Set BROADCAST_FLAG based on BROADCAST
-BROADCAST_FLAG=""
-if [ "$BROADCAST" = "true" ]; then
-    BROADCAST_FLAG="--broadcast"
-    echo "Broadcast: true"
-else
-    echo "Broadcast: false"
-fi
+# Validate and set forge script flags
+source $SCRIPT_DIR/lib/forge.sh
+set_broadcast_flag $BROADCAST
 
 # Validate that the auction info has the required fields
 echo ""
