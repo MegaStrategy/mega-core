@@ -79,20 +79,12 @@ contract TasksScript is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        // Transfer the USDC amount to the Treasury
+        // Approve the Banker to spend the USDC
         vm.startBroadcast();
-        ERC20(address(_envAddressNotZero("external.tokens.USDC"))).transfer(
-            address(_envAddressNotZero("mega.modules.OlympusTreasury")), amount_
+        ERC20(address(_envAddressNotZero("external.tokens.USDC"))).approve(
+            address(Banker(_envAddressNotZero("mega.policies.Banker"))), amount_
         );
         vm.stopBroadcast();
-
-        // Verify the USDC is in the Treasury
-        console2.log(
-            "USDC in Treasury",
-            ERC20(address(_envAddressNotZero("external.tokens.USDC"))).balanceOf(
-                _envAddressNotZero("mega.modules.OlympusTreasury")
-            )
-        );
 
         // Issue the debt token
         vm.startBroadcast();
