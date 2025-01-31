@@ -76,8 +76,16 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
         dependencies[1] = toKeycode("TOKEN");
         dependencies[2] = toKeycode("ROLES");
 
+        // Determine the address of the TOKEN module
+        address tokenModule = getModuleAddress(dependencies[1]);
+
+        // Changing the TOKEN module is not supported, otherwise option token holders will not be able to convert their tokens
+        if (address(TOKEN) != address(0) && tokenModule != address(TOKEN)) {
+            revert InvalidState();
+        }
+
         TRSRY = TRSRYv1(getModuleAddress(dependencies[0]));
-        TOKEN = TOKENv1(getModuleAddress(dependencies[1]));
+        TOKEN = TOKENv1(tokenModule);
         ROLES = ROLESv1(getModuleAddress(dependencies[2]));
     }
 
@@ -271,6 +279,11 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
 
         // Emit event
         emit SweptToTreasury(token_, tokenBalance);
+    }
+
+    /// @inheritdoc IIssuer
+    function getUnderlyingToken() external view returns (address) {
+        return address(TOKEN);
     }
 
     // ========== ADMIN ========== //
