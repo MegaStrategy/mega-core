@@ -217,6 +217,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
     // ========== CALLBACKS ========== //
 
     /// @inheritdoc BaseCallback
+    /// @dev        Upon this callback, the Banker will issue the auction capacity of debt tokens to the calling AuctionHouse
     function _onCreate(
         uint96,
         address seller_,
@@ -240,11 +241,16 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
     }
 
     /// @inheritdoc BaseCallback
+    /// @dev        Upon this callback, the Banker will burn the refunded amount of debt tokens
     function _onCancel(uint96 lotId_, uint256 refund_, bool, bytes calldata) internal override {
         // Lot ID is validated by the higher level function
 
-        // Get the base token for the lot
-        (, address baseToken,,,,,,,) = IAuctionHouse(AUCTION_HOUSE).lotRouting(lotId_);
+        // Get the lot
+        (address seller, address baseToken,,,,,,,) = IAuctionHouse(AUCTION_HOUSE).lotRouting(lotId_);
+
+        // Validate that the seller is this contract
+        // The seller is set to the caller at the time of auction creation, so this validates that the auction was created by this contract
+        if (seller != address(this)) revert OnlyLocal();
 
         // Burn the refunded amount of debt tokens on this contract
         ConvertibleDebtToken(baseToken).burn(refund_);
@@ -265,14 +271,20 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
         uint256,
         bool,
         bytes calldata
-    ) internal override {}
+    ) internal pure override {
+        revert Callback_NotImplemented();
+    }
 
     /// @inheritdoc BaseCallback
     /// @dev        Not implemented
-    function _onBid(uint96, uint64, address, uint256, bytes calldata) internal override {}
+    function _onBid(uint96, uint64, address, uint256, bytes calldata) internal pure override {
+        revert Callback_NotImplemented();
+    }
 
     /// @inheritdoc BaseCallback
-    /// @dev        Not implemented
+    /// @dev        Upon this callback, the Banker will:
+    ///             - Burn the refunded amount of debt tokens
+    ///             - Send the proceeds to the treasury
     function _onSettle(
         uint96 lotId_,
         uint256 proceeds_,
@@ -281,9 +293,13 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
     ) internal override {
         // Lot ID is validated by the higher level function
 
-        // Get the base token for the lot
-        (, address baseToken, address quoteToken,,,,,,) =
+        // Get the lot
+        (address seller, address baseToken, address quoteToken,,,,,,) =
             IAuctionHouse(AUCTION_HOUSE).lotRouting(lotId_);
+
+        // Validate that the seller is this contract
+        // The seller is set to the caller at the time of auction creation, so this validates that the auction was created by this contract
+        if (seller != address(this)) revert OnlyLocal();
 
         // Burn the refund
         ConvertibleDebtToken(baseToken).burn(refund_);
