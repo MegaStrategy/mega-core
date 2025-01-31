@@ -14,9 +14,16 @@ import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 import {WithSalts} from "../../lib/WithSalts.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
+import {IBatchAuctionHouse} from "axis-core-1.0.1/interfaces/IBatchAuctionHouse.sol";
+import {IEncryptedMarginalPrice} from
+    "axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
 import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/auctions/batch/EMP.sol";
 import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
 import {Point, ECIES} from "axis-core-1.0.1/lib/ECIES.sol";
+import {EncryptedMarginalPriceBid} from "axis-utils-1.0.0/lib/EncryptedMarginalPriceBid.sol";
+import {IAuction} from "axis-core-1.0.1/interfaces/modules/IAuction.sol";
+
+import {console2} from "@forge-std/console2.sol";
 
 // solhint-disable max-states-count
 
@@ -43,11 +50,11 @@ abstract contract BankerTest is Test, WithSalts {
     // Permissioned addresses
     address public manager = address(0xAAAA);
     address public admin = address(0xBBBB);
-    address public buyer = address(0xCCCC);
+    address public buyer = address(0x000000000000000000000000000000000000CcCc);
 
     // System parameters
     uint48 public maxDiscount = 10e2;
-    uint24 public minFillPercent = 100e2;
+    uint24 public minFillPercent = 50e2;
     uint48 public referrerFee = 0;
     uint256 public maxBids = 1000;
 
@@ -57,7 +64,7 @@ abstract contract BankerTest is Test, WithSalts {
     Banker.DebtTokenParams public debtTokenParams;
     Banker.AuctionParams public auctionParams;
 
-    uint256 public constant auctionPrivateKey = 1234e18;
+    uint256 public constant auctionPrivateKey = 112_233_445_566;
 
     uint256 public constant auctionCapacity = 100e18;
     uint48 public constant auctionStart = 1_000_000 + 1;
@@ -233,6 +240,98 @@ abstract contract BankerTest is Test, WithSalts {
         // Set the debt token based on the auction
         (, address baseToken,,,,,,,) = auctionHouse.lotRouting(0);
         debtToken = baseToken;
+        _;
+    }
+
+    modifier givenAuctionHasBid(uint96 amountIn_, uint96 amountOut_) {
+        // Fund the buyer
+        stablecoin.mint(buyer, amountIn_);
+
+        // Approve spending of the underlying asset
+        vm.startPrank(buyer);
+        stablecoin.approve(address(auctionHouse), amountIn_);
+        vm.stopPrank();
+
+        // Encrypt the bid
+        IEncryptedMarginalPrice.BidParams memory empBidParams;
+        {
+            uint256 bidPrivateKey = 112_233_445_566_778;
+            uint128 bidSeed = uint128(12_345_678_901_234_567_890_123_456_789_012_345_678);
+            uint256 encryptedAmountOut = EncryptedMarginalPriceBid.encryptAmountOut(
+                0,
+                buyer,
+                amountIn_,
+                amountOut_,
+                auctionParams.auctionPublicKey,
+                bidSeed,
+                bidPrivateKey
+            );
+            Point memory bidPubKey = ECIES.calcPubKey(Point(1, 2), bidPrivateKey);
+
+            empBidParams = IEncryptedMarginalPrice.BidParams({
+                encryptedAmountOut: encryptedAmountOut,
+                bidPublicKey: bidPubKey
+            });
+        }
+
+        // Prepare bid
+        IBatchAuctionHouse.BidParams memory bidParams = IBatchAuctionHouse.BidParams({
+            lotId: 0,
+            bidder: buyer,
+            referrer: address(0),
+            amount: amountIn_,
+            auctionData: abi.encode(empBidParams),
+            permit2Data: bytes("")
+        });
+
+        // Bid
+        vm.startPrank(buyer);
+        auctionHouse.bid(bidParams, bytes(""));
+        vm.stopPrank();
+        _;
+    }
+
+    modifier givenAuctionHasStarted() {
+        // Get the conclusion timestamp
+        IAuction.Lot memory lot = empa.getLot(0);
+
+        // Warp to the conclusion timestamp
+        vm.warp(lot.start);
+        _;
+    }
+
+    modifier givenAuctionHasConcluded() {
+        // Get the conclusion timestamp
+        IAuction.Lot memory lot = empa.getLot(0);
+
+        // Warp to the conclusion timestamp
+        vm.warp(lot.conclusion);
+        _;
+    }
+
+    modifier givenAuctionHasSettled() {
+        // Submit the private key (and decrypt the bids)
+        bytes32[] memory sortHints = new bytes32[](1);
+        sortHints[0] = bytes32(0x0000000000000000ffffffffffffffffffffffff000000000000000000000001);
+        empa.submitPrivateKey(0, auctionPrivateKey, 1, sortHints);
+
+        uint256 bidAmountOut = empa.decryptBid(0, 1);
+        console2.log("bid amount out", bidAmountOut);
+
+        // Settle the auction
+        auctionHouse.settle(0, 1, bytes(""));
+        _;
+    }
+
+    modifier givenBidIsClaimed(
+        uint64 bidId_
+    ) {
+        uint64[] memory bidIds = new uint64[](1);
+        bidIds[0] = bidId_;
+
+        // Claim the bid
+        vm.prank(buyer);
+        auctionHouse.claimBids(0, bidIds);
         _;
     }
 
