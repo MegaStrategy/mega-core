@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: TBD
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import {Point} from "axis-core-1.0.1/lib/ECIES.sol";
