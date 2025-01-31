@@ -11,21 +11,22 @@ import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 
 contract IssuerCreateOTest is IssuerTest {
     // test cases
-    // [X] when the caller does not have the admin role
-    //    [X] it reverts
-    // [X] when the policy is not locally active
-    //    [X] it reverts
-    // [X] when the quote token is the zero address
-    //    [X] it reverts
-    // [X] when the quote token is not a contract
-    //    [X] it reverts
-    // [X] when the expiry is not in the future by min option duration
-    //    [X] it reverts
-    // [X] when the convertible price is below the minimum from the teller
-    //    [X] it reverts
-    // [X] otherwise
-    //    [X] it creates an oToken with the given parameters (and hardcoded ones)
-    //    [X] it sets the createdBy mapping on the issuer to true for the oToken address
+    // when the caller does not have the admin role
+    //  [X] it reverts
+    // when the policy is not locally active
+    //  [X] it reverts
+    // when the quote token is the zero address
+    //  [X] it reverts
+    // when the quote token is not a contract
+    //  [X] it reverts
+    // when the expiry is not in the future by min option duration
+    //  [X] it reverts
+    // when the convertible price is below the minimum from the teller
+    //  [X] it reverts
+    // otherwise
+    //  [X] it creates an oToken with the given parameters (and hardcoded ones)
+    //  [X] it sets the createdBy mapping on the issuer to true for the oToken address
+    //  [X] it sets the oToken recipient to the Issuer policy
     // when vestingStart and vestingExpiry are provided
     //  when vestingExpiry is after the option token expiry
     //   [X] it reverts
@@ -118,7 +119,7 @@ contract IssuerCreateOTest is IssuerTest {
         assertEq(token.expiry(), expiry / 1 days * 1 days);
         assertEq(token.strike(), price);
         assertTrue(token.call());
-        assertEq(token.receiver(), address(TRSRY));
+        assertEq(token.receiver(), address(issuer));
         assertEq(token.teller(), address(teller));
     }
 
@@ -192,7 +193,7 @@ contract IssuerCreateOTest is IssuerTest {
         assertEq(token.expiry(), optionExpiry_ / 1 days * 1 days, "expiry");
         assertEq(token.strike(), price_, "strike");
         assertTrue(token.call(), "call");
-        assertEq(token.receiver(), address(TRSRY), "receiver");
+        assertEq(token.receiver(), address(issuer), "receiver");
         assertEq(token.teller(), address(teller), "teller");
     }
 }
