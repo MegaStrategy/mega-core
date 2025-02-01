@@ -11,7 +11,7 @@
         "tagline": "Here is a tagline"
     },
     "auctionParams": {
-        "capacity": 1000000000000000000000000,
+        "capacity": 1000000000000,
         "conversionPrice": 30000000,
         "duration": 86400,
         "maturity": 2592000,
