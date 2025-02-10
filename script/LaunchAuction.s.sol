@@ -19,6 +19,7 @@ import {IBaseDirectToLiquidity} from "src/lib/axis/IBaseDirectToLiquidity.sol";
 import {IUniswapV3DirectToLiquidity} from "src/lib/axis/IUniswapV3DirectToLiquidity.sol";
 import {IUniswapV3DTLWithAllocatedAllowlist} from
     "axis-periphery-1.0.0/callbacks/liquidity/IUniswapV3DTLWithAllocatedAllowlist.sol";
+import {IMetadataRegistry} from "axis-registry-1.0.0/interfaces/IMetadataRegistry.sol";
 
 // Mega contracts
 import {Issuer} from "src/policies/Issuer.sol";
@@ -49,7 +50,8 @@ contract LaunchAuction is WithEnvironment {
     function launch(
         string calldata chain_,
         string calldata auctionFilePath_,
-        string calldata ipfsHash_
+        string calldata ipfsHash_,
+        bytes32 merkleRoot_
     ) public {
         _loadEnv(chain_);
 
@@ -173,15 +175,15 @@ contract LaunchAuction is WithEnvironment {
 
         console2.log("Auction created with lot ID", lotId);
 
+        // Set the Merkle root for the allowlist
+        _setMerkleRoot(lotId, merkleRoot_);
+
         // Next steps:
         // - Set the Merkle root for the allowlist
     }
 
-    /// @notice Sets the Merkle root for the allowlist on the given lot id
-    /// @dev    Must be run as the seller
-    function setMerkleRoot(string calldata chain_, uint96 lotId_, bytes32 merkleRoot_) public {
-        _loadEnv(chain_);
-
+    function _setMerkleRoot(uint96 lotId_, bytes32 merkleRoot_) internal {
+        // Update the merkle root on the callback
         IUniswapV3DTLWithAllocatedAllowlist dtl = IUniswapV3DTLWithAllocatedAllowlist(
             _envAddressNotZero(
                 "axis.callbacks.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist"
@@ -192,6 +194,30 @@ contract LaunchAuction is WithEnvironment {
 
         vm.startBroadcast();
         dtl.setMerkleRoot(lotId_, merkleRoot_);
+        vm.stopBroadcast();
+    }
+
+    /// @notice Updates the Merkle root and IPFS hash for the given lot id
+    /// @dev    Must be run as the seller
+    function updateAllowlist(
+        string calldata chain_,
+        uint96 lotId_,
+        bytes32 merkleRoot_,
+        string calldata ipfsHash_
+    ) public {
+        _loadEnv(chain_);
+
+        // Update the merkle root on the callback
+        _setMerkleRoot(lotId_, merkleRoot_);
+
+        // Update the IPFS hash on the metadata registry
+        // This will cause the subgraph to update
+        IMetadataRegistry registry = IMetadataRegistry(_envAddressNotZero("axis.MetadataRegistry"));
+
+        console2.log("Updating the IPFS hash on the metadata registry for lot id", lotId_);
+
+        vm.startBroadcast();
+        registry.registerAuction(_envAddressNotZero("axis.BatchAuctionHouse"), lotId_, ipfsHash_);
         vm.stopBroadcast();
     }
 }

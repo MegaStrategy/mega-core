@@ -1,7 +1,13 @@
 #!/bin/bash
 
 # Creates an auction through the LaunchAuction script
-# Usage: ./createLaunchAuction.sh --account <cast account> --allowlist <allowlist file> --testnet <true|false> --broadcast <true|false> --env <env file>
+# Usage: ./createLaunchAuction.sh
+#       --account <cast account>
+#       --allowlist <allowlist file>
+#       --merkleRoot <merkle root>
+#       --testnet <true|false>
+#       --broadcast <true|false>
+#       --env <env file>
 #
 # Environment variables:
 # RPC_URL
@@ -27,6 +33,7 @@ echo ""
 echo "Validating arguments"
 validate_text "$account" "No account specified. Provide the cast wallet after the --account flag."
 validate_file "$allowlist" "No allowlist specified or it does not exist. Provide the path to the allowlist CSV file after the --allowlist flag."
+validate_bytes32 "$merkleRoot" "No merkle root specified or it was not a valid bytes32 value. Provide the merkle root after the --merkleRoot flag."
 
 # Check if the allowlist is a CSV file
 if ! head -n 1 $allowlist | grep -qE '^address,amount$'; then
@@ -52,6 +59,8 @@ echo "  Sender: $CAST_ADDRESS"
 echo "  Chain: $CHAIN"
 echo "  RPC URL: $RPC_URL"
 echo "  Testnet: $TESTNET"
+echo "  Allowlist: $allowlist"
+echo "  Merkle Root: $merkleRoot"
 
 # Validate and set forge script flags
 source $SCRIPT_DIR/lib/forge.sh

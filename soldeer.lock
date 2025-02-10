@@ -32,6 +32,12 @@ git = "https://github.com/Axis-Fi/axis-periphery.git"
 rev = "4c9f69e77fc59f1ba84fd620a3cfbb9ee42f650a"
 
 [[dependencies]]
+name = "axis-registry"
+version = "1.0.0"
+git = "git@github.com:Axis-Fi/axis-registry.git"
+rev = "b6a78a7ccfc40d7f3fa19db0507a03a532c56585"
+
+[[dependencies]]
 name = "axis-utils"
 version = "1.0.0"
 git = "https://github.com/Axis-Fi/axis-utils.git"

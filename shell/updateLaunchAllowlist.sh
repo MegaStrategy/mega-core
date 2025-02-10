@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# Sets the merkle root for the launch auction
-# Usage: ./setLaunchAuctionMerkleRoot.sh --lotId <lotId> --merkleRoot <merkleRoot> --account <cast account> --broadcast <true|false>
+# Updates the merkle root and IPFS hash for the launch auction
+# Usage: ./updateLaunchAllowlist.sh
+#       --lotId <lotId>
+#       --merkleRoot <merkleRoot>
+#       --ipfsHash <ipfsHash>
+#       --account <cast account>
+#       [--broadcast <true|false>]
 #
 # Environment variables:
 # RPC_URL
@@ -26,6 +31,7 @@ echo ""
 echo "Validating arguments"
 validate_number "$lotId" "No lotId specified or it was not a valid number. Provide the lotId after the --lotId flag."
 validate_bytes32 "$merkleRoot" "No merkleRoot specified or it was not a valid bytes32 value. Provide the merkleRoot after the --merkleRoot flag."
+validate_text "$ipfsHash" "No ipfsHash specified or it was not a valid text value. Provide the ipfsHash after the --ipfsHash flag."
 validate_text "$account" "No account specified. Provide the cast wallet after the --account flag."
 
 # Validate environment variables
@@ -47,6 +53,7 @@ echo "  Chain: $CHAIN"
 echo "  RPC URL: $RPC_URL"
 echo "  LotId: $lotId"
 echo "  Merkle Root: $merkleRoot"
+echo "  IPFS Hash: $ipfsHash"
 
 # Validate and set forge script flags
 source $SCRIPT_DIR/lib/forge.sh
@@ -55,7 +62,14 @@ set_broadcast_flag $BROADCAST
 # Run
 echo ""
 echo "Running the script"
-forge script ./script/LaunchAuction.s.sol --sig "setMerkleRoot(string,uint96,bytes32)" $CHAIN $lotId $merkleRoot --rpc-url $RPC_URL --account $account --sender $CAST_ADDRESS $BROADCAST_FLAG --slow -vvv
+forge script ./script/LaunchAuction.s.sol \
+    --sig "updateAllowlist(string,uint96,bytes32,string)" $CHAIN $lotId $merkleRoot $ipfsHash \
+    --rpc-url $RPC_URL \
+    --account $account \
+    --sender $CAST_ADDRESS \
+    $BROADCAST_FLAG \
+    --slow \
+    -vvv
 
 echo ""
-echo "Merkle root set"
+echo "Allowlist updated"
