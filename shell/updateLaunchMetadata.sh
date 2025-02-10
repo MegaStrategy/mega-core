@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Updates the metadata for the launch auction
-# Usage: ./updateLaunchAllowlist.sh
+# Usage: ./updateLaunchMetadata.sh
 #       --lotId <lotId>
 #       --allowlist <allowlist file>
 #       --merkleRoot <merkleRoot>

@@ -102,9 +102,9 @@ Follow these steps to create the launch auction:
 3. Generate the merkle root from the CSV file using the [oz-merkle-tree tool](https://github.com/Axis-Fi/axis-utils/tree/master/packages/oz-merkle-tree)
 4. Run the `createLaunchAuction.sh` script: `./shell/createLaunchAuction.sh --account <CAST_ACCOUNT> --allowlist <PATH_TO_ALLOWLIST_CSV> --merkleRoot <MERKLE_ROOT> --testnet <true|false> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
 
-##### Updating the Allowlist
+##### Updating the Metadata/Allowlist
 
-After the auction has been created, the allowlist can be updated using the `updateLaunchAllowlist.sh` script: `./shell/updateLaunchAllowlist.sh --lotId <LOT_ID> --merkleRoot <MERKLE_ROOT> --allowlist <PATH_TO_ALLOWLIST_CSV> --account <CAST_ACCOUNT> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
+After the auction has been created, the allowlist can be updated using the `updateLaunchMetadata.sh` script: `./shell/updateLaunchMetadata.sh --lotId <LOT_ID> --merkleRoot <MERKLE_ROOT> --allowlist <PATH_TO_ALLOWLIST_CSV> --account <CAST_ACCOUNT> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
 
 The metadata can also be updated at the same time by editing the `script/auctions/launch.json` file.
 
