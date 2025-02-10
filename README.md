@@ -91,6 +91,22 @@ The following must be performed to deploy and activate the system:
 5. Install the PRICE submodules by calling `installSubmodules()` in the `PriceConfiguration.s.sol` script
 6. Initialize the Banker using the `Tasks.s.sol` script
 
+#### Ownership Transfer
+
+To transfer ownership of the system, the `Tasks.s.sol` script can be used.
+
+This script will:
+
+-   Rescind the manager and admin roles from the caller (if applicable)
+-   Transfer ownership of the RolesAdmin
+-   Transfer the kernel executor
+
+The new admin must then call `pullNewAdmin()` in the `RolesAdmin` policy to complete the transfer.
+
+```bash
+forge script ./script/Tasks.s.sol --sig "transferOwnership(string,address)()" <CHAIN> <NEW_ADMIN_ADDRESS> --rpc-url <RPC_URL> --account <CAST_ACCOUNT> --sender <SENDER_ADDRESS> --slow -vvv --broadcast
+```
+
 #### Launch Auction
 
 After deployment, a launch auction needs to be created in order to accept wETH deposits in return for MGST.
