@@ -104,7 +104,9 @@ Follow these steps to create the launch auction:
 
 ##### Updating the Allowlist
 
-After the auction has been created, the allowlist can be updated using the `updateLaunchAllowlist.sh` script: `./shell/updateLaunchAllowlist.sh --lotId <LOT_ID> --merkleRoot <MERKLE_ROOT> --ipfsHash <IPFS_HASH> --account <CAST_ACCOUNT> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
+After the auction has been created, the allowlist can be updated using the `updateLaunchAllowlist.sh` script: `./shell/updateLaunchAllowlist.sh --lotId <LOT_ID> --merkleRoot <MERKLE_ROOT> --allowlist <PATH_TO_ALLOWLIST_CSV> --account <CAST_ACCOUNT> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
+
+The metadata can also be updated at the same time by editing the `script/auctions/launch.json` file.
 
 #### Post-Launch Auction
 

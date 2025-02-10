@@ -68,88 +68,21 @@ set_broadcast_flag $BROADCAST
 
 LAUNCH_FILE="script/auctions/launch.json"
 
-# Validate that the auction info has the required fields
-echo ""
-echo "Validating auction info"
-if ! jq -e '.auctionInfo.name' $LAUNCH_FILE > /dev/null 2>&1; then
-    echo "Error: auctionInfo.name is required"
-    exit 1
-fi
-
-if ! jq -e '.auctionInfo.description' $LAUNCH_FILE > /dev/null 2>&1; then
-    echo "Error: auctionInfo.description is required"
-    exit 1
-fi
-
-if ! jq -e '.auctionInfo.tagline' $LAUNCH_FILE > /dev/null 2>&1; then
-    echo "Error: auctionInfo.tagline is required"
-    exit 1
-fi
-
-if ! jq -e '.auctionInfo.links.projectBanner' $LAUNCH_FILE > /dev/null 2>&1; then
-    echo "Error: auctionInfo.links.projectBanner is required"
-    exit 1
-fi
-
-if ! jq -e '.auctionInfo.links.projectLogo' $LAUNCH_FILE > /dev/null 2>&1; then
-    echo "Error: auctionInfo.links.projectLogo is required"
-    exit 1
-fi
-
-if ! jq -e '.auctionInfo.links.payoutTokenLogo' $LAUNCH_FILE > /dev/null 2>&1; then
-    echo "Error: auctionInfo.links.payoutTokenLogo is required"
-    exit 1
-fi
-
-if ! jq -e '.auctionInfo.links.website' $LAUNCH_FILE > /dev/null 2>&1; then
-    echo "Error: auctionInfo.links.website is required"
-    exit 1
-fi
-
-# Extract the "auctionInfo" key from the input file and store it in the tmp directory
-echo ""
-echo "Extracting auction info from $LAUNCH_FILE for upload to IPFS"
-mkdir -p tmp
-AUCTION_INFO=$(jq -r '.auctionInfo' $LAUNCH_FILE)
-
-# Generate the allowlist from CSV
-echo ""
-echo "Formatting and validating allowlist from file $allowlist"
-ALLOWLIST_JSON=$(awk -F, 'BEGIN {print "["} NR>1 && NF>1 {printf("%s[\"%s\",\"%s\"]", (NR==2)?"":",\n", $1, $2)} END {print "]"}' $allowlist)
-
-# Set the "allowlist" key in the auction info
-AUCTION_INFO=$(echo "$AUCTION_INFO" | jq --argjson allowlist "$ALLOWLIST_JSON" '.allowlist = $allowlist')
-
-# Write the auction info to a file
-echo ""
-echo "Writing auction info to tmp/auctionInfo.json"
-echo "$AUCTION_INFO" > tmp/auctionInfo.json
-
-# Validate and format the auction info JSON file
-echo ""
-echo "Validating and formatting auction info JSON file"
-AUCTION_INFO=$(jq -s . tmp/auctionInfo.json)
-
-# Upload the data to IPFS
-echo ""
-echo "Uploading data to IPFS"
-echo "If nothing happens, you may need to run 'npx fleek login' to authenticate, and then select a project using 'npx fleek projects switch'"
-IPFS_OUTPUT=$(npx fleek storage add tmp/auctionInfo.json)
-# Extract the IPFS CID (59 characters long) from the fleek output
-IPFS_HASH=$(echo "$IPFS_OUTPUT" | grep -o "[a-zA-Z0-9]\{59\}")
-
-# Verify we got a valid hash
-if [ -z "$IPFS_HASH" ]; then
-    echo "Error: Failed to extract IPFS hash from fleek output"
-    exit 1
-else
-    echo "IPFS hash: $IPFS_HASH"
-fi
+# Upload the auction metadata to IPFS
+# This will set the IPFS_HASH environment variable
+source $SCRIPT_DIR/lib/auctionMetadata.sh
+upload_auction_metadata $LAUNCH_FILE $allowlist
 
 # Run
 echo ""
 echo "Running the auction creation script"
-forge script script/LaunchAuction.s.sol --sig "launch(string,string,string)()" $CHAIN $LAUNCH_FILE $IPFS_HASH --rpc-url $RPC_URL --account $account --sender $CAST_ADDRESS $BROADCAST_FLAG -vvv
+forge script script/LaunchAuction.s.sol \
+    --sig "launch(string,string,string,bytes32)" $CHAIN $LAUNCH_FILE $IPFS_HASH $merkleRoot \
+    --rpc-url $RPC_URL \
+    --account $account \
+    --sender $CAST_ADDRESS \
+    $BROADCAST_FLAG \
+    -vvv
 
 # Determine the dApp URL
 DAPP_URL="https://app.axis.finance/"
