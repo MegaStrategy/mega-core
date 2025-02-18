@@ -77,8 +77,8 @@ function upload_auction_metadata() {
     echo "Uploading data to IPFS"
     echo "If nothing happens, you may need to run 'npx fleek login' to authenticate, and then select a project using 'npx fleek projects switch'"
     local ipfs_output=$(npx fleek storage add tmp/auctionInfo.json)
-    # Extract the IPFS CID (59 characters long) from the fleek output
-    local ipfs_hash=$(echo "$ipfs_output" | grep -o "[a-zA-Z0-9]\{59\}")
+    # Extract the IPFS CID (supports both v0 and v1 formats)
+    local ipfs_hash=$(echo "$ipfs_output" | grep -o -E "Qm[a-zA-Z0-9]{44}|b[a-zA-Z0-9]{58,}")
 
     # Verify we got a valid hash
     if [ -z "$ipfs_hash" ]; then
