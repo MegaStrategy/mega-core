@@ -2,10 +2,10 @@
 pragma solidity 0.8.19;
 
 import {Script} from "@forge-std/Script.sol";
-import {Surl} from "surl-1.0.0/Surl.sol";
+import {Surl} from "@surl-1.0.0/Surl.sol";
 import {console2} from "@forge-std/console2.sol";
 
-import {Point} from "axis-core-1.0.1/lib/ECIES.sol";
+import {Point} from "@axis-core-1.0.1/lib/ECIES.sol";
 
 abstract contract CloakConsumer is Script {
     using Surl for string;

@@ -10,18 +10,18 @@ import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 
 import {Test} from "@forge-std/Test.sol";
-import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
+import {MockERC20} from "@solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 import {WithSalts} from "../../lib/WithSalts.sol";
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
-import {BatchAuctionHouse} from "axis-core-1.0.1/BatchAuctionHouse.sol";
-import {IBatchAuctionHouse} from "axis-core-1.0.1/interfaces/IBatchAuctionHouse.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
+import {BatchAuctionHouse} from "@axis-core-1.0.1/BatchAuctionHouse.sol";
+import {IBatchAuctionHouse} from "@axis-core-1.0.1/interfaces/IBatchAuctionHouse.sol";
 import {IEncryptedMarginalPrice} from
-    "axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
-import {EncryptedMarginalPrice} from "axis-core-1.0.1/modules/auctions/batch/EMP.sol";
-import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
-import {Point, ECIES} from "axis-core-1.0.1/lib/ECIES.sol";
-import {EncryptedMarginalPriceBid} from "axis-utils-1.0.0/lib/EncryptedMarginalPriceBid.sol";
-import {IAuction} from "axis-core-1.0.1/interfaces/modules/IAuction.sol";
+    "@axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
+import {EncryptedMarginalPrice} from "@axis-core-1.0.1/modules/auctions/batch/EMP.sol";
+import {toKeycode} from "@axis-core-1.0.1/modules/Keycode.sol";
+import {Point, ECIES} from "@axis-core-1.0.1/lib/ECIES.sol";
+import {EncryptedMarginalPriceBid} from "@axis-utils-1.0.0/lib/EncryptedMarginalPriceBid.sol";
+import {IAuction} from "@axis-core-1.0.1/interfaces/modules/IAuction.sol";
 
 import {console2} from "@forge-std/console2.sol";
 

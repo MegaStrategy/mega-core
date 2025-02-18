@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.19;
 
-import {IOracle} from "morpho-blue-1.0.0/interfaces/IOracle.sol";
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {IOracle} from "@morpho-blue-1.0.0/interfaces/IOracle.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 import {Kernel, Keycode, Permissions, Policy, toKeycode} from "src/Kernel.sol";
 import {PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";

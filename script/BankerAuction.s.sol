@@ -5,7 +5,7 @@ import {WithEnvironment} from "./WithEnvironment.s.sol";
 import {console2} from "@forge-std/console2.sol";
 
 import {CloakConsumer} from "./CloakConsumer.s.sol";
-import {Point} from "axis-core-1.0.1/lib/ECIES.sol";
+import {Point} from "@axis-core-1.0.1/lib/ECIES.sol";
 
 import {IBanker} from "src/policies/interfaces/IBanker.sol";
 

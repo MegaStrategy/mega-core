@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.15;
 
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
-import {ReentrancyGuard} from "solmate-6.8.0/utils/ReentrancyGuard.sol";
-import {Auth, Authority} from "solmate-6.8.0/auth/Auth.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
+import {ReentrancyGuard} from "@solmate-6.8.0/utils/ReentrancyGuard.sol";
+import {Auth, Authority} from "@solmate-6.8.0/auth/Auth.sol";
 import {ClonesWithImmutableArgs} from "./clones/ClonesWithImmutableArgs.sol";
 
 import {IFixedStrikeOptionTeller, IOptionTeller} from "./IFixedStrikeOptionTeller.sol";

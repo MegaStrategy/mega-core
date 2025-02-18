@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.15;
 
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 import {CloneERC20} from "./clones/CloneERC20.sol";
 
 /// @title Option Token

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.15;
 
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 // Libraries
 import {UniswapV3OracleHelper as OracleHelper} from "src/lib/Uniswap/OracleHelper.sol";

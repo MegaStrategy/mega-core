@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {Script} from "@forge-std/Script.sol";
 import {WithEnvironment} from "./WithEnvironment.s.sol";
 import {console2} from "@forge-std/console2.sol";
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 import {Actions, Kernel} from "../src/Kernel.sol";
 import {RolesAdmin} from "../src/policies/RolesAdmin.sol";
@@ -20,8 +20,8 @@ import {
     IMorpho,
     Id as MorphoId,
     MarketParams as MorphoMarketParams
-} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
-import {MarketParamsLib} from "morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
+} from "@morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {MarketParamsLib} from "@morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
 import {Hedger} from "../src/periphery/Hedger.sol";
 
 contract TasksScript is Script, WithEnvironment {

@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {IBanker} from "src/policies/interfaces/IBanker.sol";
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 import {FullMath} from "src/lib/FullMath.sol";
 import {BankerTest} from "./BankerTest.sol";

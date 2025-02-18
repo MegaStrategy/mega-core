@@ -10,10 +10,10 @@ pragma solidity 0.8.19;
 //     IMorpho,
 //     MarketParams as MorphoMarketParams,
 //     Id as MorphoId
-// } from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
-// import {MorphoLib} from "morpho-blue-1.0.0/libraries/periphery/MorphoLib.sol";
-// import {MorphoBalancesLib} from "morpho-blue-1.0.0/libraries/periphery/MorphoBalancesLib.sol";
-// import {SharesMathLib} from "morpho-blue-1.0.0/libraries/SharesMathLib.sol";
+// } from "@morpho-blue-1.0.0/interfaces/IMorpho.sol";
+// import {MorphoLib} from "@morpho-blue-1.0.0/libraries/periphery/MorphoLib.sol";
+// import {MorphoBalancesLib} from "@morpho-blue-1.0.0/libraries/periphery/MorphoBalancesLib.sol";
+// import {SharesMathLib} from "@morpho-blue-1.0.0/libraries/SharesMathLib.sol";
 
 // // Uniswap
 // import {IUniversalRouter} from "src/lib/Uniswap/IUniversalRouter.sol";

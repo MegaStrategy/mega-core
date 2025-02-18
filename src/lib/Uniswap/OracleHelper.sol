@@ -8,7 +8,7 @@ import {TickMath} from "@uniswap-v3-core-1.0.2-solc-0.8-simulate/libraries/TickM
 import {OracleLibrary} from "@uniswap-v3-periphery-1.4.2-solc-0.8/libraries/OracleLibrary.sol";
 
 // Standard libraries
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 /// @title      UniswapV3OracleHelper
 /// @author     0xJem

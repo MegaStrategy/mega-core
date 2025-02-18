@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "@forge-std/Test.sol";
 
-import {stdError} from "forge-std/StdError.sol";
+import {stdError} from "@forge-std/StdError.sol";
 
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
-import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
+import {MockERC20} from "@solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 import {WithSalts} from "../../lib/WithSalts.sol";
 
 import {
@@ -14,8 +14,8 @@ import {
     Id as MorphoId,
     MarketParams as MorphoMarketParams,
     Position as MorphoPosition
-} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
-import {MarketParamsLib} from "morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
+} from "@morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {MarketParamsLib} from "@morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
 
 import {IUniswapV3Factory} from "test/lib/IUniswapV3Factory.sol";
 import {IUniswapV3NonfungiblePositionManager} from
@@ -23,7 +23,7 @@ import {IUniswapV3NonfungiblePositionManager} from
 import {IUniswapV3Pool} from "test/lib/IUniswapV3Pool.sol";
 import {SqrtPriceMath} from "test/lib/SqrtPriceMath.sol";
 
-import {SafeTransferLib} from "solmate-6.8.0/utils/SafeTransferLib.sol";
+import {SafeTransferLib} from "@solmate-6.8.0/utils/SafeTransferLib.sol";
 
 import {Kernel, Actions} from "src/Kernel.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
@@ -33,7 +33,7 @@ import {Banker} from "src/policies/Banker.sol";
 import {Hedger} from "src/periphery/Hedger.sol";
 import {Issuer} from "src/policies/Issuer.sol";
 import {RolesAdmin} from "src/policies/RolesAdmin.sol";
-import {SharesMathLib} from "morpho-blue-1.0.0/libraries/SharesMathLib.sol";
+import {SharesMathLib} from "@morpho-blue-1.0.0/libraries/SharesMathLib.sol";
 
 contract HedgerTest is Test, WithSalts {
     using SafeTransferLib for ERC20;

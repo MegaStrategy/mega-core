@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {HedgerTest} from "./HedgerTest.sol";
 
-import {Id as MorphoId} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {Id as MorphoId} from "@morpho-blue-1.0.0/interfaces/IMorpho.sol";
 
 contract HedgerAddCvTokenTest is HedgerTest {
     // given the caller is not the owner

@@ -11,10 +11,10 @@ import {
     MarketParams as MorphoParams,
     Id as MorphoId,
     Position as MorphoPosition
-} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
-import {IOracle} from "morpho-blue-1.0.0/interfaces/IOracle.sol";
-import {MathLib} from "morpho-blue-1.0.0/libraries/MathLib.sol";
-import {SharesMathLib} from "morpho-blue-1.0.0/libraries/SharesMathLib.sol";
+} from "@morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {IOracle} from "@morpho-blue-1.0.0/interfaces/IOracle.sol";
+import {MathLib} from "@morpho-blue-1.0.0/libraries/MathLib.sol";
+import {SharesMathLib} from "@morpho-blue-1.0.0/libraries/SharesMathLib.sol";
 
 // Uniswap
 import {ISwapRouter02} from "src/lib/Uniswap/ISwapRouter02.sol";

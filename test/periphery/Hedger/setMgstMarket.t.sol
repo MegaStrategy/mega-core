@@ -6,8 +6,8 @@ import {HedgerTest} from "./HedgerTest.sol";
 import {
     Id as MorphoId,
     MarketParams as MorphoMarketParams
-} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
-import {MarketParamsLib} from "morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
+} from "@morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {MarketParamsLib} from "@morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
 
 import {Hedger} from "src/periphery/Hedger.sol";
 
