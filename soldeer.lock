@@ -34,8 +34,8 @@ rev = "4316b2019cf7d63b7009b49cd8381e6b082a21e7"
 [[dependencies]]
 name = "axis-registry"
 version = "1.0.0"
-git = "git@github.com:Axis-Fi/axis-registry.git"
-rev = "b6a78a7ccfc40d7f3fa19db0507a03a532c56585"
+git = "https://github.com/Axis-Fi/axis-registry.git"
+rev = "76499342adbcae060f05f08cd75507c2dea8dbd4"
 
 [[dependencies]]
 name = "axis-utils"
