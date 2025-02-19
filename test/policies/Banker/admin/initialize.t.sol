@@ -18,7 +18,7 @@ contract BankerInitializeTest is BankerTest {
     function test_callerIsNotPermissioned_reverts() public {
         // Expect revert
         vm.expectRevert(
-            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("admin"))
+            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("emergency"))
         );
 
         // Call
@@ -30,12 +30,12 @@ contract BankerInitializeTest is BankerTest {
         vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidState.selector));
 
         // Call
-        vm.prank(admin);
+        vm.prank(emergency);
         banker.initialize(maxDiscount, minFillPercent, referrerFee, maxBids);
     }
 
     function test_success() public {
-        vm.prank(admin);
+        vm.prank(emergency);
         banker.initialize(maxDiscount, minFillPercent, referrerFee, maxBids);
 
         assertEq(banker.locallyActive(), true, "active");

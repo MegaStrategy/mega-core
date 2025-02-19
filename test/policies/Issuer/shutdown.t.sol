@@ -6,7 +6,7 @@ import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 
 contract IssuerShutdownTest is IssuerTest {
-    // when the caller does not have the admin role
+    // when the caller does not have the emergency role
     //  [X] it reverts
     // given the contract is already inactive
     //  [X] it reverts
@@ -15,10 +15,10 @@ contract IssuerShutdownTest is IssuerTest {
     function test_callerNotPermissioned_reverts(
         address caller_
     ) public {
-        vm.assume(caller_ != admin);
+        vm.assume(caller_ != emergency);
 
         vm.expectRevert(
-            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("admin"))
+            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("emergency"))
         );
 
         vm.prank(caller_);
@@ -30,12 +30,12 @@ contract IssuerShutdownTest is IssuerTest {
         vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidState.selector));
 
         // Call
-        vm.prank(admin);
+        vm.prank(emergency);
         issuer.shutdown();
     }
 
     function test_shutdown() public {
-        vm.prank(admin);
+        vm.prank(emergency);
         issuer.shutdown();
 
         assertEq(issuer.locallyActive(), false, "locallyActive");

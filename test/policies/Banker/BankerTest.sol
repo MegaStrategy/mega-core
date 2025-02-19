@@ -51,6 +51,7 @@ abstract contract BankerTest is Test, WithSalts {
     address public manager = address(0xAAAA);
     address public admin = address(0xBBBB);
     address public buyer = address(0x000000000000000000000000000000000000CcCc);
+    address public emergency = address(0xCCCC);
 
     // System parameters
     uint48 public maxDiscount = 10e2;
@@ -121,6 +122,7 @@ abstract contract BankerTest is Test, WithSalts {
         // Set permissioned roles
         rolesAdmin.grantRole("manager", manager);
         rolesAdmin.grantRole("admin", admin);
+        rolesAdmin.grantRole("emergency", emergency);
 
         // Deploy test ERC20 tokens
         stablecoin = new MockERC20("Stablecoin", "STBL", 18);
@@ -141,7 +143,7 @@ abstract contract BankerTest is Test, WithSalts {
     // ======= Modifiers ======= //
 
     modifier givenPolicyIsActive() {
-        vm.prank(admin);
+        vm.prank(emergency);
         banker.initialize(maxDiscount, minFillPercent, referrerFee, maxBids);
         _;
     }

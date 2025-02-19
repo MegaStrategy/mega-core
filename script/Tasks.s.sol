@@ -47,6 +47,16 @@ contract TasksScript is Script, WithEnvironment {
         vm.stopBroadcast();
     }
 
+    function addEmergency(string calldata chain_, address emergency_) external {
+        _loadEnv(chain_);
+
+        vm.startBroadcast();
+        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
+            bytes32("emergency"), emergency_
+        );
+        vm.stopBroadcast();
+    }
+
     function transferOwnership(string calldata chain_, address newOwner_) external {
         _loadEnv(chain_);
 
@@ -75,6 +85,12 @@ contract TasksScript is Script, WithEnvironment {
             console2.log("  No admin role to revoke");
         }
 
+        // Rescind the emergency role
+        if (ROLES.hasRole(msg.sender, bytes32("emergency"))) {
+            console2.log("  Revoking emergency role");
+            rolesAdmin.revokeRole(bytes32("emergency"), msg.sender);
+        }
+
         // Transfer ownership of the RolesAdmin
         console2.log("  Transferring ownership of the RolesAdmin");
         console2.log("    Current admin: ", rolesAdmin.admin());
@@ -98,7 +114,7 @@ contract TasksScript is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        // Add as admin and manager first
+        // Add as emergency first
 
         // Initialize the Banker
         vm.startBroadcast();
