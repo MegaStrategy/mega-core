@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
 import {MockERC20} from "@solmate-6.8.0/test/utils/mocks/MockERC20.sol";

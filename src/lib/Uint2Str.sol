@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 // Some fancy math to convert a uint into a string, courtesy of Provable Things.
 // Updated to work with solc 0.8.0.
-// https://github.com/provable-things/ethereum-api/blob/master/provableAPI_0.6.sol
+// https://github.com/provable-things/ethereum-api/blob/a67a1d9bd5f57a5cc80386e2e67bbfd58d07fa14/contracts/solc-v0.6.x/provableAPI.sol
 function uint2str(
     uint256 _i
 ) pure returns (string memory) {

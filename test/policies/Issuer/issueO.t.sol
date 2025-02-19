@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";

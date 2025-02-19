@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: TBD
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.19;
 
 import {IOracle} from "morpho-blue-1.0.0/interfaces/IOracle.sol";
