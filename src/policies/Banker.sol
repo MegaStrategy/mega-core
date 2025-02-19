@@ -354,6 +354,8 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
         // Increment first to start at 1
         uint256 series = ++seriesCounter[dtParams_.underlying];
 
+        // TODO make into public function
+
         // Get the name and symbol for the debt token
         // This is based on the series for the underlying asset
         (string memory name, string memory symbol) =
@@ -371,6 +373,8 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
                 address(this) // issuer is this contract
             )
         );
+
+        // TODO validate debt token address
 
         // Mark the debt token as created by this contract and store the address
         createdBy[debtToken] = true;

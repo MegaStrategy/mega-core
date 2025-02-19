@@ -40,12 +40,16 @@ interface IBanker {
     /// @notice Parameters for creating a debt token
     ///
     /// @param  underlying      The underlying asset for the debt token
-    /// @param  maturity        The maturity timestamp of the debt token
+    /// @param  expectedAddress The expected address of the debt token. Set to 0 to not perform validation.
     /// @param  conversionPrice The price at which the debt token can be converted to the underlying asset. See `ConvertibleDebtToken.conversionPrice` for more details.
+    /// @param  maturity        The maturity timestamp of the debt token
+    /// @param  salt            A salt to be used for the debt token CREATE2 deployment.
     struct DebtTokenParams {
         address underlying;
-        uint48 maturity;
+        address expectedAddress;
         uint256 conversionPrice;
+        uint48 maturity;
+        bytes32 salt;
     }
 
     /// @notice Parameters for creating an auction

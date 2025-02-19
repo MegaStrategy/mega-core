@@ -129,8 +129,10 @@ abstract contract BankerTest is Test, WithSalts {
 
         // Set debt token defaults
         debtTokenParams.underlying = address(stablecoin);
+        debtTokenParams.expectedAddress = address(0);
         debtTokenParams.maturity = debtTokenMaturity;
         debtTokenParams.conversionPrice = debtTokenConversionPrice;
+        debtTokenParams.salt = bytes32(0);
 
         // Set auction defaults
         auctionParams.start = auctionStart;
@@ -139,6 +141,9 @@ abstract contract BankerTest is Test, WithSalts {
         auctionParams.auctionPublicKey = ECIES.calcPubKey(Point(1, 2), auctionPrivateKey);
         auctionParams.infoHash = "ipfsHash";
     }
+
+    // TODO set salt
+    // TODO set expected address
 
     // ======= Modifiers ======= //
 
