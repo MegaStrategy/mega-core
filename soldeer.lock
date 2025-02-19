@@ -28,9 +28,14 @@ integrity = "381ce84e3d947c891a53aa651a59328bdcba27534116bf5c55f57833a5603962"
 [[dependencies]]
 name = "axis-periphery"
 version = "1.0.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/axis-periphery/1_0_0_22-08-2024_19:37:58_axis-periphery.zip"
-checksum = "fb20c7ebe7ab30697b72300c8c9e4cc847de98c35ab8c05b5d71fe3ed59fead0"
-integrity = "289e922ce8d2419e991f94b6a26339377e255931a7e61a3d44725642ff97ba41"
+git = "https://github.com/Axis-Fi/axis-periphery.git"
+rev = "4316b2019cf7d63b7009b49cd8381e6b082a21e7"
+
+[[dependencies]]
+name = "axis-registry"
+version = "1.0.0"
+git = "https://github.com/Axis-Fi/axis-registry.git"
+rev = "76499342adbcae060f05f08cd75507c2dea8dbd4"
 
 [[dependencies]]
 name = "axis-utils"

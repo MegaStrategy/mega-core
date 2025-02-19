@@ -10,6 +10,7 @@ abstract contract WithEnvironment is Script {
 
     string public chain;
     string public env;
+    address public constant defaultDeployer = 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38;
 
     function _loadEnv(
         string calldata chain_
@@ -19,6 +20,13 @@ abstract contract WithEnvironment is Script {
 
         // Load environment file
         env = vm.readFile("./script/env.json");
+
+        // Exit if the default deployer is used
+        // msg.sender will not resolve correctly in the script, which produces wonky results
+        if (msg.sender == defaultDeployer) {
+            // solhint-disable-next-line custom-errors
+            revert("Using default deployer address. Set using the --sender flag.");
+        }
     }
 
     /// @notice Get address from environment file

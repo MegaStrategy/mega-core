@@ -87,16 +87,48 @@ The following must be performed to deploy and activate the system:
 2. Deploy the system using the `deploy.sh` script
 3. Install the modules and policies into the Kernel using the `kernelInstallation.sh` script
 4. Grant admin and manager roles using the `Tasks.s.sol` script
+    - e.g. `forge script ./script/Tasks.s.sol --sig "addAdmin(string,address)()" base-sepolia <ADMIN_ADDRESS> --rpc-url <RPC_URL> --account <CAST_ACCOUNT> --sender <SIGNER_ADDRESS> --slow -vvv --broadcast`
+5. Install the PRICE submodules by calling `installSubmodules()` in the `PriceConfiguration.s.sol` script
+6. Initialize the Banker using the `Tasks.s.sol` script
 
--   e.g. `forge script ./script/Tasks.s.sol --sig "addAdmin(string,address)()" base-sepolia <ADMIN_ADDRESS> --rpc-url <RPC_URL> --account <CAST_ACCOUNT> --sender <SIGNER_ADDRESS> --slow -vvv --broadcast`
+#### Ownership Transfer
 
-5. Initialize the Banker using the `Tasks.s.sol` script
+To transfer ownership of the system, the `Tasks.s.sol` script can be used.
+
+This script will:
+
+-   Rescind the manager and admin roles from the caller (if applicable)
+-   Transfer ownership of the RolesAdmin
+-   Transfer the kernel executor
+
+The new admin must then call `pullNewAdmin()` in the `RolesAdmin` policy to complete the transfer.
+
+```bash
+forge script ./script/Tasks.s.sol --sig "transferOwnership(string,address)()" <CHAIN> <NEW_ADMIN_ADDRESS> --rpc-url <RPC_URL> --account <CAST_ACCOUNT> --sender <SENDER_ADDRESS> --slow -vvv --broadcast
+```
 
 #### Launch Auction
 
 After deployment, a launch auction needs to be created in order to accept wETH deposits in return for MGST.
 
-This can be performed using the `shell/createLaunchAuction.sh` script.
+Follow these steps to create the launch auction:
+
+1. Set the auction details in the `script/auctions/launch.json` file.
+2. Create a CSV file with the allowlist addresses and allocations.
+3. Generate the merkle root from the CSV file using the [oz-merkle-tree tool](https://github.com/Axis-Fi/axis-utils/tree/master/packages/oz-merkle-tree)
+4. Run the `createLaunchAuction.sh` script: `./shell/createLaunchAuction.sh --account <CAST_ACCOUNT> --allowlist <PATH_TO_ALLOWLIST_CSV> --merkleRoot <MERKLE_ROOT> --testnet <true|false> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
+
+##### Updating the Metadata/Allowlist
+
+After the auction has been created, the allowlist can be updated using the `updateLaunchMetadata.sh` script: `./shell/updateLaunchMetadata.sh --lotId <LOT_ID> --merkleRoot <MERKLE_ROOT> --allowlist <PATH_TO_ALLOWLIST_CSV> --account <CAST_ACCOUNT> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
+
+The metadata can also be updated at the same time by editing the `script/auctions/launch.json` file.
+
+#### Post-Launch Auction
+
+After the launch auction has been completed, the following can be performed:
+
+1. Configure the PRICE module using the `configureAssets()` function in the `PriceConfiguration.s.sol` script. (This relies on the Uniswap V3 pool for MGST-WETH existing, which is only created and initialised when the auction settles.)
 
 #### Convertible Debt Auctions
 

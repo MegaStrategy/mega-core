@@ -10,6 +10,9 @@
 # VERIFIER_URL:       URL for the Etherscan API verifier. Should be specified when used on an unsupported chain.
 # PRIVATE_KEY:        Private key for the deployer account. Should be specified in .env.
 
+# Exit if there is an error
+set -e
+
 # Iterate through named arguments
 # Source: https://unix.stackexchange.com/a/388038
 while [ $# -gt 0 ]; do
@@ -113,3 +116,6 @@ forge script ./script/deploy/Deploy.s.sol:Deploy \
     $BROADCAST_FLAG \
     $VERIFY_FLAG \
     $RESUME_FLAG
+
+# Lint
+pnpm run lint

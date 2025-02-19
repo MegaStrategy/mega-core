@@ -6,7 +6,9 @@ import {WithEnvironment} from "./WithEnvironment.s.sol";
 import {console2} from "@forge-std/console2.sol";
 import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
 
+import {Actions, Kernel} from "../src/Kernel.sol";
 import {RolesAdmin} from "../src/policies/RolesAdmin.sol";
+import {ROLESv1} from "../src/modules/ROLES/OlympusRoles.sol";
 import {Banker} from "../src/policies/Banker.sol";
 import {Issuer} from "../src/policies/Issuer.sol";
 import {IUniswapV3Factory} from "test/lib/IUniswapV3Factory.sol";
@@ -43,6 +45,52 @@ contract TasksScript is Script, WithEnvironment {
             bytes32("manager"), manager_
         );
         vm.stopBroadcast();
+    }
+
+    function transferOwnership(string calldata chain_, address newOwner_) external {
+        _loadEnv(chain_);
+
+        RolesAdmin rolesAdmin = RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin"));
+        ROLESv1 ROLES = ROLESv1(_envAddressNotZero("mega.modules.OlympusRoles"));
+
+        vm.startBroadcast();
+
+        console2.log("Starting ownership transfer");
+        console2.log("  Caller: ", msg.sender);
+        console2.log("  New owner: ", newOwner_);
+
+        // Rescind the manager role
+        if (ROLES.hasRole(msg.sender, bytes32("manager"))) {
+            console2.log("  Revoking manager role");
+            rolesAdmin.revokeRole(bytes32("manager"), msg.sender);
+        } else {
+            console2.log("  No manager role to revoke");
+        }
+
+        // Rescind the admin role
+        if (ROLES.hasRole(msg.sender, bytes32("admin"))) {
+            console2.log("  Revoking admin role");
+            rolesAdmin.revokeRole(bytes32("admin"), msg.sender);
+        } else {
+            console2.log("  No admin role to revoke");
+        }
+
+        // Transfer ownership of the RolesAdmin
+        console2.log("  Transferring ownership of the RolesAdmin");
+        console2.log("    Current admin: ", rolesAdmin.admin());
+        rolesAdmin.pushNewAdmin(newOwner_);
+
+        // Transfer kernel executor
+        console2.log("  Transferring kernel executor");
+        Kernel kernel = Kernel(_envAddressNotZero("mega.Kernel"));
+        console2.log("    Current executor: ", kernel.executor());
+        kernel.executeAction(Actions.ChangeExecutor, newOwner_);
+
+        vm.stopBroadcast();
+
+        console2.log("");
+        console2.log("Ownership transferred");
+        console2.log("New admin must call RolesAdmin.pullNewAdmin()");
     }
 
     function initialize(

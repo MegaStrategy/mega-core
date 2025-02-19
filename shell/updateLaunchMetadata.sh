@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# Creates an auction through the LaunchAuction script
-# Usage: ./createLaunchAuction.sh
-#       --account <cast account>
+# Updates the metadata for the launch auction
+# Usage: ./updateLaunchMetadata.sh
+#       --lotId <lotId>
 #       --allowlist <allowlist file>
-#       --merkleRoot <merkle root>
-#       --testnet <true|false>
-#       --broadcast <true|false>
-#       --env <env file>
+#       --merkleRoot <merkleRoot>
+#       --account <cast account>
+#       [--broadcast <true|false>]
 #
 # Environment variables:
 # RPC_URL
@@ -26,14 +25,14 @@ load_env
 
 # Set sane defaults
 BROADCAST=${broadcast:-false}
-TESTNET=${testnet:-false}
 
 # Validate named arguments
 echo ""
 echo "Validating arguments"
-validate_text "$account" "No account specified. Provide the cast wallet after the --account flag."
+validate_number "$lotId" "No lotId specified or it was not a valid number. Provide the lotId after the --lotId flag."
 validate_file "$allowlist" "No allowlist specified or it does not exist. Provide the path to the allowlist CSV file after the --allowlist flag."
-validate_bytes32 "$merkleRoot" "No merkle root specified or it was not a valid bytes32 value. Provide the merkle root after the --merkleRoot flag."
+validate_bytes32 "$merkleRoot" "No merkleRoot specified or it was not a valid bytes32 value. Provide the merkleRoot after the --merkleRoot flag."
+validate_text "$account" "No account specified. Provide the cast wallet after the --account flag."
 
 # Check if the allowlist is a CSV file
 if ! head -n 1 $allowlist | grep -qE '^address,amount$'; then
@@ -54,11 +53,11 @@ CAST_ADDRESS=$(cast wallet address --account $account)
 
 echo ""
 echo "Summary:"
-echo "  Deploy from account: $account"
+echo "  Account: $account"
 echo "  Sender: $CAST_ADDRESS"
 echo "  Chain: $CHAIN"
 echo "  RPC URL: $RPC_URL"
-echo "  Testnet: $TESTNET"
+echo "  LotId: $lotId"
 echo "  Allowlist: $allowlist"
 echo "  Merkle Root: $merkleRoot"
 
@@ -75,22 +74,15 @@ upload_auction_metadata $LAUNCH_FILE $allowlist
 
 # Run
 echo ""
-echo "Running the auction creation script"
-forge script script/LaunchAuction.s.sol \
-    --sig "launch(string,string,string,bytes32)" $CHAIN $LAUNCH_FILE $IPFS_HASH $merkleRoot \
+echo "Running the script"
+forge script ./script/LaunchAuction.s.sol \
+    --sig "updateAllowlist(string,uint96,bytes32,string)" $CHAIN $lotId $merkleRoot $IPFS_HASH \
     --rpc-url $RPC_URL \
     --account $account \
     --sender $CAST_ADDRESS \
     $BROADCAST_FLAG \
+    --slow \
     -vvv
 
-# Determine the dApp URL
-DAPP_URL="https://app.axis.finance/"
-if [ "$TESTNET" = "true" ]; then
-    DAPP_URL="https://testnet.axis.finance/"
-fi
-
-# Output the auction ID
 echo ""
-echo "Auction created"
-echo "You can view the auction at $DAPP_URL"
+echo "Allowlist updated"

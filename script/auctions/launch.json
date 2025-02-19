@@ -11,15 +11,16 @@
         "tagline": "Here is a tagline"
     },
     "auctionParams": {
-        "capacity": 1000000000000000000000000,
-        "duration": 604800,
-        "minFillPercent": 5000,
-        "price": 1000000000000000000,
+        "capacity": 33333333000000000000000000,
+        "curator": "0x0000000000000000000000000000000000000000",
+        "duration": 259200,
+        "minFillPercent": 6000,
+        "price": 100000000000000,
         "startDelay": 60
     },
     "callbackParams": {
         "maxSlippage": 1000,
-        "poolFee": 3000,
+        "poolFee": 10000,
         "poolPercent": 1000,
         "vestingExpiry": 0,
         "vestingStart": 0

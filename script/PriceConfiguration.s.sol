@@ -33,8 +33,9 @@ contract PriceConfiguration is Script, WithEnvironment {
 
         // Chainlink
         {
-            ChainlinkPriceFeeds chainlinkPriceFeeds =
-                ChainlinkPriceFeeds(_envAddressNotZero("mega.modules.ChainlinkPriceFeeds"));
+            ChainlinkPriceFeeds chainlinkPriceFeeds = ChainlinkPriceFeeds(
+                _envAddressNotZero("mega.submodules.PriceV2.ChainlinkPriceFeeds")
+            );
 
             console2.log("Installing submodule: Chainlink Price Feeds");
             vm.startBroadcast();
@@ -45,7 +46,7 @@ contract PriceConfiguration is Script, WithEnvironment {
         // Uniswap V3
         {
             UniswapV3Price uniswapV3Price =
-                UniswapV3Price(_envAddressNotZero("mega.modules.UniswapV3Price"));
+                UniswapV3Price(_envAddressNotZero("mega.submodules.PriceV2.UniswapV3Price"));
 
             console2.log("Installing submodule: Uniswap V3 Price");
             vm.startBroadcast();
@@ -55,8 +56,9 @@ contract PriceConfiguration is Script, WithEnvironment {
 
         // SimplePriceFeedStrategy
         {
-            SimplePriceFeedStrategy simplePriceFeedStrategy =
-                SimplePriceFeedStrategy(_envAddressNotZero("mega.modules.SimplePriceFeedStrategy"));
+            SimplePriceFeedStrategy simplePriceFeedStrategy = SimplePriceFeedStrategy(
+                _envAddressNotZero("mega.submodules.PriceV2.SimplePriceFeedStrategy")
+            );
 
             console2.log("Installing submodule: Simple Price Feed Strategy");
             vm.startBroadcast();
