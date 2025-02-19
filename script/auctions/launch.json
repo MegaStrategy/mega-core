@@ -13,7 +13,7 @@
     "auctionParams": {
         "capacity": 33333333000000000000000000,
         "curator": "0x0000000000000000000000000000000000000000",
-        "duration": 172800,
+        "duration": 259200,
         "minFillPercent": 6000,
         "price": 100000000000000,
         "startDelay": 60
