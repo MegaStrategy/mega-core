@@ -4,22 +4,22 @@
             "name": "Kernel"
         },
         {
-            "name": "OlympusTreasury",
+            "name": "TRSRY",
             "args": {}
         },
         {
-            "name": "Token",
+            "name": "TOKEN",
             "args": {
                 "name": "MegaStrategy",
                 "symbol": "MGST"
             }
         },
         {
-            "name": "OlympusRoles",
+            "name": "ROLES",
             "args": {}
         },
         {
-            "name": "OlympusPriceV2",
+            "name": "PRICE",
             "args": {
                 "decimals": 18,
                 "observationFrequency": 28800

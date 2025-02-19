@@ -1,10 +1,10 @@
 {
     "axis.options.FixedStrikeOptionTeller": "0xf69d31d3D366F063e3b70B145a884D38275d6088",
     "mega.Kernel": "0x10420E23960bb72968A3DBcfec8F0e13c7694c68",
-    "mega.modules.OlympusPriceV2": "0x0d291dFF1365D1F0fbb058e9F9130437f3416A50",
-    "mega.modules.OlympusRoles": "0xbdFd2d1515ff348d8eDaFdc972b5C6df93f6B853",
-    "mega.modules.OlympusTreasury": "0x2292dC8658e6B9a0346294C13cb8EaFECfDa6860",
-    "mega.modules.Token": "0x050e39A7d1e44CF554348e3319A675b07c0a5524",
+    "mega.modules.PRICE": "0x0d291dFF1365D1F0fbb058e9F9130437f3416A50",
+    "mega.modules.ROLES": "0xbdFd2d1515ff348d8eDaFdc972b5C6df93f6B853",
+    "mega.modules.TOKEN": "0x050e39A7d1e44CF554348e3319A675b07c0a5524",
+    "mega.modules.TRSRY": "0x2292dC8658e6B9a0346294C13cb8EaFECfDa6860",
     "mega.policies.Banker": "0xE752f0deBa44aA2FE6bdbBd6dC3e04880d7f84Df",
     "mega.policies.Emergency": "0xe2e1D6bd43A57729bcF4EDE491abd9a7A9b59f8d",
     "mega.policies.Issuer": "0x7a0e43888FDEF06365697f33fc31e858844fd1d4",
@@ -12,7 +12,7 @@
     "mega.policies.PriceConfigV2": "0x722A62E23FFe4734d417557B827f7E1AA83CA94e",
     "mega.policies.RolesAdmin": "0xBe6C5B3Ea7F24c007EC23436Ae0c8a986824E9fb",
     "mega.policies.TreasuryCustodian": "0x9309A5eA7671a57E523c59da5B127CB9dC966973",
-    "mega.submodules.PriceV2.ChainlinkPriceFeeds": "0x5B83Dc5939dE79A48c7F428F76A96B2C309d644B",
-    "mega.submodules.PriceV2.SimplePriceFeedStrategy": "0x505eC9A905210E8165543398ea0ab48565AC5A45",
-    "mega.submodules.PriceV2.UniswapV3Price": "0x914675d21D2C5Fb9a97724dE0bF44969005Cf371"
+    "mega.submodules.PRICE.ChainlinkPriceFeeds": "0x5B83Dc5939dE79A48c7F428F76A96B2C309d644B",
+    "mega.submodules.PRICE.SimplePriceFeedStrategy": "0x505eC9A905210E8165543398ea0ab48565AC5A45",
+    "mega.submodules.PRICE.UniswapV3Price": "0x914675d21D2C5Fb9a97724dE0bF44969005Cf371"
 }

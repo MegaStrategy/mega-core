@@ -51,7 +51,7 @@ contract TasksScript is Script, WithEnvironment {
         _loadEnv(chain_);
 
         RolesAdmin rolesAdmin = RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin"));
-        ROLESv1 ROLES = ROLESv1(_envAddressNotZero("mega.modules.OlympusRoles"));
+        ROLESv1 ROLES = ROLESv1(_envAddressNotZero("mega.modules.ROLES"));
 
         vm.startBroadcast();
 
@@ -226,7 +226,7 @@ contract TasksScript is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
         address weth = _envAddressNotZero("external.tokens.WETH");
 
         // Create the pool. Will revert if the pool already exists.
@@ -296,7 +296,7 @@ contract TasksScript is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
         address weth = _envAddressNotZero("external.tokens.WETH");
         address positionManager = _envAddressNotZero("external.uniswap.v3.positionManager");
 
@@ -329,7 +329,7 @@ contract TasksScript is Script, WithEnvironment {
         view
         returns (MorphoMarketParams memory marketParams)
     {
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
         address usdc = _envAddressNotZero("external.tokens.USDC");
 
         marketParams = MorphoMarketParams({
@@ -346,7 +346,7 @@ contract TasksScript is Script, WithEnvironment {
     function _getMgstDebtTokenMorphoMarketParams(
         address debtToken_
     ) internal view returns (MorphoMarketParams memory marketParams) {
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
 
         marketParams = MorphoMarketParams({
             loanToken: mgst,
@@ -381,7 +381,7 @@ contract TasksScript is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
         address morpho = _envAddressNotZero("external.morpho");
 
         // Mint MGST

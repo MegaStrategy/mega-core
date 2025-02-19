@@ -97,7 +97,7 @@ contract LaunchAuction is WithEnvironment {
         // Approve the AuctionHouse to transfer the tokens
         vm.startBroadcast();
         console2.log("Approving the AuctionHouse to transfer the tokens");
-        ERC20(_envAddressNotZero("mega.modules.Token")).safeApprove(
+        ERC20(_envAddressNotZero("mega.modules.TOKEN")).safeApprove(
             _envAddressNotZero("axis.BatchAuctionHouse"), auctionHouseAmount
         );
         vm.stopBroadcast();
@@ -105,7 +105,7 @@ contract LaunchAuction is WithEnvironment {
         // Approve the DTL callback to transfer the tokens
         vm.startBroadcast();
         console2.log("Approving the DTL callback to transfer the tokens");
-        ERC20(_envAddressNotZero("mega.modules.Token")).safeApprove(
+        ERC20(_envAddressNotZero("mega.modules.TOKEN")).safeApprove(
             _envAddressNotZero(
                 "axis.callbacks.BatchUniswapV3DirectToLiquidityWithAllocatedAllowlist"
             ),
@@ -126,14 +126,14 @@ contract LaunchAuction is WithEnvironment {
             poolPercent: uint24(vm.parseJsonUint(auctionData, ".callbackParams.poolPercent")),
             vestingStart: uint48(vm.parseJsonUint(auctionData, ".callbackParams.vestingStart")),
             vestingExpiry: uint48(vm.parseJsonUint(auctionData, ".callbackParams.vestingExpiry")),
-            recipient: _envAddressNotZero("mega.modules.OlympusTreasury"),
+            recipient: _envAddressNotZero("mega.modules.TRSRY"),
             implParams: abi.encode(uniswapV3Params)
         });
 
         // Prepare the routing parameters
         IAuctionHouse.RoutingParams memory routing = IAuctionHouse.RoutingParams({
             auctionType: toKeycode("FPBA"),
-            baseToken: _envAddressNotZero("mega.modules.Token"),
+            baseToken: _envAddressNotZero("mega.modules.TOKEN"),
             quoteToken: _envAddressNotZero("external.tokens.WETH"),
             curator: _parseJsonAddress(auctionData, ".auctionParams.curator"), // Curator, zero address is allowed
             referrerFee: 0,
