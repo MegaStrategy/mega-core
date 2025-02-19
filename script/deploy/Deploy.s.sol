@@ -247,9 +247,21 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         console2.log("    Token name:", name);
         console2.log("    Token symbol:", symbol);
 
+        // Generate a salt
+        bytes32 salt_;
+        {
+            bytes memory args = abi.encode(kernel, name, symbol);
+            bytes memory contractCode = type(MegaToken).creationCode;
+            (string memory bytecodePath, bytes32 bytecodeHash) =
+                _writeBytecode("MegaToken", contractCode, args);
+            _setSalt(bytecodePath, "7777777", "MegaToken", bytecodeHash);
+            salt_ = _getSalt("MegaToken", contractCode, args);
+            console2.log("    Token salt:", vm.toString(salt_));
+        }
+
         // Deploy Token module
         vm.broadcast();
-        MegaToken token = new MegaToken(kernel, name, symbol);
+        MegaToken token = new MegaToken{salt: salt_}(kernel, name, symbol);
         console2.log("Token deployed at:", address(token));
 
         return (address(token), "mega.modules.TOKEN");
@@ -370,13 +382,12 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         bytes32 salt_;
         {
             bytes memory args = abi.encode(kernel, auctionHouse);
-
             bytes memory contractCode = type(Banker).creationCode;
             (string memory bytecodePath, bytes32 bytecodeHash) =
                 _writeBytecode("Banker", contractCode, args);
             _setSalt(bytecodePath, "E7", "Banker", bytecodeHash);
-            salt_ = _getSalt("Banker", type(Banker).creationCode, args);
-            console2.log("Salt", vm.toString(salt_));
+            salt_ = _getSalt("Banker", contractCode, args);
+            console2.log("    Token salt:", vm.toString(salt_));
         }
 
         // Deploy Banker policy
