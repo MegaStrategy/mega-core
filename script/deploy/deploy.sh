@@ -63,10 +63,16 @@ if [ -z "$account" ]; then
     exit 1
 fi
 
+# Get the address of the cast wallet
+echo ""
+echo "Getting address for cast account $account"
+CAST_ADDRESS=$(cast wallet address --account $account)
+
 echo "Sequence file: $SEQUENCE_FILE"
 echo "Chain: $CHAIN"
 echo "Using RPC at URL: $RPC_URL"
 echo "Using forge account: $account"
+echo "Sender: $CAST_ADDRESS"
 
 # Set BROADCAST_FLAG based on BROADCAST
 BROADCAST_FLAG=""
@@ -113,6 +119,7 @@ fi
 forge script ./script/deploy/Deploy.s.sol:Deploy \
     --sig "deploy(string,string)()" $CHAIN $SEQUENCE_FILE \
     --rpc-url $RPC_URL --account $account --slow -vvv \
+    --sender $CAST_ADDRESS \
     $BROADCAST_FLAG \
     $VERIFY_FLAG \
     $RESUME_FLAG
