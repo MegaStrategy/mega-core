@@ -6,7 +6,7 @@ import {Kernel, Policy, Keycode, toKeycode, Permissions} from "src/Kernel.sol";
 // Modules
 import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
 import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
-import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
+import {ROLESv1, RolesConsumer} from "src/modules/ROLES/MegaRoles.sol";
 
 // Policies
 import {IIssuer} from "src/policies/interfaces/IIssuer.sol";

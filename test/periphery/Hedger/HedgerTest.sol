@@ -27,8 +27,8 @@ import {SafeTransferLib} from "@solmate-6.8.0/utils/SafeTransferLib.sol";
 
 import {Kernel, Actions} from "src/Kernel.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
-import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
-import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
+import {MegaRoles} from "src/modules/ROLES/MegaRoles.sol";
+import {MegaTreasury} from "src/modules/TRSRY/MegaTreasury.sol";
 import {Banker} from "src/policies/Banker.sol";
 import {Hedger} from "src/periphery/Hedger.sol";
 import {Issuer} from "src/policies/Issuer.sol";
@@ -40,8 +40,8 @@ contract HedgerTest is Test, WithSalts {
 
     Kernel public kernel;
     MegaToken public mgst;
-    OlympusRoles public roles;
-    OlympusTreasury public treasury;
+    MegaRoles public roles;
+    MegaTreasury public treasury;
     Banker public banker;
     Issuer public issuer;
     RolesAdmin public rolesAdmin;
@@ -94,8 +94,8 @@ contract HedgerTest is Test, WithSalts {
 
         vm.startPrank(OWNER);
         mgst = new MegaToken(kernel, "MGST", "MGST");
-        roles = new OlympusRoles(kernel);
-        treasury = new OlympusTreasury(kernel);
+        roles = new MegaRoles(kernel);
+        treasury = new MegaTreasury(kernel);
         issuer = new Issuer(kernel, address(0), address(0)); // No oToken teller needed
         rolesAdmin = new RolesAdmin(kernel);
         vm.stopPrank();

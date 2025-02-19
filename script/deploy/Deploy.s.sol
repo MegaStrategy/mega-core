@@ -10,10 +10,10 @@ import {Authority} from "@solmate-6.8.0/auth/Auth.sol";
 import {FixedStrikeOptionTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
 
 import {Actions, fromKeycode, Kernel, Keycode, Module, toKeycode} from "src/Kernel.sol";
-import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
-import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
+import {MegaTreasury} from "src/modules/TRSRY/MegaTreasury.sol";
+import {MegaRoles} from "src/modules/ROLES/MegaRoles.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
-import {OlympusPriceV2} from "src/modules/PRICE/OlympusPrice.v2.sol";
+import {MegaPriceV2} from "src/modules/PRICE/MegaPrice.v2.sol";
 import {UniswapV3Price} from "src/modules/PRICE/submodules/feeds/UniswapV3Price.sol";
 import {ChainlinkPriceFeeds} from "src/modules/PRICE/submodules/feeds/ChainlinkPriceFeeds.sol";
 import {SimplePriceFeedStrategy} from
@@ -215,7 +215,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy Treasury module
         vm.broadcast();
-        OlympusTreasury TRSRY = new OlympusTreasury(kernel);
+        MegaTreasury TRSRY = new MegaTreasury(kernel);
         console2.log("Treasury deployed at:", address(TRSRY));
 
         return (address(TRSRY), "mega.modules.TRSRY");
@@ -228,7 +228,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy Roles module
         vm.broadcast();
-        OlympusRoles ROLES = new OlympusRoles(kernel);
+        MegaRoles ROLES = new MegaRoles(kernel);
         console2.log("Roles deployed at:", address(ROLES));
 
         return (address(ROLES), "mega.modules.ROLES");
@@ -271,7 +271,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy PriceV2 module
         vm.broadcast();
-        OlympusPriceV2 priceV2 = new OlympusPriceV2(kernel, decimals, observationFrequency);
+        MegaPriceV2 priceV2 = new MegaPriceV2(kernel, decimals, observationFrequency);
         console2.log("PriceV2 deployed at:", address(priceV2));
 
         return (address(priceV2), "mega.modules.PRICE");
@@ -518,10 +518,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         _loadEnv(chain_);
 
         // Modules
-        OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.ROLES"));
-        OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.TRSRY"));
+        MegaRoles ROLES = MegaRoles(_getAddressNotZero("mega.modules.ROLES"));
+        MegaTreasury TRSRY = MegaTreasury(_getAddressNotZero("mega.modules.TRSRY"));
         MegaToken token = MegaToken(_getAddressNotZero("mega.modules.TOKEN"));
-        OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.PRICE"));
+        MegaPriceV2 PRICE = MegaPriceV2(_getAddressNotZero("mega.modules.PRICE"));
 
         // Policies
         RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
@@ -572,7 +572,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Modules
         // TRSRY
         {
-            OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.TRSRY"));
+            MegaTreasury TRSRY = MegaTreasury(_getAddressNotZero("mega.modules.TRSRY"));
             Module trsryModule = kernel.getModuleForKeycode(toKeycode("TRSRY"));
             Keycode trsryKeycode = kernel.getKeycodeForModule(TRSRY);
             require(trsryModule == TRSRY);
@@ -590,7 +590,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // ROLES
         {
-            OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.ROLES"));
+            MegaRoles ROLES = MegaRoles(_getAddressNotZero("mega.modules.ROLES"));
             Module rolesModule = kernel.getModuleForKeycode(toKeycode("ROLES"));
             Keycode rolesKeycode = kernel.getKeycodeForModule(ROLES);
             require(rolesModule == ROLES);
@@ -599,7 +599,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // PRICEv2
         {
-            OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.PRICE"));
+            MegaPriceV2 PRICE = MegaPriceV2(_getAddressNotZero("mega.modules.PRICE"));
             Module priceModule = kernel.getModuleForKeycode(toKeycode("PRICE"));
             Keycode priceKeycode = kernel.getKeycodeForModule(PRICE);
             require(priceModule == PRICE);

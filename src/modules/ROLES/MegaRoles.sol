@@ -18,7 +18,7 @@ abstract contract RolesConsumer {
 }
 
 /// @notice Module that holds multisig roles needed by various policies.
-contract OlympusRoles is ROLESv1 {
+contract MegaRoles is ROLESv1 {
     //============================================================================================//
     //                                        MODULE SETUP                                        //
     //============================================================================================//

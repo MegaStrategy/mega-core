@@ -8,7 +8,7 @@ import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 import {Actions, Kernel} from "../src/Kernel.sol";
 import {RolesAdmin} from "../src/policies/RolesAdmin.sol";
-import {ROLESv1} from "../src/modules/ROLES/OlympusRoles.sol";
+import {ROLESv1} from "../src/modules/ROLES/MegaRoles.sol";
 import {Banker} from "../src/policies/Banker.sol";
 import {Issuer} from "../src/policies/Issuer.sol";
 import {IUniswapV3Factory} from "test/lib/IUniswapV3Factory.sol";

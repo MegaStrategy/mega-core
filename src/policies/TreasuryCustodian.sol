@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 import {Kernel, Policy, Keycode, toKeycode, Permissions} from "src/Kernel.sol";
-import {RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
+import {RolesConsumer} from "src/modules/ROLES/MegaRoles.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
 
