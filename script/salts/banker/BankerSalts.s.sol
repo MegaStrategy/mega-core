@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {Script} from "@forge-std/Script.sol";
 import {WithSalts} from "../WithSalts.s.sol";
-import {WithEnvironment} from "../../deploy/WithEnvironment.s.sol";
+import {WithEnvironment} from "../../WithEnvironment.s.sol";
 
 import {Banker} from "../../../src/policies/Banker.sol";
 

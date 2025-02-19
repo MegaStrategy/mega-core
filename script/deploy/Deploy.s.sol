@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {Script, console2} from "@forge-std/Script.sol";
 import {stdJson} from "@forge-std/StdJson.sol";
 import {WithSalts} from "../salts/WithSalts.s.sol";
-import {WithEnvironment} from "./WithEnvironment.s.sol";
+import {WithEnvironment} from "../WithEnvironment.s.sol";
 
 import {Authority} from "@solmate-6.8.0/auth/Auth.sol";
 import {FixedStrikeOptionTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
