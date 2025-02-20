@@ -109,10 +109,16 @@ abstract contract BankerTest is Test, WithSalts {
 
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
+
+        // Deploy Banker at a deterministic address
         bytes memory args = abi.encode(kernel, address(auctionHouse));
         bytes32 salt = _getTestSalt("Banker", type(Banker).creationCode, args);
         vm.broadcast();
-        banker = new Banker{salt: salt}(kernel, address(auctionHouse));
+        Banker _banker = new Banker{salt: salt}(kernel, address(auctionHouse));
+        banker = Banker(address(0xE700000000000000000000000000000000000000));
+        vm.etch(address(banker), address(_banker).code);
+        vm.store(address(banker), bytes32(uint256(0)), bytes32(abi.encode(address(kernel)))); // Kernel
+        vm.store(address(banker), bytes32(uint256(1)), bytes32(abi.encode(address(auctionHouse)))); // AuctionHouse
 
         // Install the modules and policies in the Kernel
         kernel.executeAction(Actions.InstallModule, address(ROLES));
