@@ -228,7 +228,11 @@ contract HedgerTest is Test, WithSalts {
         // Create the debt token
         vm.prank(MANAGER);
         debtToken = banker.createDebtToken(
-            address(reserve), uint48(block.timestamp + 30 days), DEBT_TOKEN_CONVERSION_PRICE
+            address(reserve),
+            address(0),
+            DEBT_TOKEN_CONVERSION_PRICE,
+            uint48(block.timestamp + 30 days),
+            bytes32(0)
         );
     }
 

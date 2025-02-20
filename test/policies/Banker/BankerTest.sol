@@ -61,6 +61,8 @@ abstract contract BankerTest is Test, WithSalts {
 
     uint48 public constant debtTokenMaturity = 1_000_000 + 100;
     uint256 public constant debtTokenConversionPrice = 5e18;
+    address public debtTokenExpectedAddress;
+    bytes32 public debtTokenSalt;
 
     Banker.DebtTokenParams public debtTokenParams;
     Banker.AuctionParams public auctionParams;
@@ -129,10 +131,10 @@ abstract contract BankerTest is Test, WithSalts {
 
         // Set debt token defaults
         debtTokenParams.underlying = address(stablecoin);
-        debtTokenParams.expectedAddress = address(0);
+        debtTokenParams.expectedAddress = debtTokenExpectedAddress;
         debtTokenParams.maturity = debtTokenMaturity;
         debtTokenParams.conversionPrice = debtTokenConversionPrice;
-        debtTokenParams.salt = bytes32(0);
+        debtTokenParams.salt = debtTokenSalt;
 
         // Set auction defaults
         auctionParams.start = auctionStart;
@@ -184,7 +186,11 @@ abstract contract BankerTest is Test, WithSalts {
     function _createDebtToken() internal {
         vm.prank(manager);
         debtToken = banker.createDebtToken(
-            debtTokenParams.underlying, debtTokenParams.maturity, debtTokenParams.conversionPrice
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
         );
     }
 
