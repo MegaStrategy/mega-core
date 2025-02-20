@@ -68,20 +68,23 @@ contract BankerSalts is Script, WithSalts, WithEnvironment {
             Banker(banker).getNextDebtTokenNameAndSymbol(underlying);
 
         // Generate the salt
-        bytes memory args = abi.encode(
-            name,
-            symbol,
-            underlying,
-            address(_envAddressNotZero("mega.tokens.MGST")),
-            maturity,
-            conversionPrice,
-            banker
-        );
-        bytes memory contractCode = type(ConvertibleDebtToken).creationCode;
-        (string memory bytecodePath, bytes32 bytecodeHash) =
-            _writeBytecode("ConvertibleDebtToken", contractCode, args);
-        _setSalt(bytecodePath, prefix_, "ConvertibleDebtToken", bytecodeHash);
-        bytes32 salt = _getSalt("ConvertibleDebtToken", contractCode, args);
+        bytes32 salt;
+        {
+            bytes memory args = abi.encode(
+                name,
+                symbol,
+                underlying,
+                address(_envAddressNotZero("mega.tokens.MGST")),
+                maturity,
+                conversionPrice,
+                banker
+            );
+            bytes memory contractCode = type(ConvertibleDebtToken).creationCode;
+            (string memory bytecodePath, bytes32 bytecodeHash) =
+                _writeBytecode("ConvertibleDebtToken", contractCode, args);
+            _setSalt(bytecodePath, prefix_, "ConvertibleDebtToken", bytecodeHash);
+            salt = _getSalt("ConvertibleDebtToken", contractCode, args);
+        }
 
         // Do a mock deployment and display the expected address
         vm.startBroadcast(CREATE2_DEPLOYER);
