@@ -28,6 +28,10 @@ contract BankerCreateTokenTest is BankerTest {
     // given the underlying asset has 6 decimals
     //  [X] the debt token has the underlying asset decimals
     //  [X] the debt token has the conversion price set according to the parameters
+    // when the expected address is set
+    //  when the expected address does not match the salt
+    //   [X] it reverts
+    //  [X] it creates a debt token at the correct address
     // [X] it creates a ConvertibleDebtToken with the given parameters
     // [X] it stores the debt token address in the createdBy mapping
     // [X] the token name is Convertible + underlying name + Series N
@@ -139,6 +143,46 @@ contract BankerCreateTokenTest is BankerTest {
         ConvertibleDebtToken cdt = ConvertibleDebtToken(debtToken);
         assertEq(cdt.decimals(), 6, "debt token decimals");
         assertEq(cdt.conversionPrice(), conversionPrice, "conversionPrice");
+    }
+
+    function test_whenExpectedAddressIsSet()
+        public
+        givenPolicyIsActive
+        givenSalt(bytes32(uint256(1)))
+    {
+        vm.prank(manager);
+        address debtToken = banker.createDebtToken(
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
+        );
+
+        assertEq(debtToken, debtTokenParams.expectedAddress, "debt token address");
+    }
+
+    function test_whenExpectedAddressIsSet_invalidAddress_reverts()
+        public
+        givenPolicyIsActive
+        givenSalt(bytes32(uint256(1)))
+    {
+        // Set an invalid expected address
+        debtTokenParams.expectedAddress = address(0x1234567890123456789012345678901234567890);
+
+        // Expect revert
+        vm.expectRevert(
+            abi.encodeWithSelector(ConvertibleDebtToken.InvalidParam.selector, "expectedAddress")
+        );
+
+        vm.prank(manager);
+        banker.createDebtToken(
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
+        );
     }
 
     function test_success(uint256 maturity_, uint256 conversionPrice_) public givenPolicyIsActive {

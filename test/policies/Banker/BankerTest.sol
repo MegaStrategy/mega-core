@@ -22,6 +22,7 @@ import {toKeycode} from "@axis-core-1.0.1/modules/Keycode.sol";
 import {Point, ECIES} from "@axis-core-1.0.1/lib/ECIES.sol";
 import {EncryptedMarginalPriceBid} from "@axis-utils-1.0.0/lib/EncryptedMarginalPriceBid.sol";
 import {IAuction} from "@axis-core-1.0.1/interfaces/modules/IAuction.sol";
+import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 
 import {console2} from "@forge-std/console2.sol";
 
@@ -105,7 +106,7 @@ abstract contract BankerTest is Test, WithSalts {
         // Modules
         ROLES = new MegaRoles(kernel);
         TRSRY = new MegaTreasury(kernel);
-        mgst = new MegaToken(kernel, "MGST", "MGST");
+        mgst = new MegaToken(kernel, "MegaStrategy", "MGST");
 
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
@@ -149,9 +150,6 @@ abstract contract BankerTest is Test, WithSalts {
         auctionParams.auctionPublicKey = ECIES.calcPubKey(Point(1, 2), auctionPrivateKey);
         auctionParams.infoHash = "ipfsHash";
     }
-
-    // TODO set salt
-    // TODO set expected address
 
     // ======= Modifiers ======= //
 
@@ -351,6 +349,34 @@ abstract contract BankerTest is Test, WithSalts {
         // Claim the bid
         vm.prank(buyer);
         auctionHouse.claimBids(0, bidIds);
+        _;
+    }
+
+    modifier givenSalt(
+        bytes32 salt_
+    ) {
+        debtTokenParams.salt = salt_;
+
+        // Determine the expected address
+        bytes32 bytecodeHash = keccak256(
+            abi.encodePacked(
+                type(ConvertibleDebtToken).creationCode,
+                abi.encode(
+                    "Convertible Stablecoin - Series 1",
+                    "cvSTBL-1",
+                    debtTokenParams.underlying,
+                    address(mgst),
+                    debtTokenParams.maturity,
+                    debtTokenParams.conversionPrice,
+                    address(banker)
+                )
+            )
+        );
+        address expectedAddress =
+            _computeAddress(address(banker), debtTokenParams.salt, bytecodeHash);
+        console2.log("Expected address:", expectedAddress);
+
+        debtTokenParams.expectedAddress = expectedAddress;
         _;
     }
 
