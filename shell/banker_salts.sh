@@ -44,7 +44,7 @@ echo "  Chain: $CHAIN"
 
 forge script script/salts/banker/BankerSalts.s.sol:BankerSalts \
     --sender $CAST_ADDRESS \
-    --sig "generate(string)()" $CHAIN
+    --sig "generateBankerSalt(string)()" $CHAIN
 
 # Lint
 pnpm run lint

@@ -5,8 +5,10 @@ pragma solidity 0.8.19;
 import {Script} from "@forge-std/Script.sol";
 import {WithEnvironment} from "../../WithEnvironment.s.sol";
 import {WithSalts} from "../WithSalts.s.sol";
+import {console2} from "@forge-std/console2.sol";
 
 // Contracts
+import {Kernel} from "../../../src/Kernel.sol";
 import {Banker} from "../../../src/policies/Banker.sol";
 
 contract TestSalts is Script, WithEnvironment, WithSalts {
@@ -42,6 +44,13 @@ contract TestSalts is Script, WithEnvironment, WithSalts {
         (string memory bytecodePath, bytes32 bytecodeHash) =
             _writeBytecode(BANKER, contractCode, args);
         _setTestSalt(bytecodePath, "E7", BANKER, bytecodeHash);
+        bytes32 salt = _getSalt("Test_Banker", contractCode, args);
+
+        // Do a mock deployment and display the expected address
+        vm.startPrank(CREATE2_DEPLOYER);
+        Banker banker = new Banker{salt: salt}(Kernel(KERNEL), AUCTION_HOUSE);
+        console2.log("Expected address:", address(banker));
+        vm.stopPrank();
 
         // Base version
         args = abi.encode(KERNEL, BASE_AUCTION_HOUSE);
