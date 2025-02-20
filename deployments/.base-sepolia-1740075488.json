@@ -1,0 +1,18 @@
+{
+    "axis.options.FixedStrikeOptionTeller": "0x56Ba1da79B0337065Ca2288d03eC9769481AcA20",
+    "mega.Kernel": "0x4DC3f2A79C40002C95952015bf999A3F1000ba1e",
+    "mega.modules.PRICE": "0xC2B35473e89973359AD7053623cE16aF5a7845e4",
+    "mega.modules.ROLES": "0xf8a515Af4bC0EE72AE09D7BE311a189aF3DFb388",
+    "mega.modules.TOKEN": "0x7777777e30cD43be4F2d39AC50680Aa12a3aEAa2",
+    "mega.modules.TRSRY": "0x24Da1f026D9f709F2C9E0c915b4B22448419E009",
+    "mega.policies.Banker": "0xE772753415BfA9eC5855dacaA3d6364f7964d5C3",
+    "mega.policies.Emergency": "0xD8daCCe2a40C84F379dC4B523159453D6898aF24",
+    "mega.policies.Issuer": "0xFeDff48Cb7853dCAf9CC21Fab2fCD2561899e3B4",
+    "mega.policies.MegaTokenOracle": "0xa749abC6E38B5D86FCBAF5e401400D5127D7b681",
+    "mega.policies.PriceConfigV2": "0xbD2A6C06feE361b658dF9EA70B4AD78498C86a9D",
+    "mega.policies.RolesAdmin": "0x3bFF33792909446B55EbC4d9148a36e2B804a313",
+    "mega.policies.TreasuryCustodian": "0x4F325CAD0fa04a7048c13E4c1881033f392E04F6",
+    "mega.submodules.PRICE.ChainlinkPriceFeeds": "0x3238D1bEEB35B9A3215dAc4e0eBeF9cD2c083116",
+    "mega.submodules.PRICE.SimplePriceFeedStrategy": "0xC9BDF0D42bD535d4BfD344A858650Fe2A8D5265D",
+    "mega.submodules.PRICE.UniswapV3Price": "0x44409a5b23E1eD61ae7743c9aDAB50879603E39F"
+}
