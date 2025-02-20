@@ -69,6 +69,7 @@ contract HedgerTest is Test, WithSalts {
     address public constant MANAGER = address(0xCCCC);
     address public constant ADMIN = address(0xDDDD);
     address public constant OPERATOR = address(0xEEEE);
+    address public constant EMERGENCY = address(0xFFFF);
 
     uint24 public constant RESERVE_WETH_SWAP_FEE = 500;
     uint24 public constant MGST_WETH_SWAP_FEE = 3000;
@@ -123,10 +124,11 @@ contract HedgerTest is Test, WithSalts {
         vm.startPrank(OWNER);
         rolesAdmin.grantRole("manager", MANAGER);
         rolesAdmin.grantRole("admin", ADMIN);
+        rolesAdmin.grantRole("emergency", EMERGENCY);
         vm.stopPrank();
 
         // Activate policies
-        vm.startPrank(ADMIN);
+        vm.startPrank(EMERGENCY);
         banker.initialize(0, 0, 0, 1e18);
         vm.stopPrank();
 
@@ -226,7 +228,11 @@ contract HedgerTest is Test, WithSalts {
         // Create the debt token
         vm.prank(MANAGER);
         debtToken = banker.createDebtToken(
-            address(reserve), uint48(block.timestamp + 30 days), DEBT_TOKEN_CONVERSION_PRICE
+            address(reserve),
+            address(0),
+            DEBT_TOKEN_CONVERSION_PRICE,
+            uint48(block.timestamp + 30 days),
+            bytes32(0)
         );
     }
 

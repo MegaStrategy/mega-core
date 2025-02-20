@@ -17,7 +17,7 @@ contract BankerShutdownTest is BankerTest {
     function test_callerNotPermissioned_reverts() public {
         // Expect revert
         vm.expectRevert(
-            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("admin"))
+            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("emergency"))
         );
 
         // Call
@@ -29,12 +29,12 @@ contract BankerShutdownTest is BankerTest {
         vm.expectRevert(abi.encodeWithSelector(IBanker.InvalidState.selector));
 
         // Call
-        vm.prank(admin);
+        vm.prank(emergency);
         banker.shutdown();
     }
 
     function test_policyActive() public givenPolicyIsActive {
-        vm.prank(admin);
+        vm.prank(emergency);
         banker.shutdown();
 
         // Assert

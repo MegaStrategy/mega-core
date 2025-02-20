@@ -7,7 +7,8 @@ import {ROLESv1, RolesConsumer} from "src/modules/ROLES/MegaRoles.sol";
 import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
 import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
 
-// Contract to allow emergency shutdown of minting and treasury withdrawals
+/// @notice Contract to allow emergency shutdown of minting and treasury withdrawals
+/// @dev    All functions are only callable by the "emergency" role
 contract Emergency is Policy, RolesConsumer {
     // =========  EVENTS ========= //
 
@@ -66,39 +67,39 @@ contract Emergency is Policy, RolesConsumer {
     //============================================================================================//
 
     /// @notice Emergency shutdown of treasury withdrawals and minting
-    function shutdown() external onlyRole("admin") {
+    function shutdown() external onlyRole("emergency") {
         TRSRY.deactivate();
         TOKEN.deactivate();
         _reportStatus();
     }
 
     /// @notice Emergency shutdown of treasury withdrawals
-    function shutdownWithdrawals() external onlyRole("admin") {
+    function shutdownWithdrawals() external onlyRole("emergency") {
         TRSRY.deactivate();
         _reportStatus();
     }
 
     /// @notice Emergency shutdown of minting
-    function shutdownMinting() external onlyRole("admin") {
+    function shutdownMinting() external onlyRole("emergency") {
         TOKEN.deactivate();
         _reportStatus();
     }
 
     /// @notice Restart treasury withdrawals and minting after shutdown
-    function restart() external onlyRole("admin") {
+    function restart() external onlyRole("emergency") {
         TRSRY.activate();
         TOKEN.activate();
         _reportStatus();
     }
 
     /// @notice Restart treasury withdrawals after shutdown
-    function restartWithdrawals() external onlyRole("admin") {
+    function restartWithdrawals() external onlyRole("emergency") {
         TRSRY.activate();
         _reportStatus();
     }
 
     /// @notice Restart minting after shutdown
-    function restartMinting() external onlyRole("admin") {
+    function restartMinting() external onlyRole("emergency") {
         TOKEN.activate();
         _reportStatus();
     }

@@ -312,9 +312,9 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
 
     /// @notice Enable the contract functionality
     /// @dev    This function reverts if:
-    ///         - The caller does not have the admin role
+    ///         - The caller does not have the emergency role
     ///         - The policy is already active
-    function activate() external onlyRole("admin") {
+    function activate() external onlyRole("emergency") {
         // Validate that the policy is not already active
         if (locallyActive) revert InvalidState();
 
@@ -324,9 +324,9 @@ contract Issuer is Policy, RolesConsumer, IIssuer {
 
     /// @notice Disable the contract functionality
     /// @dev    This function reverts if:
-    ///         - The caller does not have the admin role
+    ///         - The caller does not have the emergency role
     ///         - The policy is already inactive
-    function shutdown() external onlyRole("admin") {
+    function shutdown() external onlyRole("emergency") {
         // Validate that the policy is not already inactive
         if (!locallyActive) revert InvalidState();
 

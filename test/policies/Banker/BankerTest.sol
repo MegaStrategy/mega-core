@@ -22,6 +22,7 @@ import {toKeycode} from "@axis-core-1.0.1/modules/Keycode.sol";
 import {Point, ECIES} from "@axis-core-1.0.1/lib/ECIES.sol";
 import {EncryptedMarginalPriceBid} from "@axis-utils-1.0.0/lib/EncryptedMarginalPriceBid.sol";
 import {IAuction} from "@axis-core-1.0.1/interfaces/modules/IAuction.sol";
+import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 
 import {console2} from "@forge-std/console2.sol";
 
@@ -51,6 +52,7 @@ abstract contract BankerTest is Test, WithSalts {
     address public manager = address(0xAAAA);
     address public admin = address(0xBBBB);
     address public buyer = address(0x000000000000000000000000000000000000CcCc);
+    address public emergency = address(0xCCCC);
 
     // System parameters
     uint48 public maxDiscount = 10e2;
@@ -60,6 +62,8 @@ abstract contract BankerTest is Test, WithSalts {
 
     uint48 public constant debtTokenMaturity = 1_000_000 + 100;
     uint256 public constant debtTokenConversionPrice = 5e18;
+    address public debtTokenExpectedAddress;
+    bytes32 public debtTokenSalt;
 
     Banker.DebtTokenParams public debtTokenParams;
     Banker.AuctionParams public auctionParams;
@@ -102,14 +106,20 @@ abstract contract BankerTest is Test, WithSalts {
         // Modules
         ROLES = new MegaRoles(kernel);
         TRSRY = new MegaTreasury(kernel);
-        mgst = new MegaToken(kernel, "MGST", "MGST");
+        mgst = new MegaToken(kernel, "MegaStrategy", "MGST");
 
         // Policies
         rolesAdmin = new RolesAdmin(kernel);
+
+        // Deploy Banker at a deterministic address
         bytes memory args = abi.encode(kernel, address(auctionHouse));
         bytes32 salt = _getTestSalt("Banker", type(Banker).creationCode, args);
         vm.broadcast();
-        banker = new Banker{salt: salt}(kernel, address(auctionHouse));
+        Banker _banker = new Banker{salt: salt}(kernel, address(auctionHouse));
+        banker = Banker(address(0xE700000000000000000000000000000000000000));
+        vm.etch(address(banker), address(_banker).code);
+        vm.store(address(banker), bytes32(uint256(0)), bytes32(abi.encode(address(kernel)))); // Kernel
+        vm.store(address(banker), bytes32(uint256(1)), bytes32(abi.encode(address(auctionHouse)))); // AuctionHouse
 
         // Install the modules and policies in the Kernel
         kernel.executeAction(Actions.InstallModule, address(ROLES));
@@ -121,14 +131,17 @@ abstract contract BankerTest is Test, WithSalts {
         // Set permissioned roles
         rolesAdmin.grantRole("manager", manager);
         rolesAdmin.grantRole("admin", admin);
+        rolesAdmin.grantRole("emergency", emergency);
 
         // Deploy test ERC20 tokens
         stablecoin = new MockERC20("Stablecoin", "STBL", 18);
 
         // Set debt token defaults
         debtTokenParams.underlying = address(stablecoin);
+        debtTokenParams.expectedAddress = debtTokenExpectedAddress;
         debtTokenParams.maturity = debtTokenMaturity;
         debtTokenParams.conversionPrice = debtTokenConversionPrice;
+        debtTokenParams.salt = debtTokenSalt;
 
         // Set auction defaults
         auctionParams.start = auctionStart;
@@ -141,7 +154,7 @@ abstract contract BankerTest is Test, WithSalts {
     // ======= Modifiers ======= //
 
     modifier givenPolicyIsActive() {
-        vm.prank(admin);
+        vm.prank(emergency);
         banker.initialize(maxDiscount, minFillPercent, referrerFee, maxBids);
         _;
     }
@@ -177,7 +190,11 @@ abstract contract BankerTest is Test, WithSalts {
     function _createDebtToken() internal {
         vm.prank(manager);
         debtToken = banker.createDebtToken(
-            debtTokenParams.underlying, debtTokenParams.maturity, debtTokenParams.conversionPrice
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
         );
     }
 
@@ -332,6 +349,34 @@ abstract contract BankerTest is Test, WithSalts {
         // Claim the bid
         vm.prank(buyer);
         auctionHouse.claimBids(0, bidIds);
+        _;
+    }
+
+    modifier givenSalt(
+        bytes32 salt_
+    ) {
+        debtTokenParams.salt = salt_;
+
+        // Determine the expected address
+        bytes32 bytecodeHash = keccak256(
+            abi.encodePacked(
+                type(ConvertibleDebtToken).creationCode,
+                abi.encode(
+                    "Convertible Stablecoin - Series 1",
+                    "cvSTBL-1",
+                    debtTokenParams.underlying,
+                    address(mgst),
+                    debtTokenParams.maturity,
+                    debtTokenParams.conversionPrice,
+                    address(banker)
+                )
+            )
+        );
+        address expectedAddress =
+            _computeAddress(address(banker), debtTokenParams.salt, bytecodeHash);
+        console2.log("Expected address:", expectedAddress);
+
+        debtTokenParams.expectedAddress = expectedAddress;
         _;
     }
 
