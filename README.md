@@ -146,6 +146,7 @@ To create the auction:
 
 1. Create a JSON file with the auction details. See [script/auctions/cvUSDC.json](script/auctions/cvUSDC.json) for an example.
 2. Create a salt for the ConvertibleDebtToken using the `cv_token_salts.sh` script: `./shell/cv_token_salts.sh --account <CAST_ACCOUNT> --prefix <PREFIX> --auctionFilePath <PATH_TO_AUCTION_FILE>`
+    - The `prefix` is the hexadecimal prefix for the ConvertibleDebtToken, e.g. `c0c0c0`
 3. Update the JSON file with the salt and expected address of the ConvertibleDebtToken.
 4. Run the `createBankerAuction.sh` script: `./shell/createBankerAuction.sh --account <CAST_ACCOUNT> --auctionFilePath <PATH_TO_AUCTION_FILE> --testnet <true|false> --broadcast <true|false>`
 

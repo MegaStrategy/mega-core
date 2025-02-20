@@ -50,10 +50,10 @@ echo "  Auction file path: $auctionFilePath"
 
 forge script script/salts/banker/BankerSalts.s.sol:BankerSalts \
     --sender $CAST_ADDRESS \
-    --sig "generateDebtTokenSalt(string,string,string)()"
-$CHAIN \
-    $prefix \
-    $auctionFilePath
+    --account $account \
+    --rpc-url $RPC_URL \
+    --sig "generateDebtTokenSalt(string,string,string)()" $CHAIN $auctionFilePath $prefix \
+    --slow -vvv
 
 # Lint
 pnpm run lint

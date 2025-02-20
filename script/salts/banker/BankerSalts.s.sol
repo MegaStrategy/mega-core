@@ -74,7 +74,7 @@ contract BankerSalts is Script, WithSalts, WithEnvironment {
                 name,
                 symbol,
                 underlying,
-                address(_envAddressNotZero("mega.tokens.MGST")),
+                address(_envAddressNotZero("mega.modules.TOKEN")),
                 maturity,
                 conversionPrice,
                 banker
@@ -92,11 +92,13 @@ contract BankerSalts is Script, WithSalts, WithEnvironment {
             name,
             symbol,
             underlying,
-            address(_envAddressNotZero("mega.tokens.MGST")),
+            address(_envAddressNotZero("mega.modules.TOKEN")),
             maturity,
             conversionPrice,
             banker
         );
+        console2.log("Salt:");
+        console2.logBytes32(salt);
         console2.log("Expected address:", address(debtToken));
         vm.stopBroadcast();
     }
