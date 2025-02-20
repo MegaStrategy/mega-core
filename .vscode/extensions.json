@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "gruntfuggly.todo-tree",
+        "juanblanco.solidity",
+        "bierner.markdown-mermaid",
+        "tamasfe.even-better-toml",
+        "d-koppenhagen.file-tree-to-text-generator",
+        "tintinweb.solidity-metrics"
+    ]
+}

@@ -1,0 +1,63 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+    workflow_dispatch:
+
+env:
+    FOUNDRY_PROFILE: ci
+
+jobs:
+    check:
+        strategy:
+            fail-fast: true
+
+        name: Foundry project
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: stable
+
+            - name: Show Forge version
+              run: |
+                  forge --version
+
+            - name: Install Dependencies
+              run: |
+                  pnpm install
+
+            - name: Run Lint Check
+              run: |
+                  pnpm run lint:check
+              id: lint
+
+            - name: Run Forge build
+              run: |
+                  forge build
+              id: build
+
+            - name: Run Forge tests
+              env:
+                  FORK_RPC_URL: ${{ secrets.FORK_RPC_URL }}
+              run: |
+                  forge test -vvv
+              id: test
+
+            - name: Build Size
+              run: |
+                  pnpm run size
+              id: size

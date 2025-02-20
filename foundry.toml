@@ -1,0 +1,45 @@
+[profile.default]
+src = "src"
+out = "out"
+fs_permissions = [{access = "read-write", path = "./bytecode/"}, {access = "read", path = "./script/"}, {access = "read-write", path = "./deployments/"}]
+verbosity = 2
+ffi = true
+ast = true
+solc_version = "0.8.19"
+evm_version = "paris"
+no-match-test = "optimal"
+libs = ["node_modules", "lib"]
+optimizer = true
+optimizer_runs = 200
+
+[fuzz]
+runs = 4096
+
+# Remappings are setup using remappings.txt, since forge seems to ignore remappings here
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = false
+multiline_func_header = "params_first"
+quote_style = "double"
+number_underscore = "thousands"
+wrap_comments = false
+ignore = [
+  "src/lib/**",
+]
+
+[dependencies]
+forge-std = "1.9.4"
+solady = "0.0.261"
+axis-core = "1.0.1"
+axis-periphery = { version = "1.0.0", git = "https://github.com/Axis-Fi/axis-periphery.git", rev = "4316b2019cf7d63b7009b49cd8381e6b082a21e7" }
+axis-utils = { version = "1.0.0", git = "https://github.com/Axis-Fi/axis-utils.git", rev = "d4122f4a0adb115d9862b6606a6501d6eaad2f48" }
+"@openzeppelin-contracts" = "4.9.6"
+solmate = "6.8.0"
+morpho-blue = { version = "1.0.0", git = "https://github.com/morpho-org/morpho-blue.git", rev = "4844569ce51f2a01a46e27a5a22f54e9a388adcc" }
+surl = { version = "1.0.0", git = "https://github.com/memester-xyz/surl.git", rev = "034c912ae9b5e707a5afd21f145b452ad8e800df" }
+"@uniswap-v3-core" = "1.0.2-solc-0.8-simulate"
+"@uniswap-v3-periphery" = { version = "1.4.2-solc-0.8", git = "https://github.com/Uniswap/v3-periphery.git", rev = "b325bb0905d922ae61fcc7df85ee802e8df5e96c" }
+clones-with-immutable-args = { version = "1.1.1", git = "https://github.com/wighawag/clones-with-immutable-args.git", rev = "f5ca191afea933d50a36d101009b5644dc28bc99" }
+axis-registry = { version = "1.0.0", git = "https://github.com/Axis-Fi/axis-registry.git", rev = "76499342adbcae060f05f08cd75507c2dea8dbd4" }
