@@ -336,10 +336,14 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
     /// @inheritdoc IBanker
     function createDebtToken(
         address asset_,
+        address expectedAddress_,
+        uint256 conversionPrice_,
         uint48 maturity_,
-        uint256 conversionPrice_
+        bytes32 salt_
     ) external override onlyRole("manager") onlyWhileActive returns (address) {
-        return _createDebtToken(DebtTokenParams(asset_, maturity_, conversionPrice_));
+        return _createDebtToken(
+            DebtTokenParams(asset_, expectedAddress_, conversionPrice_, maturity_, salt_)
+        );
     }
 
     function _createDebtToken(
@@ -361,7 +365,7 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
 
         // Create the debt token
         debtToken = address(
-            new ConvertibleDebtToken(
+            new ConvertibleDebtToken{salt: dtParams_.salt}(
                 name,
                 symbol,
                 dtParams_.underlying,
@@ -371,6 +375,11 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
                 address(this) // issuer is this contract
             )
         );
+
+        // Validate that the address of the debt token is as expected
+        if (dtParams_.expectedAddress != address(0) && debtToken != dtParams_.expectedAddress) {
+            revert InvalidParam("expectedAddress");
+        }
 
         // Mark the debt token as created by this contract and store the address
         createdBy[debtToken] = true;
@@ -586,6 +595,14 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
             string(abi.encodePacked("Convertible ", ERC20(underlying_).name(), " - Series ", ss)),
             string(abi.encodePacked("cv", ERC20(underlying_).symbol(), "-", ss))
         );
+    }
+
+    /// @inheritdoc IBanker
+    function getNextDebtTokenNameAndSymbol(
+        address underlying_
+    ) external view returns (string memory name, string memory symbol) {
+        uint256 series = seriesCounter[underlying_] + 1;
+        return _computeNameAndSymbol(underlying_, series);
     }
 
     // ========== ADMIN FUNCTIONS ========== //

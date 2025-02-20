@@ -38,6 +38,10 @@ contract BankerAuctionTest is BankerTest {
     //  [X] the auction minBidSize is set according to the scale of the underlying asset
     //  [X] the debt token has the underlying asset decimals
     //  [X] the debt token has the conversion price set according to the parameters
+    // when the expected address is set
+    //  when the expected address does not match the salt
+    //   [X] it reverts
+    //  [X] it creates a debt token at the correct address
     // [X] it creates an EMP auction with the given auction parameters
     // [X] the AuctionHouse receives the capacity in debt tokens
     // [X] the policy is the curator
@@ -160,6 +164,37 @@ contract BankerAuctionTest is BankerTest {
         assertEq(address(convertsTo), address(mgst), "CDT convertsTo");
         assertEq(maturity, debtTokenParams.maturity, "CDT maturity");
         assertEq(conversionPrice, 5e6, "CDT conversionPrice");
+    }
+
+    function test_whenExpectedAddressIsSet()
+        public
+        givenPolicyIsActive
+        givenSalt(bytes32(uint256(1)))
+    {
+        vm.prank(manager);
+        banker.auction(debtTokenParams, auctionParams);
+
+        // Assertions
+        (, address baseToken,,,,,,,) = auctionHouse.lotRouting(0);
+
+        assertEq(baseToken, debtTokenParams.expectedAddress, "debt token address");
+    }
+
+    function test_whenExpectedAddressIsSet_invalidAddress_reverts()
+        public
+        givenPolicyIsActive
+        givenSalt(bytes32(uint256(1)))
+    {
+        // Set an invalid expected address
+        debtTokenParams.expectedAddress = address(0x1234567890123456789012345678901234567890);
+
+        // Expect revert
+        vm.expectRevert(
+            abi.encodeWithSelector(ConvertibleDebtToken.InvalidParam.selector, "expectedAddress")
+        );
+
+        vm.prank(manager);
+        banker.auction(debtTokenParams, auctionParams);
     }
 
     function test_auction_success() public givenPolicyIsActive {

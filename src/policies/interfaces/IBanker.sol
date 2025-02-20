@@ -40,12 +40,16 @@ interface IBanker {
     /// @notice Parameters for creating a debt token
     ///
     /// @param  underlying      The underlying asset for the debt token
-    /// @param  maturity        The maturity timestamp of the debt token
+    /// @param  expectedAddress The expected address of the debt token. Set to 0 to not perform validation.
     /// @param  conversionPrice The price at which the debt token can be converted to the underlying asset. See `ConvertibleDebtToken.conversionPrice` for more details.
+    /// @param  maturity        The maturity timestamp of the debt token
+    /// @param  salt            A salt to be used for the debt token CREATE2 deployment.
     struct DebtTokenParams {
         address underlying;
-        uint48 maturity;
+        address expectedAddress;
         uint256 conversionPrice;
+        uint48 maturity;
+        bytes32 salt;
     }
 
     /// @notice Parameters for creating an auction
@@ -85,13 +89,17 @@ interface IBanker {
     ///         - The policy is locally active
     ///
     /// @param  asset_            The underlying asset for the debt token
+    /// @param  expectedAddress_  The expected address of the debt token. Set to 0 to not perform validation.
     /// @param  maturity_         The maturity timestamp of the debt token
     /// @param  conversionPrice_  The price at which the debt token can be converted to the underlying asset. Amount of underlying to MGST in underlying decimals.
+    /// @param  salt_             A salt to be used for the debt token CREATE2 deployment.
     /// @return debtToken         The address of the newly created debt token
     function createDebtToken(
         address asset_,
+        address expectedAddress_,
+        uint256 conversionPrice_,
         uint48 maturity_,
-        uint256 conversionPrice_
+        bytes32 salt_
     ) external returns (address debtToken);
 
     /// @notice Issues convertible debt tokens to an address
@@ -138,4 +146,13 @@ interface IBanker {
 
     /// @notice Returns the address of the token that is converted to
     function getConvertedToken() external view returns (address);
+
+    /// @notice Returns the name and symbol for the debt token that would be next created for an underlying asset
+    ///
+    /// @param  underlying_ The underlying asset for the debt token
+    /// @return name        The name of the debt token
+    /// @return symbol      The symbol of the debt token
+    function getNextDebtTokenNameAndSymbol(
+        address underlying_
+    ) external view returns (string memory name, string memory symbol);
 }

@@ -1,11 +1,13 @@
 #!/bin/bash
 
-# Updates the salts for the Banker policy
+# Creates a salt for a ConvertibleDebtToken
 #
 # Usage:
-# ./banker_salts.sh
+# ./cv_token_salts.sh
 #   --env <.env file>
 #   --account <cast account>
+#   --prefix <prefix>
+#   --auctionFilePath <auction file path>
 #
 # Environment variables:
 # CHAIN
@@ -25,6 +27,8 @@ load_env
 echo ""
 echo "Validating arguments"
 validate_text "$account" "No account specified. Provide the cast wallet after the --account flag."
+validate_text "$prefix" "No prefix specified. Provide the prefix after the --prefix flag."
+validate_file "$auctionFilePath" "No auction file path specified. Provide the path after the --auctionFilePath flag."
 
 # Validate environment variables
 echo ""
@@ -41,10 +45,15 @@ echo "Summary:"
 echo "  Deploy from account: $account"
 echo "  Sender: $CAST_ADDRESS"
 echo "  Chain: $CHAIN"
+echo "  Prefix: $prefix"
+echo "  Auction file path: $auctionFilePath"
 
 forge script script/salts/banker/BankerSalts.s.sol:BankerSalts \
     --sender $CAST_ADDRESS \
-    --sig "generateBankerSalt(string)()" $CHAIN
+    --sig "generateDebtTokenSalt(string,string,string)()"
+$CHAIN \
+    $prefix \
+    $auctionFilePath
 
 # Lint
 pnpm run lint

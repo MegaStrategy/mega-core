@@ -122,14 +122,23 @@ contract TasksScript is Script, WithEnvironment {
         vm.stopBroadcast();
     }
 
-    function createDebtToken(string calldata chain_, uint256 conversionPrice_) external {
+    function createDebtToken(
+        string calldata chain_,
+        address expectedAddress_,
+        uint256 conversionPrice_,
+        bytes32 salt_
+    ) external {
         _loadEnv(chain_);
 
         // Create the debt token
         uint48 maturity = uint48(block.timestamp + 7 days);
         vm.startBroadcast();
         address debtToken = Banker(_envAddressNotZero("mega.policies.Banker")).createDebtToken(
-            address(_envAddressNotZero("external.tokens.USDC")), maturity, conversionPrice_
+            address(_envAddressNotZero("external.tokens.USDC")),
+            expectedAddress_,
+            conversionPrice_,
+            maturity,
+            salt_
         );
         vm.stopBroadcast();
         console2.log("debtToken", debtToken);
