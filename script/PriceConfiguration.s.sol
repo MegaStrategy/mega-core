@@ -33,9 +33,8 @@ contract PriceConfiguration is Script, WithEnvironment {
 
         // Chainlink
         {
-            ChainlinkPriceFeeds chainlinkPriceFeeds = ChainlinkPriceFeeds(
-                _envAddressNotZero("mega.submodules.PriceV2.ChainlinkPriceFeeds")
-            );
+            ChainlinkPriceFeeds chainlinkPriceFeeds =
+                ChainlinkPriceFeeds(_envAddressNotZero("mega.submodules.PRICE.ChainlinkPriceFeeds"));
 
             console2.log("Installing submodule: Chainlink Price Feeds");
             vm.startBroadcast();
@@ -46,7 +45,7 @@ contract PriceConfiguration is Script, WithEnvironment {
         // Uniswap V3
         {
             UniswapV3Price uniswapV3Price =
-                UniswapV3Price(_envAddressNotZero("mega.submodules.PriceV2.UniswapV3Price"));
+                UniswapV3Price(_envAddressNotZero("mega.submodules.PRICE.UniswapV3Price"));
 
             console2.log("Installing submodule: Uniswap V3 Price");
             vm.startBroadcast();
@@ -57,7 +56,7 @@ contract PriceConfiguration is Script, WithEnvironment {
         // SimplePriceFeedStrategy
         {
             SimplePriceFeedStrategy simplePriceFeedStrategy = SimplePriceFeedStrategy(
-                _envAddressNotZero("mega.submodules.PriceV2.SimplePriceFeedStrategy")
+                _envAddressNotZero("mega.submodules.PRICE.SimplePriceFeedStrategy")
             );
 
             console2.log("Installing submodule: Simple Price Feed Strategy");
@@ -100,7 +99,7 @@ contract PriceConfiguration is Script, WithEnvironment {
             console2.log("Configuring asset: MGST");
             vm.startBroadcast();
             priceConfigV2.addAssetPrice(
-                _envAddressNotZero("mega.modules.Token"),
+                _envAddressNotZero("mega.modules.TOKEN"),
                 false, // Don't store moving average
                 false, // Don't use moving average
                 0, // No moving average duration

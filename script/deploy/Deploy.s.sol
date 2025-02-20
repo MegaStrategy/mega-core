@@ -10,10 +10,10 @@ import {Authority} from "@solmate-6.8.0/auth/Auth.sol";
 import {FixedStrikeOptionTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
 
 import {Actions, fromKeycode, Kernel, Keycode, Module, toKeycode} from "src/Kernel.sol";
-import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
-import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
+import {MegaTreasury} from "src/modules/TRSRY/MegaTreasury.sol";
+import {MegaRoles} from "src/modules/ROLES/MegaRoles.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
-import {OlympusPriceV2} from "src/modules/PRICE/OlympusPrice.v2.sol";
+import {MegaPriceV2} from "src/modules/PRICE/MegaPrice.v2.sol";
 import {UniswapV3Price} from "src/modules/PRICE/submodules/feeds/UniswapV3Price.sol";
 import {ChainlinkPriceFeeds} from "src/modules/PRICE/submodules/feeds/ChainlinkPriceFeeds.sol";
 import {SimplePriceFeedStrategy} from
@@ -69,10 +69,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
     function _setUp(string calldata chain_, string calldata deployFilePath_) internal {
         // Setup contract -> selector mappings
         // Modules
-        selectorMap["OlympusTreasury"] = this._deployTreasury.selector;
-        selectorMap["OlympusRoles"] = this._deployRoles.selector;
-        selectorMap["Token"] = this._deployToken.selector;
-        selectorMap["OlympusPriceV2"] = this._deployPriceV2.selector;
+        selectorMap["TRSRY"] = this._deployTreasury.selector;
+        selectorMap["ROLES"] = this._deployRoles.selector;
+        selectorMap["TOKEN"] = this._deployToken.selector;
+        selectorMap["PRICE"] = this._deployPriceV2.selector;
         selectorMap["ChainlinkPriceFeeds"] = this._deployChainlinkPriceFeeds.selector;
         selectorMap["UniswapV3Price"] = this._deployUniswapV3Price.selector;
         selectorMap["SimplePriceFeedStrategy"] = this._deploySimplePriceFeedStrategy.selector;
@@ -215,10 +215,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy Treasury module
         vm.broadcast();
-        OlympusTreasury TRSRY = new OlympusTreasury(kernel);
+        MegaTreasury TRSRY = new MegaTreasury(kernel);
         console2.log("Treasury deployed at:", address(TRSRY));
 
-        return (address(TRSRY), "mega.modules.OlympusTreasury");
+        return (address(TRSRY), "mega.modules.TRSRY");
     }
 
     function _deployRoles(
@@ -228,10 +228,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy Roles module
         vm.broadcast();
-        OlympusRoles ROLES = new OlympusRoles(kernel);
+        MegaRoles ROLES = new MegaRoles(kernel);
         console2.log("Roles deployed at:", address(ROLES));
 
-        return (address(ROLES), "mega.modules.OlympusRoles");
+        return (address(ROLES), "mega.modules.ROLES");
     }
 
     function _deployToken(
@@ -252,7 +252,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         MegaToken token = new MegaToken(kernel, name, symbol);
         console2.log("Token deployed at:", address(token));
 
-        return (address(token), "mega.modules.Token");
+        return (address(token), "mega.modules.TOKEN");
     }
 
     function _deployPriceV2(
@@ -271,10 +271,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // Deploy PriceV2 module
         vm.broadcast();
-        OlympusPriceV2 priceV2 = new OlympusPriceV2(kernel, decimals, observationFrequency);
+        MegaPriceV2 priceV2 = new MegaPriceV2(kernel, decimals, observationFrequency);
         console2.log("PriceV2 deployed at:", address(priceV2));
 
-        return (address(priceV2), "mega.modules.OlympusPriceV2");
+        return (address(priceV2), "mega.modules.PRICE");
     }
 
     function _deployChainlinkPriceFeeds(
@@ -285,10 +285,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Deploy ChainlinkPriceFeeds module
         vm.broadcast();
         ChainlinkPriceFeeds chainlinkPriceFeeds =
-            new ChainlinkPriceFeeds(Module(_getAddressNotZero("mega.modules.OlympusPriceV2")));
+            new ChainlinkPriceFeeds(Module(_getAddressNotZero("mega.modules.PRICE")));
         console2.log("ChainlinkPriceFeeds deployed at:", address(chainlinkPriceFeeds));
 
-        return (address(chainlinkPriceFeeds), "mega.submodules.PriceV2.ChainlinkPriceFeeds");
+        return (address(chainlinkPriceFeeds), "mega.submodules.PRICE.ChainlinkPriceFeeds");
     }
 
     function _deployUniswapV3Price(
@@ -299,10 +299,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Deploy UniswapV3Price module
         vm.broadcast();
         UniswapV3Price uniswapV3Price =
-            new UniswapV3Price(Module(_getAddressNotZero("mega.modules.OlympusPriceV2")));
+            new UniswapV3Price(Module(_getAddressNotZero("mega.modules.PRICE")));
         console2.log("UniswapV3Price deployed at:", address(uniswapV3Price));
 
-        return (address(uniswapV3Price), "mega.submodules.PriceV2.UniswapV3Price");
+        return (address(uniswapV3Price), "mega.submodules.PRICE.UniswapV3Price");
     }
 
     function _deploySimplePriceFeedStrategy(
@@ -313,10 +313,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Deploy SimplePriceFeedStrategy module
         vm.broadcast();
         SimplePriceFeedStrategy simplePriceFeedStrategy =
-            new SimplePriceFeedStrategy(Module(_getAddressNotZero("mega.modules.OlympusPriceV2")));
+            new SimplePriceFeedStrategy(Module(_getAddressNotZero("mega.modules.PRICE")));
         console2.log("SimplePriceFeedStrategy deployed at:", address(simplePriceFeedStrategy));
 
-        return (address(simplePriceFeedStrategy), "mega.submodules.PriceV2.SimplePriceFeedStrategy");
+        return (address(simplePriceFeedStrategy), "mega.submodules.PRICE.SimplePriceFeedStrategy");
     }
 
     function _deployRolesAdmin(
@@ -482,7 +482,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Deploy Hedger
         vm.broadcast();
         Hedger hedger = new Hedger(
-            _getAddressNotZero("mega.modules.Token"),
+            _getAddressNotZero("mega.modules.TOKEN"),
             _getAddressNotZero("external.tokens.WETH"),
             reserve,
             mgstMarketId,
@@ -518,10 +518,10 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         _loadEnv(chain_);
 
         // Modules
-        OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
-        OlympusTreasury TRSRY = OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
-        MegaToken token = MegaToken(_getAddressNotZero("mega.modules.Token"));
-        OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.OlympusPriceV2"));
+        MegaRoles ROLES = MegaRoles(_getAddressNotZero("mega.modules.ROLES"));
+        MegaTreasury TRSRY = MegaTreasury(_getAddressNotZero("mega.modules.TRSRY"));
+        MegaToken token = MegaToken(_getAddressNotZero("mega.modules.TOKEN"));
+        MegaPriceV2 PRICE = MegaPriceV2(_getAddressNotZero("mega.modules.PRICE"));
 
         // Policies
         RolesAdmin rolesAdmin = RolesAdmin(_getAddressNotZero("mega.policies.RolesAdmin"));
@@ -572,8 +572,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
         // Modules
         // TRSRY
         {
-            OlympusTreasury TRSRY =
-                OlympusTreasury(_getAddressNotZero("mega.modules.OlympusTreasury"));
+            MegaTreasury TRSRY = MegaTreasury(_getAddressNotZero("mega.modules.TRSRY"));
             Module trsryModule = kernel.getModuleForKeycode(toKeycode("TRSRY"));
             Keycode trsryKeycode = kernel.getKeycodeForModule(TRSRY);
             require(trsryModule == TRSRY);
@@ -582,7 +581,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // TOKEN
         {
-            MegaToken token = MegaToken(_getAddressNotZero("mega.modules.Token"));
+            MegaToken token = MegaToken(_getAddressNotZero("mega.modules.TOKEN"));
             Module tokenModule = kernel.getModuleForKeycode(toKeycode("TOKEN"));
             Keycode tokenKeycode = kernel.getKeycodeForModule(token);
             require(tokenModule == token);
@@ -591,7 +590,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // ROLES
         {
-            OlympusRoles ROLES = OlympusRoles(_getAddressNotZero("mega.modules.OlympusRoles"));
+            MegaRoles ROLES = MegaRoles(_getAddressNotZero("mega.modules.ROLES"));
             Module rolesModule = kernel.getModuleForKeycode(toKeycode("ROLES"));
             Keycode rolesKeycode = kernel.getKeycodeForModule(ROLES);
             require(rolesModule == ROLES);
@@ -600,7 +599,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
 
         // PRICEv2
         {
-            OlympusPriceV2 PRICE = OlympusPriceV2(_getAddressNotZero("mega.modules.OlympusPriceV2"));
+            MegaPriceV2 PRICE = MegaPriceV2(_getAddressNotZero("mega.modules.PRICE"));
             Module priceModule = kernel.getModuleForKeycode(toKeycode("PRICE"));
             Keycode priceKeycode = kernel.getKeycodeForModule(PRICE);
             require(priceModule == PRICE);

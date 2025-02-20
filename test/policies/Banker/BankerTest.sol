@@ -5,8 +5,8 @@ import {Kernel, Actions} from "src/Kernel.sol";
 
 import {Banker} from "src/policies/Banker.sol";
 import {RolesAdmin} from "src/policies/RolesAdmin.sol";
-import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
-import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
+import {MegaRoles} from "src/modules/ROLES/MegaRoles.sol";
+import {MegaTreasury} from "src/modules/TRSRY/MegaTreasury.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 
 import {Test} from "@forge-std/Test.sol";
@@ -30,8 +30,8 @@ import {console2} from "@forge-std/console2.sol";
 abstract contract BankerTest is Test, WithSalts {
     // System contracts
     Kernel public kernel;
-    OlympusRoles public ROLES;
-    OlympusTreasury public TRSRY;
+    MegaRoles public ROLES;
+    MegaTreasury public TRSRY;
     MegaToken public mgst;
     Banker public banker;
     RolesAdmin public rolesAdmin;
@@ -100,8 +100,8 @@ abstract contract BankerTest is Test, WithSalts {
         vm.store(address(kernel), bytes32(uint256(0)), bytes32(abi.encode(address(this))));
 
         // Modules
-        ROLES = new OlympusRoles(kernel);
-        TRSRY = new OlympusTreasury(kernel);
+        ROLES = new MegaRoles(kernel);
+        TRSRY = new MegaTreasury(kernel);
         mgst = new MegaToken(kernel, "MGST", "MGST");
 
         // Policies

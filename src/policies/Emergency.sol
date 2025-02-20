@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 // solhint-disable-next-line no-global-import
 import "src/Kernel.sol";
-import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
+import {ROLESv1, RolesConsumer} from "src/modules/ROLES/MegaRoles.sol";
 import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
 import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
 
