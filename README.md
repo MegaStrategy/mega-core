@@ -86,7 +86,7 @@ The following must be performed to deploy and activate the system:
 1. Copy the `.env.example` file to `.env` (or similar if using multiple chains) and populate with the correct values
 2. Deploy the system using the `deploy.sh` script
 3. Install the modules and policies into the Kernel using the `kernelInstallation.sh` script
-4. Grant admin and manager roles using the `Tasks.s.sol` script
+4. Grant admin, emergency and manager roles using the `Tasks.s.sol` script
     - e.g. `forge script ./script/Tasks.s.sol --sig "addAdmin(string,address)()" base-sepolia <ADMIN_ADDRESS> --rpc-url <RPC_URL> --account <CAST_ACCOUNT> --sender <SIGNER_ADDRESS> --slow -vvv --broadcast`
 5. Install the PRICE submodules by calling `installSubmodules()` in the `PriceConfiguration.s.sol` script
 6. Initialize the Banker using the `Tasks.s.sol` script
@@ -143,8 +143,10 @@ This script has additional requirements that need to be manually configured:
 
 To create the auction:
 
-1. Create a JSON file with the auction details. See [script/auctions/IMG.json](script/auctions/IMG.json) for an example.
-2. Run the `createBankerAuction.sh` script: `./shell/createBankerAuction.sh --account <CAST_ACCOUNT> --auctionFilePath <PATH_TO_AUCTION_FILE> --testnet <true|false> --broadcast <true|false>`
+1. Create a JSON file with the auction details. See [script/auctions/cvUSDC.json](script/auctions/cvUSDC.json) for an example.
+2. Create a salt for the ConvertibleDebtToken using the `cv_token_salts.sh` script: `./shell/cv_token_salts.sh --account <CAST_ACCOUNT> --prefix <PREFIX> --auctionFilePath <PATH_TO_AUCTION_FILE>`
+3. Update the JSON file with the salt and expected address of the ConvertibleDebtToken.
+4. Run the `createBankerAuction.sh` script: `./shell/createBankerAuction.sh --account <CAST_ACCOUNT> --auctionFilePath <PATH_TO_AUCTION_FILE> --testnet <true|false> --broadcast <true|false>`
 
 #### Options Issuance
 

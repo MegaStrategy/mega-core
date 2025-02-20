@@ -28,6 +28,10 @@ contract BankerCreateTokenTest is BankerTest {
     // given the underlying asset has 6 decimals
     //  [X] the debt token has the underlying asset decimals
     //  [X] the debt token has the conversion price set according to the parameters
+    // when the expected address is set
+    //  when the expected address does not match the salt
+    //   [X] it reverts
+    //  [X] it creates a debt token at the correct address
     // [X] it creates a ConvertibleDebtToken with the given parameters
     // [X] it stores the debt token address in the createdBy mapping
     // [X] the token name is Convertible + underlying name + Series N
@@ -37,7 +41,11 @@ contract BankerCreateTokenTest is BankerTest {
         vm.prank(manager);
         vm.expectRevert(abi.encodeWithSelector(IBanker.Inactive.selector));
         banker.createDebtToken(
-            debtTokenParams.underlying, debtTokenParams.maturity, debtTokenParams.conversionPrice
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
         );
     }
 
@@ -51,7 +59,11 @@ contract BankerCreateTokenTest is BankerTest {
             abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("manager"))
         );
         banker.createDebtToken(
-            debtTokenParams.underlying, debtTokenParams.maturity, debtTokenParams.conversionPrice
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
         );
     }
 
@@ -59,7 +71,11 @@ contract BankerCreateTokenTest is BankerTest {
         vm.prank(manager);
         vm.expectRevert();
         banker.createDebtToken(
-            address(0), debtTokenParams.maturity, debtTokenParams.conversionPrice
+            address(0),
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
         );
     }
 
@@ -67,7 +83,11 @@ contract BankerCreateTokenTest is BankerTest {
         vm.prank(manager);
         vm.expectRevert();
         banker.createDebtToken(
-            address(this), debtTokenParams.maturity, debtTokenParams.conversionPrice
+            address(this),
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
         );
     }
 
@@ -81,7 +101,11 @@ contract BankerCreateTokenTest is BankerTest {
             abi.encodeWithSelector(ConvertibleDebtToken.InvalidParam.selector, "maturity")
         );
         banker.createDebtToken(
-            debtTokenParams.underlying, maturity, debtTokenParams.conversionPrice
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            maturity,
+            debtTokenParams.salt
         );
     }
 
@@ -90,7 +114,13 @@ contract BankerCreateTokenTest is BankerTest {
         vm.expectRevert(
             abi.encodeWithSelector(ConvertibleDebtToken.InvalidParam.selector, "conversionPrice")
         );
-        banker.createDebtToken(debtTokenParams.underlying, debtTokenParams.maturity, 0);
+        banker.createDebtToken(
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            0,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
+        );
     }
 
     function test_underlyingAssetHasSmallerDecimals()
@@ -102,12 +132,57 @@ contract BankerCreateTokenTest is BankerTest {
         uint256 conversionPrice = 5e6;
 
         vm.prank(manager);
-        address debtToken =
-            banker.createDebtToken(debtTokenParams.underlying, maturity, conversionPrice);
+        address debtToken = banker.createDebtToken(
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            conversionPrice,
+            maturity,
+            debtTokenParams.salt
+        );
 
         ConvertibleDebtToken cdt = ConvertibleDebtToken(debtToken);
         assertEq(cdt.decimals(), 6, "debt token decimals");
         assertEq(cdt.conversionPrice(), conversionPrice, "conversionPrice");
+    }
+
+    function test_whenExpectedAddressIsSet()
+        public
+        givenPolicyIsActive
+        givenSalt(bytes32(uint256(1)))
+    {
+        vm.prank(manager);
+        address debtToken = banker.createDebtToken(
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
+        );
+
+        assertEq(debtToken, debtTokenParams.expectedAddress, "debt token address");
+    }
+
+    function test_whenExpectedAddressIsSet_invalidAddress_reverts()
+        public
+        givenPolicyIsActive
+        givenSalt(bytes32(uint256(1)))
+    {
+        // Set an invalid expected address
+        debtTokenParams.expectedAddress = address(0x1234567890123456789012345678901234567890);
+
+        // Expect revert
+        vm.expectRevert(
+            abi.encodeWithSelector(ConvertibleDebtToken.InvalidParam.selector, "expectedAddress")
+        );
+
+        vm.prank(manager);
+        banker.createDebtToken(
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            debtTokenParams.conversionPrice,
+            debtTokenParams.maturity,
+            debtTokenParams.salt
+        );
     }
 
     function test_success(uint256 maturity_, uint256 conversionPrice_) public givenPolicyIsActive {
@@ -115,8 +190,13 @@ contract BankerCreateTokenTest is BankerTest {
         uint256 conversionPrice = bound(conversionPrice_, 1, type(uint256).max);
 
         vm.prank(manager);
-        address debtToken =
-            banker.createDebtToken(debtTokenParams.underlying, maturity, conversionPrice);
+        address debtToken = banker.createDebtToken(
+            debtTokenParams.underlying,
+            debtTokenParams.expectedAddress,
+            conversionPrice,
+            maturity,
+            debtTokenParams.salt
+        );
 
         // Confirm the debt token's parameters are correct
         ConvertibleDebtToken cdt = ConvertibleDebtToken(debtToken);

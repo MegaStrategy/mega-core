@@ -42,10 +42,14 @@ contract BankerAuctionScript is WithEnvironment, CloakConsumer {
             // Set up debt token params
             dtParams = IBanker.DebtTokenParams({
                 underlying: address(_envAddressNotZero("external.tokens.USDC")),
+                expectedAddress: address(
+                    vm.parseJsonAddress(auctionData, ".auctionParams.expectedAddress")
+                ),
+                conversionPrice: vm.parseJsonUint(auctionData, ".auctionParams.conversionPrice"),
                 maturity: uint48(
                     block.timestamp + uint48(vm.parseJsonUint(auctionData, ".auctionParams.maturity"))
                 ),
-                conversionPrice: vm.parseJsonUint(auctionData, ".auctionParams.conversionPrice")
+                salt: vm.parseJsonBytes32(auctionData, ".auctionParams.salt")
             });
 
             // Set up auction params
