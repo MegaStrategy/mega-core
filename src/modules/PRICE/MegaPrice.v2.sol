@@ -5,10 +5,10 @@ import {Kernel, Keycode, Module, toKeycode} from "src/Kernel.sol";
 import {fromSubKeycode} from "src/Submodules.sol";
 import {PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";
 
-/// @title      OlympusPriceV2
+/// @title      MegaPriceV2
 /// @author     Oighty
 /// @notice     Provides current and historical prices for assets
-contract OlympusPriceV2 is PRICEv2 {
+contract MegaPriceV2 is PRICEv2 {
     // DONE
     // [X] Update functions for asset price feeds, strategies, etc.
     // [X] Toggle MA on and off for an asset
@@ -21,7 +21,7 @@ contract OlympusPriceV2 is PRICEv2 {
 
     // ========== CONSTRUCTOR ========== //
 
-    /// @notice                         Constructor to create OlympusPrice V2
+    /// @notice                         Constructor to create MegaPrice V2
     /// @dev                            The constructor reverts if:
     /// @dev                            - `observationFrequency_` is invalid (zero)
     ///

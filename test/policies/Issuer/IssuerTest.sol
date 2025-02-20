@@ -5,8 +5,8 @@ import {Kernel, Actions} from "src/Kernel.sol";
 
 import {Issuer} from "src/policies/Issuer.sol";
 import {RolesAdmin} from "src/policies/RolesAdmin.sol";
-import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
-import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
+import {MegaRoles} from "src/modules/ROLES/MegaRoles.sol";
+import {MegaTreasury} from "src/modules/TRSRY/MegaTreasury.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 
 import {Test} from "@forge-std/Test.sol";
@@ -23,8 +23,8 @@ abstract contract IssuerTest is Test {
 
     // System contracts
     Kernel public kernel;
-    OlympusRoles public ROLES;
-    OlympusTreasury public TRSRY;
+    MegaRoles public ROLES;
+    MegaTreasury public TRSRY;
     MegaToken public mgst;
     Issuer public issuer;
     RolesAdmin public rolesAdmin;
@@ -41,6 +41,7 @@ abstract contract IssuerTest is Test {
     // Permissioned addresses
     address public admin = address(0xAAAA);
     address public manager = address(0xBBBB);
+    address public emergency = address(0xCCCC);
 
     function setUp() public {
         // Set the block timestamp to some time in 2024
@@ -60,8 +61,8 @@ abstract contract IssuerTest is Test {
         vestingModule = new LinearVesting(address(kernel));
 
         // Modules
-        ROLES = new OlympusRoles(kernel);
-        TRSRY = new OlympusTreasury(kernel);
+        ROLES = new MegaRoles(kernel);
+        TRSRY = new MegaTreasury(kernel);
         mgst = new MegaToken(kernel, "MGST", "MGST");
 
         // Policies
@@ -78,10 +79,11 @@ abstract contract IssuerTest is Test {
         // Set permissioned roles
         rolesAdmin.grantRole(bytes32("admin"), admin);
         rolesAdmin.grantRole(bytes32("manager"), manager);
+        rolesAdmin.grantRole(bytes32("emergency"), emergency);
     }
 
     modifier givenLocallyInactive() {
-        vm.prank(admin);
+        vm.prank(emergency);
         issuer.shutdown();
         _;
     }

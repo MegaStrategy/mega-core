@@ -8,7 +8,7 @@ import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 import {Actions, Kernel} from "../src/Kernel.sol";
 import {RolesAdmin} from "../src/policies/RolesAdmin.sol";
-import {ROLESv1} from "../src/modules/ROLES/OlympusRoles.sol";
+import {ROLESv1} from "../src/modules/ROLES/MegaRoles.sol";
 import {Banker} from "../src/policies/Banker.sol";
 import {Issuer} from "../src/policies/Issuer.sol";
 import {IUniswapV3Factory} from "test/lib/IUniswapV3Factory.sol";
@@ -47,11 +47,21 @@ contract TasksScript is Script, WithEnvironment {
         vm.stopBroadcast();
     }
 
+    function addEmergency(string calldata chain_, address emergency_) external {
+        _loadEnv(chain_);
+
+        vm.startBroadcast();
+        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
+            bytes32("emergency"), emergency_
+        );
+        vm.stopBroadcast();
+    }
+
     function transferOwnership(string calldata chain_, address newOwner_) external {
         _loadEnv(chain_);
 
         RolesAdmin rolesAdmin = RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin"));
-        ROLESv1 ROLES = ROLESv1(_envAddressNotZero("mega.modules.OlympusRoles"));
+        ROLESv1 ROLES = ROLESv1(_envAddressNotZero("mega.modules.ROLES"));
 
         vm.startBroadcast();
 
@@ -73,6 +83,12 @@ contract TasksScript is Script, WithEnvironment {
             rolesAdmin.revokeRole(bytes32("admin"), msg.sender);
         } else {
             console2.log("  No admin role to revoke");
+        }
+
+        // Rescind the emergency role
+        if (ROLES.hasRole(msg.sender, bytes32("emergency"))) {
+            console2.log("  Revoking emergency role");
+            rolesAdmin.revokeRole(bytes32("emergency"), msg.sender);
         }
 
         // Transfer ownership of the RolesAdmin
@@ -98,7 +114,7 @@ contract TasksScript is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        // Add as admin and manager first
+        // Add as emergency first
 
         // Initialize the Banker
         vm.startBroadcast();
@@ -106,14 +122,23 @@ contract TasksScript is Script, WithEnvironment {
         vm.stopBroadcast();
     }
 
-    function createDebtToken(string calldata chain_, uint256 conversionPrice_) external {
+    function createDebtToken(
+        string calldata chain_,
+        address expectedAddress_,
+        uint256 conversionPrice_,
+        bytes32 salt_
+    ) external {
         _loadEnv(chain_);
 
         // Create the debt token
         uint48 maturity = uint48(block.timestamp + 7 days);
         vm.startBroadcast();
         address debtToken = Banker(_envAddressNotZero("mega.policies.Banker")).createDebtToken(
-            address(_envAddressNotZero("external.tokens.USDC")), maturity, conversionPrice_
+            address(_envAddressNotZero("external.tokens.USDC")),
+            expectedAddress_,
+            conversionPrice_,
+            maturity,
+            salt_
         );
         vm.stopBroadcast();
         console2.log("debtToken", debtToken);
@@ -226,7 +251,7 @@ contract TasksScript is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
         address weth = _envAddressNotZero("external.tokens.WETH");
 
         // Create the pool. Will revert if the pool already exists.
@@ -296,7 +321,7 @@ contract TasksScript is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
         address weth = _envAddressNotZero("external.tokens.WETH");
         address positionManager = _envAddressNotZero("external.uniswap.v3.positionManager");
 
@@ -329,7 +354,7 @@ contract TasksScript is Script, WithEnvironment {
         view
         returns (MorphoMarketParams memory marketParams)
     {
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
         address usdc = _envAddressNotZero("external.tokens.USDC");
 
         marketParams = MorphoMarketParams({
@@ -346,7 +371,7 @@ contract TasksScript is Script, WithEnvironment {
     function _getMgstDebtTokenMorphoMarketParams(
         address debtToken_
     ) internal view returns (MorphoMarketParams memory marketParams) {
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
 
         marketParams = MorphoMarketParams({
             loanToken: mgst,
@@ -381,7 +406,7 @@ contract TasksScript is Script, WithEnvironment {
     ) external {
         _loadEnv(chain_);
 
-        address mgst = _envAddressNotZero("mega.modules.Token");
+        address mgst = _envAddressNotZero("mega.modules.TOKEN");
         address morpho = _envAddressNotZero("external.morpho");
 
         // Mint MGST

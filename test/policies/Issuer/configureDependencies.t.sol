@@ -6,7 +6,7 @@ import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 import {Kernel} from "src/Kernel.sol";
 import {Actions} from "src/Kernel.sol";
 import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
-import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
+import {MegaTreasury} from "src/modules/TRSRY/MegaTreasury.sol";
 
 contract MockTokenModule is MegaToken {
     constructor(
@@ -14,10 +14,10 @@ contract MockTokenModule is MegaToken {
     ) MegaToken(kernel_, "MGST", "MGST") {}
 }
 
-contract MockTreasuryModule is OlympusTreasury {
+contract MockTreasuryModule is MegaTreasury {
     constructor(
         Kernel kernel_
-    ) OlympusTreasury(kernel_) {}
+    ) MegaTreasury(kernel_) {}
 }
 
 contract IssuerConfigureDependenciesTest is IssuerTest {

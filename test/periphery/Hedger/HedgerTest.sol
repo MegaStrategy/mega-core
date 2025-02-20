@@ -27,8 +27,8 @@ import {SafeTransferLib} from "@solmate-6.8.0/utils/SafeTransferLib.sol";
 
 import {Kernel, Actions} from "src/Kernel.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
-import {OlympusRoles} from "src/modules/ROLES/OlympusRoles.sol";
-import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
+import {MegaRoles} from "src/modules/ROLES/MegaRoles.sol";
+import {MegaTreasury} from "src/modules/TRSRY/MegaTreasury.sol";
 import {Banker} from "src/policies/Banker.sol";
 import {Hedger} from "src/periphery/Hedger.sol";
 import {Issuer} from "src/policies/Issuer.sol";
@@ -40,8 +40,8 @@ contract HedgerTest is Test, WithSalts {
 
     Kernel public kernel;
     MegaToken public mgst;
-    OlympusRoles public roles;
-    OlympusTreasury public treasury;
+    MegaRoles public roles;
+    MegaTreasury public treasury;
     Banker public banker;
     Issuer public issuer;
     RolesAdmin public rolesAdmin;
@@ -69,6 +69,7 @@ contract HedgerTest is Test, WithSalts {
     address public constant MANAGER = address(0xCCCC);
     address public constant ADMIN = address(0xDDDD);
     address public constant OPERATOR = address(0xEEEE);
+    address public constant EMERGENCY = address(0xFFFF);
 
     uint24 public constant RESERVE_WETH_SWAP_FEE = 500;
     uint24 public constant MGST_WETH_SWAP_FEE = 3000;
@@ -94,8 +95,8 @@ contract HedgerTest is Test, WithSalts {
 
         vm.startPrank(OWNER);
         mgst = new MegaToken(kernel, "MGST", "MGST");
-        roles = new OlympusRoles(kernel);
-        treasury = new OlympusTreasury(kernel);
+        roles = new MegaRoles(kernel);
+        treasury = new MegaTreasury(kernel);
         issuer = new Issuer(kernel, address(0), address(0)); // No oToken teller needed
         rolesAdmin = new RolesAdmin(kernel);
         vm.stopPrank();
@@ -123,10 +124,11 @@ contract HedgerTest is Test, WithSalts {
         vm.startPrank(OWNER);
         rolesAdmin.grantRole("manager", MANAGER);
         rolesAdmin.grantRole("admin", ADMIN);
+        rolesAdmin.grantRole("emergency", EMERGENCY);
         vm.stopPrank();
 
         // Activate policies
-        vm.startPrank(ADMIN);
+        vm.startPrank(EMERGENCY);
         banker.initialize(0, 0, 0, 1e18);
         vm.stopPrank();
 
@@ -226,7 +228,11 @@ contract HedgerTest is Test, WithSalts {
         // Create the debt token
         vm.prank(MANAGER);
         debtToken = banker.createDebtToken(
-            address(reserve), uint48(block.timestamp + 30 days), DEBT_TOKEN_CONVERSION_PRICE
+            address(reserve),
+            address(0),
+            DEBT_TOKEN_CONVERSION_PRICE,
+            uint48(block.timestamp + 30 days),
+            bytes32(0)
         );
     }
 

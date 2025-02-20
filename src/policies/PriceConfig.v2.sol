@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import {Kernel, Keycode, Permissions, Policy, toKeycode} from "src/Kernel.sol";
 import {Submodule, SubKeycode} from "src/Submodules.sol";
-import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
+import {ROLESv1, RolesConsumer} from "src/modules/ROLES/MegaRoles.sol";
 import {PRICEv2} from "src/modules/PRICE/PRICE.v2.sol";
 
 /// @notice     Policy to configure PRICEv2
