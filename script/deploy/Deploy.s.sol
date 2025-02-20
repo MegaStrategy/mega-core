@@ -6,7 +6,7 @@ import {stdJson} from "@forge-std/StdJson.sol";
 import {WithSalts} from "../salts/WithSalts.s.sol";
 import {WithEnvironment} from "./WithEnvironment.s.sol";
 
-import {Authority} from "solmate-6.8.0/auth/Auth.sol";
+import {Authority} from "@solmate-6.8.0/auth/Auth.sol";
 import {FixedStrikeOptionTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
 
 import {Actions, fromKeycode, Kernel, Keycode, Module, toKeycode} from "src/Kernel.sol";
@@ -31,8 +31,8 @@ import {MegaTokenOracle} from "src/policies/MegaTokenOracle.sol";
 import {
     Id as MorphoId,
     MarketParams as MorphoMarketParams
-} from "morpho-blue-1.0.0/interfaces/IMorpho.sol";
-import {MarketParamsLib} from "morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
+} from "@morpho-blue-1.0.0/interfaces/IMorpho.sol";
+import {MarketParamsLib} from "@morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
 
 // solhint-disable max-states-count
 /// @notice Script to deploy the system

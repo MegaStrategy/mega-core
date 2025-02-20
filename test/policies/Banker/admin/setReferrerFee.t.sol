@@ -3,8 +3,8 @@ pragma solidity 0.8.19;
 
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
 import {IBanker} from "src/policies/interfaces/IBanker.sol";
-import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
-import {IFeeManager} from "axis-core-1.0.1/interfaces/IFeeManager.sol";
+import {toKeycode} from "@axis-core-1.0.1/modules/Keycode.sol";
+import {IFeeManager} from "@axis-core-1.0.1/interfaces/IFeeManager.sol";
 
 import {BankerTest} from "../BankerTest.sol";
 

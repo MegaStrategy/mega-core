@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {FixedPointMathLib} from "solmate-6.8.0/utils/FixedPointMathLib.sol";
+import {FixedPointMathLib} from "@solmate-6.8.0/utils/FixedPointMathLib.sol";
 import {FullMath} from "src/lib/oTokens/FullMath.sol";
 
 /// @notice     Library to calculate sqrtPriceX96 from token amounts

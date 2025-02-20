@@ -2,12 +2,12 @@
 pragma solidity 0.8.19;
 
 // Axis dependencies
-import {BaseCallback, Callbacks} from "axis-core-1.0.1/bases/BaseCallback.sol";
-import {IAuctionHouse, IAuction} from "axis-core-1.0.1/interfaces/IAuctionHouse.sol";
-import {IFeeManager} from "axis-core-1.0.1/interfaces/IFeeManager.sol";
+import {BaseCallback, Callbacks} from "@axis-core-1.0.1/bases/BaseCallback.sol";
+import {IAuctionHouse, IAuction} from "@axis-core-1.0.1/interfaces/IAuctionHouse.sol";
+import {IFeeManager} from "@axis-core-1.0.1/interfaces/IFeeManager.sol";
 import {IEncryptedMarginalPrice} from
-    "axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
-import {toKeycode as toAxisKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
+    "@axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
+import {toKeycode as toAxisKeycode} from "@axis-core-1.0.1/modules/Keycode.sol";
 
 import {Kernel, Policy, Keycode, toKeycode, Permissions} from "src/Kernel.sol";
 
@@ -21,7 +21,7 @@ import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 import {uint2str} from "src/lib/Uint2Str.sol";
 
 // External
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 import {TransferHelper} from "src/lib/TransferHelper.sol";
 
 import {IBanker} from "./interfaces/IBanker.sol";

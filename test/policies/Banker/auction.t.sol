@@ -3,18 +3,18 @@ pragma solidity 0.8.19;
 
 import {IBanker} from "src/policies/interfaces/IBanker.sol";
 import {ROLESv1} from "src/modules/ROLES/ROLES.v1.sol";
-import {IAuction} from "axis-core-1.0.1/interfaces/modules/IAuction.sol";
+import {IAuction} from "@axis-core-1.0.1/interfaces/modules/IAuction.sol";
 import {ConvertibleDebtToken} from "src/lib/ConvertibleDebtToken.sol";
 import {
     Veecode,
     fromKeycode,
     fromVeecode,
     keycodeFromVeecode
-} from "axis-core-1.0.1/modules/Keycode.sol";
-import {ICallback} from "axis-core-1.0.1/interfaces/ICallback.sol";
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+} from "@axis-core-1.0.1/modules/Keycode.sol";
+import {ICallback} from "@axis-core-1.0.1/interfaces/ICallback.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 import {IEncryptedMarginalPrice} from
-    "axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
+    "@axis-core-1.0.1/interfaces/modules/auctions/IEncryptedMarginalPrice.sol";
 
 import {BankerTest} from "./BankerTest.sol";
 

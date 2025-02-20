@@ -9,17 +9,17 @@ import {TransferHelper} from "src/lib/TransferHelper.sol";
 import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 // Axis dependencies
-import {toKeycode} from "axis-core-1.0.1/modules/Keycode.sol";
-import {IAuctionHouse} from "axis-core-1.0.1/interfaces/IAuctionHouse.sol";
-import {IFeeManager} from "axis-core-1.0.1/interfaces/IFeeManager.sol";
-import {IAuction} from "axis-core-1.0.1/interfaces/modules/IAuction.sol";
-import {IFixedPriceBatch} from "axis-core-1.0.1/interfaces/modules/auctions/IFixedPriceBatch.sol";
-import {ICallback} from "axis-core-1.0.1/interfaces/ICallback.sol";
+import {toKeycode} from "@axis-core-1.0.1/modules/Keycode.sol";
+import {IAuctionHouse} from "@axis-core-1.0.1/interfaces/IAuctionHouse.sol";
+import {IFeeManager} from "@axis-core-1.0.1/interfaces/IFeeManager.sol";
+import {IAuction} from "@axis-core-1.0.1/interfaces/modules/IAuction.sol";
+import {IFixedPriceBatch} from "@axis-core-1.0.1/interfaces/modules/auctions/IFixedPriceBatch.sol";
+import {ICallback} from "@axis-core-1.0.1/interfaces/ICallback.sol";
 import {IBaseDirectToLiquidity} from "src/lib/axis/IBaseDirectToLiquidity.sol";
 import {IUniswapV3DirectToLiquidity} from "src/lib/axis/IUniswapV3DirectToLiquidity.sol";
 import {IUniswapV3DTLWithAllocatedAllowlist} from
-    "axis-periphery-1.0.0/callbacks/liquidity/IUniswapV3DTLWithAllocatedAllowlist.sol";
-import {IMetadataRegistry} from "axis-registry-1.0.0/interfaces/IMetadataRegistry.sol";
+    "@axis-periphery-1.0.0/callbacks/liquidity/IUniswapV3DTLWithAllocatedAllowlist.sol";
+import {IMetadataRegistry} from "@axis-registry-1.0.0/interfaces/IMetadataRegistry.sol";
 
 // Mega contracts
 import {Issuer} from "src/policies/Issuer.sol";

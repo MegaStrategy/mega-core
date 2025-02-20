@@ -10,12 +10,12 @@ import {OlympusTreasury} from "src/modules/TRSRY/OlympusTreasury.sol";
 import {MegaToken} from "src/modules/TOKEN/MegaToken.sol";
 
 import {Test} from "@forge-std/Test.sol";
-import {MockERC20} from "solmate-6.8.0/test/utils/mocks/MockERC20.sol";
+import {MockERC20} from "@solmate-6.8.0/test/utils/mocks/MockERC20.sol";
 
 import {FixedStrikeOptionTeller as oTeller} from "src/lib/oTokens/FixedStrikeOptionTeller.sol";
-import {Authority} from "solmate-6.8.0/auth/Auth.sol";
+import {Authority} from "@solmate-6.8.0/auth/Auth.sol";
 
-import {LinearVesting} from "axis-core-1.0.1/modules/derivatives/LinearVesting.sol";
+import {LinearVesting} from "@axis-core-1.0.1/modules/derivatives/LinearVesting.sol";
 
 // solhint-disable max-states-count
 abstract contract IssuerTest is Test {

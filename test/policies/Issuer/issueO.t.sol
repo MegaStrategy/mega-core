@@ -6,7 +6,7 @@ import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptio
 
 import {IssuerTest} from "./IssuerTest.sol";
 import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 contract IssuerIssueOTest is IssuerTest {
     // test cases

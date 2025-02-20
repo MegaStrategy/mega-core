@@ -12,8 +12,8 @@ import {ROLESv1, RolesConsumer} from "src/modules/ROLES/OlympusRoles.sol";
 import {IIssuer} from "src/policies/interfaces/IIssuer.sol";
 
 // Libraries
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
-import {Timestamp} from "axis-core-1.0.1/lib/Timestamp.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
+import {Timestamp} from "@axis-core-1.0.1/lib/Timestamp.sol";
 import {TransferHelper} from "src/lib/TransferHelper.sol";
 
 // Option tokens
@@ -21,8 +21,8 @@ import {FixedStrikeOptionToken as oToken} from "src/lib/oTokens/FixedStrikeOptio
 import {IFixedStrikeOptionTeller as oTeller} from "src/lib/oTokens/IFixedStrikeOptionTeller.sol";
 
 // Vesting
-import {ILinearVesting} from "axis-core-1.0.1/interfaces/modules/derivatives/ILinearVesting.sol";
-import {LinearVesting} from "axis-core-1.0.1/modules/derivatives/LinearVesting.sol";
+import {ILinearVesting} from "@axis-core-1.0.1/interfaces/modules/derivatives/ILinearVesting.sol";
+import {LinearVesting} from "@axis-core-1.0.1/modules/derivatives/LinearVesting.sol";
 
 /// @title  Issuer
 /// @notice Policy that manages issuance of the protocol token and options tokens

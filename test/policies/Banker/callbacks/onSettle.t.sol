@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
-import {BaseCallback} from "axis-core-1.0.1/bases/BaseCallback.sol";
-import {ERC20} from "solmate-6.8.0/tokens/ERC20.sol";
+import {BaseCallback} from "@axis-core-1.0.1/bases/BaseCallback.sol";
+import {ERC20} from "@solmate-6.8.0/tokens/ERC20.sol";
 
 import {BankerTest} from "../BankerTest.sol";
 
