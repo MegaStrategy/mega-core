@@ -1,6 +1,6 @@
 {
-    "name": "megastrategy",
-    "version": "0.1.0",
+    "name": "mega-core",
+    "version": "1.0.0",
     "engines": {
         "npm": "use-pnpm",
         "yarn": "use-pnpm"
