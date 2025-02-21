@@ -159,4 +159,16 @@ contract WithSalts is Script {
 
         console2.log("Salt set for", saltKey_, "with prefix", prefix_);
     }
+
+    function _computeAddress(
+        address deployer_,
+        bytes32 salt_,
+        bytes32 bytecodeHash_
+    ) internal pure returns (address) {
+        return address(
+            uint160(
+                uint256(keccak256(abi.encodePacked(bytes1(0xff), deployer_, salt_, bytecodeHash_)))
+            )
+        );
+    }
 }

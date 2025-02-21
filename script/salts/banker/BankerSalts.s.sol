@@ -80,24 +80,16 @@ contract BankerSalts is Script, WithSalts, WithEnvironment {
             bytes memory contractCode = type(ConvertibleDebtToken).creationCode;
             (string memory bytecodePath, bytes32 bytecodeHash) =
                 _writeBytecode("ConvertibleDebtToken", contractCode, args);
-            _setSalt(bytecodePath, prefix_, "ConvertibleDebtToken", bytecodeHash);
+            _setSaltWithDeployer(
+                bytecodePath, prefix_, "ConvertibleDebtToken", bytecodeHash, banker
+            );
             salt = _getSalt("ConvertibleDebtToken", contractCode, args);
-        }
 
-        // Do a mock deployment and display the expected address
-        vm.startBroadcast(CREATE2_DEPLOYER);
-        ConvertibleDebtToken debtToken = new ConvertibleDebtToken{salt: salt}(
-            name,
-            symbol,
-            underlying,
-            _envAddressNotZero("mega.modules.TOKEN"),
-            maturity,
-            conversionPrice,
-            banker
-        );
-        console2.log("Salt:");
-        console2.logBytes32(salt);
-        console2.log("Expected address:", address(debtToken));
-        vm.stopBroadcast();
+            // Display the expected address
+            address expectedAddress = _computeAddress(banker, salt, bytecodeHash);
+            console2.log("Salt:");
+            console2.logBytes32(salt);
+            console2.log("Expected address:", expectedAddress);
+        }
     }
 }
