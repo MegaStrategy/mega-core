@@ -8,7 +8,7 @@ import {TRSRYv1} from "src/modules/TRSRY/TRSRY.v1.sol";
 import {TOKENv1} from "src/modules/TOKEN/TOKEN.v1.sol";
 
 /// @notice Contract to allow emergency shutdown of minting and treasury withdrawals
-/// @dev    All functions are only callable by the "emergency" role
+/// @dev    Shutdown functions are only callable by the "emergency" role
 contract Emergency is Policy, RolesConsumer {
     // =========  EVENTS ========= //
 
@@ -86,20 +86,20 @@ contract Emergency is Policy, RolesConsumer {
     }
 
     /// @notice Restart treasury withdrawals and minting after shutdown
-    function restart() external onlyRole("emergency") {
+    function restart() external onlyRole("admin") {
         TRSRY.activate();
         TOKEN.activate();
         _reportStatus();
     }
 
     /// @notice Restart treasury withdrawals after shutdown
-    function restartWithdrawals() external onlyRole("emergency") {
+    function restartWithdrawals() external onlyRole("admin") {
         TRSRY.activate();
         _reportStatus();
     }
 
     /// @notice Restart minting after shutdown
-    function restartMinting() external onlyRole("emergency") {
+    function restartMinting() external onlyRole("admin") {
         TOKEN.activate();
         _reportStatus();
     }

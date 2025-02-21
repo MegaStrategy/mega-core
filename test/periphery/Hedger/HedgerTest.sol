@@ -128,7 +128,7 @@ contract HedgerTest is Test, WithSalts {
         vm.stopPrank();
 
         // Activate policies
-        vm.startPrank(EMERGENCY);
+        vm.startPrank(ADMIN);
         banker.initialize(0, 0, 0, 1e18);
         vm.stopPrank();
 

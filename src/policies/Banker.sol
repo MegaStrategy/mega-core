@@ -128,14 +128,14 @@ contract Banker is Policy, RolesConsumer, BaseCallback, IBanker {
 
     /// @notice Enable the contract functionality
     /// @dev    This function reverts if:
-    ///         - The caller does not have the emergency role
+    ///         - The caller does not have the admin role
     ///         - The policy is already active
     function initialize(
         uint48 maxDiscount_,
         uint24 minFillPercent_,
         uint48 referrerFee_,
         uint256 maxBids_
-    ) external onlyRole("emergency") {
+    ) external onlyRole("admin") {
         // Validate that the policy is not already active
         if (locallyActive) revert InvalidState();
 
