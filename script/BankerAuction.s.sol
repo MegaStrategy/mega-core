@@ -22,12 +22,24 @@ contract BankerAuctionScript is WithEnvironment, CloakConsumer {
         console2.log("Auction created");
     }
 
+    function _setLabels() internal {
+        address banker = _envAddressNotZero("mega.policies.Banker");
+        vm.label(banker, "Banker");
+
+        address underlying = address(_envAddressNotZero("external.tokens.USDC"));
+        vm.label(underlying, "USDC");
+
+        address ROLES = _envAddressNotZero("mega.modules.ROLES");
+        vm.label(ROLES, "ROLES");
+    }
+
     function create(
         string calldata chain_,
         string calldata auctionFilePath_,
         string calldata ipfsHash_
     ) external {
         _loadEnv(chain_);
+        _setLabels();
 
         // Get public key
         Point memory publicKey = _getPublicKey();
