@@ -22,12 +22,24 @@ contract BankerAuctionScript is WithEnvironment, CloakConsumer {
         console2.log("Auction created");
     }
 
+    function _setLabels() internal {
+        address banker = _envAddressNotZero("mega.policies.Banker");
+        vm.label(banker, "Banker");
+
+        address underlying = address(_envAddressNotZero("external.tokens.USDC"));
+        vm.label(underlying, "USDC");
+
+        address ROLES = _envAddressNotZero("mega.modules.ROLES");
+        vm.label(ROLES, "ROLES");
+    }
+
     function create(
         string calldata chain_,
         string calldata auctionFilePath_,
         string calldata ipfsHash_
     ) external {
         _loadEnv(chain_);
+        _setLabels();
 
         // Get public key
         Point memory publicKey = _getPublicKey();
@@ -41,22 +53,16 @@ contract BankerAuctionScript is WithEnvironment, CloakConsumer {
 
             // Set up debt token params
             dtParams = IBanker.DebtTokenParams({
-                underlying: address(_envAddressNotZero("external.tokens.USDC")),
-                expectedAddress: address(
-                    vm.parseJsonAddress(auctionData, ".auctionParams.expectedAddress")
-                ),
+                underlying: _envAddressNotZero("external.tokens.USDC"),
+                expectedAddress: vm.parseJsonAddress(auctionData, ".auctionParams.expectedAddress"),
                 conversionPrice: vm.parseJsonUint(auctionData, ".auctionParams.conversionPrice"),
-                maturity: uint48(
-                    block.timestamp + uint48(vm.parseJsonUint(auctionData, ".auctionParams.maturity"))
-                ),
+                maturity: uint48(vm.parseJsonUint(auctionData, ".auctionParams.maturity")),
                 salt: vm.parseJsonBytes32(auctionData, ".auctionParams.salt")
             });
 
             // Set up auction params
             auctionParams = IBanker.AuctionParams({
-                start: uint48(
-                    block.timestamp + uint48(vm.parseJsonUint(auctionData, ".auctionParams.startDelay"))
-                ),
+                start: uint48(vm.parseJsonUint(auctionData, ".auctionParams.start")),
                 duration: uint48(vm.parseJsonUint(auctionData, ".auctionParams.duration")),
                 capacity: uint96(vm.parseJsonUint(auctionData, ".auctionParams.capacity")),
                 auctionPublicKey: publicKey,

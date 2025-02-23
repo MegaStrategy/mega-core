@@ -1,18 +1,16 @@
 #!/bin/bash
 
-# Creates a salt for a ConvertibleDebtToken
-#
-# Usage:
-# ./cv_token_salts.sh
-#   --env <.env file>
-#   --account <cast account>
-#   --prefix <prefix>
-#   --auctionFilePath <auction file path>
+# Installs the modules and policies into the Kernel
+# Usage: ./kernelInstallation.sh
+#   --env <.env>
+#   --account <account>
+#   --broadcast <false>
 #
 # Environment variables:
-# CHAIN
+# CHAIN:              Chain name to deploy to. Corresponds to names in "./script/env.json".
+# RPC_URL:            URL for the RPC node.
 
-# Exit if any error occurs
+# Exit if there is an error
 set -e
 
 # Load named arguments
@@ -23,17 +21,19 @@ load_named_args "$@"
 # Load environment variables
 load_env
 
+# Apply defaults to command-line arguments
+BROADCAST=${broadcast:-false}
+
 # Validate named arguments
 echo ""
 echo "Validating arguments"
 validate_text "$account" "No account specified. Provide the cast wallet after the --account flag."
-validate_text "$prefix" "No prefix specified. Provide the prefix after the --prefix flag."
-validate_file "$auctionFilePath" "No auction file path specified. Provide the path after the --auctionFilePath flag."
 
 # Validate environment variables
 echo ""
 echo "Validating environment variables"
 validate_text "$CHAIN" "No chain specified. Specify the CHAIN in the $ENV_FILE file."
+validate_text "$RPC_URL" "No RPC URL specified. Specify the RPC_URL in the $ENV_FILE file."
 
 # Get the address of the cast wallet
 echo ""
@@ -45,15 +45,15 @@ echo "Summary:"
 echo "  Deploy from account: $account"
 echo "  Sender: $CAST_ADDRESS"
 echo "  Chain: $CHAIN"
-echo "  Prefix: $prefix"
-echo "  Auction file path: $auctionFilePath"
+echo "  RPC URL: $RPC_URL"
 
-forge script script/salts/banker/BankerSalts.s.sol:BankerSalts \
+# Validate and set forge script flags
+source $SCRIPT_DIR/lib/forge.sh
+set_broadcast_flag $BROADCAST
+
+forge script ./script/deploy/Deploy.s.sol:Deploy \
+    --sig "kernelInstallation(string)()" $CHAIN \
+    --rpc-url $RPC_URL --account $account \
     --sender $CAST_ADDRESS \
-    --account $account \
-    --rpc-url $RPC_URL \
-    --sig "generateDebtTokenSalt(string,string,string)()" $CHAIN $auctionFilePath $prefix \
-    --slow -vvv
-
-# Lint
-pnpm run lint
+    --slow -vvv \
+    $BROADCAST_FLAG
