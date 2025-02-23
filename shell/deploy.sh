@@ -12,7 +12,7 @@
 #
 # Environment variables:
 # CHAIN:              Chain name to deploy to. Corresponds to names in "./script/env.json".
-# ETHERSCAN_API_KEY:  API key for Etherscan verification.
+# ETHERSCAN_KEY:  API key for Etherscan verification.
 # RPC_URL:            URL for the RPC node.
 # VERIFIER_URL:       URL for the Etherscan API verifier.
 
@@ -62,7 +62,7 @@ echo "  Sequence file: $SEQUENCE_FILE"
 # Validate and set forge script flags
 source $SCRIPT_DIR/lib/forge.sh
 set_broadcast_flag $BROADCAST
-set_verify_flag $VERIFY
+set_verify_flag $VERIFY $ETHERSCAN_KEY $VERIFIER_URL
 set_resume_flag $RESUME
 
 # Deploy using script
