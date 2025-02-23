@@ -71,7 +71,7 @@ When issuing tokens, the `Banker` and `Issuer` policies seek pre-approval from t
 
 #### Deployment
 
-Use the `script/deploy/deploy.sh` script to deploy the system.
+Use the `./shell/deploy.sh` script to deploy the system.
 
 The following must be performed to deploy and activate the system:
 
