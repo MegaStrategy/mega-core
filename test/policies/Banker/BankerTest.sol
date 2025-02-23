@@ -154,7 +154,7 @@ abstract contract BankerTest is Test, WithSalts {
     // ======= Modifiers ======= //
 
     modifier givenPolicyIsActive() {
-        vm.prank(emergency);
+        vm.prank(admin);
         banker.initialize(maxDiscount, minFillPercent, referrerFee, maxBids);
         _;
     }
