@@ -108,12 +108,11 @@ contract TasksScript is Script, WithEnvironment {
         console2.log("New admin must call RolesAdmin.pullNewAdmin()");
     }
 
+    /// @dev Caller should be an admin
     function initialize(
         string calldata chain_
     ) external {
         _loadEnv(chain_);
-
-        // Add as emergency first
 
         // Initialize the Banker
         vm.startBroadcast();
