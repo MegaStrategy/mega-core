@@ -27,12 +27,6 @@ import {Issuer} from "src/policies/Issuer.sol";
 import {PriceConfigV2} from "src/policies/PriceConfig.v2.sol";
 import {MegaTokenOracle} from "src/policies/MegaTokenOracle.sol";
 
-import {
-    Id as MorphoId,
-    MarketParams as MorphoMarketParams
-} from "@morpho-blue-1.0.0/interfaces/IMorpho.sol";
-import {MarketParamsLib} from "@morpho-blue-1.0.0/libraries/MarketParamsLib.sol";
-
 // solhint-disable max-states-count
 /// @notice Script to deploy the system
 /// @dev    The address that this script is broadcast from must have write access to the contracts being configured
