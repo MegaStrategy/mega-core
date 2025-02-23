@@ -15,10 +15,10 @@ contract IssuerActivateTest is IssuerTest {
     function test_callerNotPermissioned_reverts(
         address caller_
     ) public {
-        vm.assume(caller_ != emergency);
+        vm.assume(caller_ != admin);
 
         vm.expectRevert(
-            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("emergency"))
+            abi.encodeWithSelector(ROLESv1.ROLES_RequireRole.selector, bytes32("admin"))
         );
 
         vm.prank(caller_);
@@ -30,12 +30,12 @@ contract IssuerActivateTest is IssuerTest {
         vm.expectRevert(abi.encodeWithSelector(IIssuer.InvalidState.selector));
 
         // Call
-        vm.prank(emergency);
+        vm.prank(admin);
         issuer.activate();
     }
 
     function test_activate() public givenLocallyInactive {
-        vm.prank(emergency);
+        vm.prank(admin);
         issuer.activate();
 
         assertEq(issuer.locallyActive(), true, "locallyActive");
