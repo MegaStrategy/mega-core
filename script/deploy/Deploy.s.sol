@@ -28,6 +28,7 @@ import {PriceConfigV2} from "src/policies/PriceConfig.v2.sol";
 import {MegaTokenOracle} from "src/policies/MegaTokenOracle.sol";
 
 // solhint-disable max-states-count
+// solhint-disable custom-errors
 /// @notice Script to deploy the system
 /// @dev    The address that this script is broadcast from must have write access to the contracts being configured
 contract Deploy is Script, WithSalts, WithEnvironment {
