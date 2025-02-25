@@ -107,6 +107,7 @@ After deployment, a launch auction needs to be created in order to accept wETH d
 Follow these steps to create the launch auction:
 
 1. Set the auction details in the `script/auctions/launch.json` file.
+    - Note that the `start` value is an absolute timestamp
 2. Create a CSV file with the allowlist addresses and allocations.
 3. Generate the merkle root from the CSV file using the [oz-merkle-tree tool](https://github.com/Axis-Fi/axis-utils/tree/master/packages/oz-merkle-tree)
 4. Run the `createLaunchAuction.sh` script: `./shell/createLaunchAuction.sh --account <CAST_ACCOUNT> --allowlist <PATH_TO_ALLOWLIST_CSV> --merkleRoot <MERKLE_ROOT> --testnet <true|false> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`

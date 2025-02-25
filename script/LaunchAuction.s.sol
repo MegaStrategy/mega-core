@@ -58,6 +58,37 @@ contract LaunchAuction is WithEnvironment {
         console2.log("Loading auction data from ", auctionFilePath_);
         string memory auctionData = vm.readFile(auctionFilePath_);
 
+        // Validate the auction data
+        // - Capacity is not zero
+        // - Price is not zero
+        // - Start is not zero
+        // - Duration is not zero
+        {
+            uint256 capacity = vm.parseJsonUint(auctionData, ".auctionParams.capacity");
+            if (capacity == 0) {
+                // solhint-disable-next-line custom-errors
+                revert("Capacity is zero");
+            }
+
+            uint256 price = vm.parseJsonUint(auctionData, ".auctionParams.price");
+            if (price == 0) {
+                // solhint-disable-next-line custom-errors
+                revert("Price is zero");
+            }
+
+            uint256 start = vm.parseJsonUint(auctionData, ".auctionParams.start");
+            if (start == 0) {
+                // solhint-disable-next-line custom-errors
+                revert("Start is zero");
+            }
+
+            uint256 duration = vm.parseJsonUint(auctionData, ".auctionParams.duration");
+            if (duration == 0) {
+                // solhint-disable-next-line custom-errors
+                revert("Duration is zero");
+            }
+        }
+
         // Determine the amount of tokens to mint to the caller
         // Capacity + curator fee + DTL
         uint256 auctionHouseAmount;
@@ -80,30 +111,37 @@ contract LaunchAuction is WithEnvironment {
             dtlAmount = capacity * uint256(poolPercent) / uint256(100e2);
 
             auctionHouseAmount = capacity + curatorFee;
-            console2.log("  Capacity", capacity);
-            console2.log("  Curator fee", curatorFee);
-            console2.log("  DTL liquidity", dtlAmount);
+            console2.log("  Capacity", capacity, "/1e18");
+            console2.log("  Curator", curator);
+            console2.log("  Curator fee", curatorFee, "/10000");
+            console2.log("  Pool percent", poolPercent, "/10000");
+            console2.log("  DTL liquidity", dtlAmount, "/1e18");
         }
 
         // Mint tokens to the caller
         // This requires the caller to have the "admin" role
         vm.startBroadcast();
+        console2.log("");
         console2.log("Minting tokens to the caller", msg.sender);
         Issuer(_envAddressNotZero("mega.policies.Issuer")).mint(
             msg.sender, auctionHouseAmount + dtlAmount
         );
+        console2.log("  Minted", auctionHouseAmount + dtlAmount, "/1e18", "tokens to the caller");
         vm.stopBroadcast();
 
         // Approve the AuctionHouse to transfer the tokens
         vm.startBroadcast();
+        console2.log("");
         console2.log("Approving the AuctionHouse to transfer the tokens");
         ERC20(_envAddressNotZero("mega.modules.TOKEN")).safeApprove(
             _envAddressNotZero("axis.BatchAuctionHouse"), auctionHouseAmount
         );
+        console2.log("  Approved", auctionHouseAmount, "/1e18", "tokens");
         vm.stopBroadcast();
 
         // Approve the DTL callback to transfer the tokens
         vm.startBroadcast();
+        console2.log("");
         console2.log("Approving the DTL callback to transfer the tokens");
         ERC20(_envAddressNotZero("mega.modules.TOKEN")).safeApprove(
             _envAddressNotZero(
@@ -111,6 +149,7 @@ contract LaunchAuction is WithEnvironment {
             ),
             dtlAmount
         );
+        console2.log("  Approved", dtlAmount, "/1e18", "tokens");
         vm.stopBroadcast();
 
         // Prepare Uniswap V3 DTL callback parameters
@@ -119,6 +158,10 @@ contract LaunchAuction is WithEnvironment {
             poolFee: uint24(vm.parseJsonUint(auctionData, ".callbackParams.poolFee")),
             maxSlippage: uint24(vm.parseJsonUint(auctionData, ".callbackParams.maxSlippage"))
         });
+        console2.log("");
+        console2.log("Uniswap V3 DTL params");
+        console2.log("  Pool Fee", uniswapV3Params.poolFee, "/10000");
+        console2.log("  Max Slippage", uniswapV3Params.maxSlippage, "/10000");
 
         // Prepare BaseDTL callback parameters
         IBaseDirectToLiquidity.OnCreateParams memory dtlParams = IBaseDirectToLiquidity
@@ -129,6 +172,10 @@ contract LaunchAuction is WithEnvironment {
             recipient: _envAddressNotZero("mega.modules.TRSRY"),
             implParams: abi.encode(uniswapV3Params)
         });
+        console2.log("  Pool Percent", dtlParams.poolPercent, "/10000");
+        console2.log("  Vesting Start", dtlParams.vestingStart);
+        console2.log("  Vesting Expiry", dtlParams.vestingExpiry);
+        console2.log("  Recipient", dtlParams.recipient);
 
         // Prepare the routing parameters
         IAuctionHouse.RoutingParams memory routing = IAuctionHouse.RoutingParams({
@@ -147,23 +194,42 @@ contract LaunchAuction is WithEnvironment {
             derivativeParams: "",
             wrapDerivative: false
         });
+        console2.log("");
+        console2.log("Routing Params");
+        console2.log("  Auction Type", "FPBA");
+        console2.log("  Base Token", routing.baseToken);
+        console2.log("  Quote Token", routing.quoteToken);
+        console2.log("  Curator", routing.curator);
+        console2.log("  Referrer Fee", routing.referrerFee, "/10000");
+        console2.log("  Callbacks", address(routing.callbacks));
+        console2.log("  Derivative Type", "");
+        console2.log("  Derivative Params", "");
+        console2.log("  Wrap Derivative", false);
 
         // Prepare the FPB parameters
         IFixedPriceBatch.AuctionDataParams memory fpbParams = IFixedPriceBatch.AuctionDataParams({
             price: vm.parseJsonUint(auctionData, ".auctionParams.price"),
             minFillPercent: uint24(vm.parseJsonUint(auctionData, ".auctionParams.minFillPercent"))
         });
+        console2.log("");
+        console2.log("FPB Params");
+        console2.log("  Price", fpbParams.price, "/1e18");
+        console2.log("  Min Fill Percent", fpbParams.minFillPercent, "/10000");
 
         // Prepare the auction parameters
         IAuction.AuctionParams memory auction = IAuction.AuctionParams({
-            start: uint48(
-                block.timestamp + uint48(vm.parseJsonUint(auctionData, ".auctionParams.startDelay"))
-            ),
+            start: uint48(vm.parseJsonUint(auctionData, ".auctionParams.start")),
             duration: uint48(vm.parseJsonUint(auctionData, ".auctionParams.duration")),
             capacityInQuote: false,
             capacity: vm.parseJsonUint(auctionData, ".auctionParams.capacity"),
             implParams: abi.encode(fpbParams)
         });
+        console2.log("");
+        console2.log("Auction Params");
+        console2.log("  Start", auction.start);
+        console2.log("  Duration", auction.duration);
+        console2.log("  Capacity", auction.capacity, "/1e18");
+        console2.log("  Capacity In Quote", auction.capacityInQuote);
 
         // Create the auction
         vm.startBroadcast();
