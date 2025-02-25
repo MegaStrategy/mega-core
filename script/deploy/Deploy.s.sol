@@ -606,7 +606,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
             inputs[0] = "mkdir";
             inputs[1] = "deployments";
 
-            vm.ffi(inputs);
+            _ffi(inputs);
         }
 
         // Create file path
@@ -648,7 +648,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
             inputs[1] = string.concat("current.", chain_, ".", deployKey);
             inputs[2] = vm.toString(deployedTo[deployKey]);
 
-            vm.ffi(inputs);
+            _ffi(inputs);
         }
         console2.log("Done");
     }

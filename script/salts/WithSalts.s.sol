@@ -5,7 +5,9 @@ import {Script} from "@forge-std/Script.sol";
 import {console2} from "@forge-std/console2.sol";
 import {stdJson} from "@forge-std/StdJson.sol";
 
-contract WithSalts is Script {
+import {WithFfi} from "../WithFfi.s.sol";
+
+contract WithSalts is Script, WithFfi {
     using stdJson for string;
 
     string internal constant _SALTS_PATH = "./script/salts/salts.json";
@@ -31,7 +33,7 @@ contract WithSalts is Script {
             inputs[0] = "mkdir";
             inputs[1] = _BYTECODE_DIR;
 
-            vm.ffi(inputs);
+            _ffi(inputs);
         }
     }
 
@@ -129,7 +131,7 @@ contract WithSalts is Script {
         inputs[7] = "--bytecodeHash";
         inputs[8] = vm.toString(bytecodeHash_);
 
-        vm.ffi(inputs);
+        _ffi(inputs);
 
         console2.log("Salt set for", saltKey_, "with prefix", prefix_);
     }
@@ -155,7 +157,7 @@ contract WithSalts is Script {
         inputs[9] = "--deployer";
         inputs[10] = vm.toString(deployer_);
 
-        vm.ffi(inputs);
+        _ffi(inputs);
 
         console2.log("Salt set for", saltKey_, "with prefix", prefix_);
     }
