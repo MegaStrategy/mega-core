@@ -80,7 +80,7 @@ The following must be performed to deploy and activate the system:
     - e.g. `./shell/deploy.sh --sequence ./script/deploy/sequences/launch.json --account <CAST_ACCOUNT> --broadcast <true|false> --verify <true|false> --resume <true|false> --env .env.base`
 3. Install the modules and policies into the Kernel using the `kernelInstallation.sh` script
 4. Grant admin, emergency and manager roles using the `Tasks.s.sol` script
-    - e.g. `forge script ./script/Tasks.s.sol --sig "addAdmin(string,address)()" base-sepolia <ADMIN_ADDRESS> --rpc-url <RPC_URL> --account <CAST_ACCOUNT> --sender <SIGNER_ADDRESS> --slow -vvv --broadcast`
+    - e.g. `./shell/grant_role.sh --account <CAST_ACCOUNT> --env .env.base --role admin --recipient <RECIPIENT> --broadcast false`
 5. Install the PRICE submodules by calling `installSubmodules()` in the `PriceConfiguration.s.sol` script
 6. Initialize the Banker using the `Tasks.s.sol` script
 
