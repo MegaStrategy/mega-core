@@ -1,10 +1,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.19;
 
-import {Vm} from "@forge-std/Vm.sol";
+import {Vm, VmSafe} from "@forge-std/Vm.sol";
+import {console2} from "@forge-std/console2.sol";
 
 library Quabi {
     Vm internal constant vm = Vm(address(bytes20(uint160(uint256(keccak256("hevm cheat code"))))));
+
+    function _ffi(
+        string[] memory inputs_
+    ) internal returns (bytes memory res) {
+        VmSafe.FfiResult memory result = vm.tryFfi(inputs_);
+        if (result.exitCode != 0) {
+            console2.log("FFI call failed");
+            console2.log("stdError:", string(result.stderr));
+
+            // solhint-disable-next-line custom-errors
+            revert("FFI call failed");
+        }
+
+        return result.stdout;
+    }
 
     function jq(
         string memory query,
@@ -15,7 +31,7 @@ library Quabi {
         inputs[1] = "-c";
         inputs[2] =
             string(bytes.concat("./test/lib/quabi/jq.sh ", bytes(query), " ", bytes(path), ""));
-        bytes memory res = vm.ffi(inputs);
+        bytes memory res = _ffi(inputs);
 
         response = abi.decode(res, (bytes[]));
     }
@@ -28,7 +44,7 @@ library Quabi {
         inputs[1] = "-c";
         inputs[2] =
             string(bytes.concat("./test/lib/quabi/path.sh ", bytes(contractName), ".json", ""));
-        bytes memory res = vm.ffi(inputs);
+        bytes memory res = _ffi(inputs);
 
         path = abi.decode(res, (string));
     }

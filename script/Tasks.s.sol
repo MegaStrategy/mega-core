@@ -26,32 +26,30 @@ import {MarketParamsLib} from "@morpho-blue-1.0.0/libraries/MarketParamsLib.sol"
 contract TasksScript is Script, WithEnvironment {
     uint256 public constant LLTV = 945e15; // 94.5%
 
-    function addAdmin(string calldata chain_, address admin_) external {
+    function grantRole(
+        string calldata chain_,
+        string calldata role_,
+        address recipient_
+    ) external {
         _loadEnv(chain_);
 
         vm.startBroadcast();
         RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
-            bytes32("admin"), admin_
+            bytes32(bytes(role_)), recipient_
         );
         vm.stopBroadcast();
     }
 
-    function addManager(string calldata chain_, address manager_) external {
+    function revokeRole(
+        string calldata chain_,
+        string calldata role_,
+        address recipient_
+    ) external {
         _loadEnv(chain_);
 
         vm.startBroadcast();
-        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
-            bytes32("manager"), manager_
-        );
-        vm.stopBroadcast();
-    }
-
-    function addEmergency(string calldata chain_, address emergency_) external {
-        _loadEnv(chain_);
-
-        vm.startBroadcast();
-        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).grantRole(
-            bytes32("emergency"), emergency_
+        RolesAdmin(_envAddressNotZero("mega.policies.RolesAdmin")).revokeRole(
+            bytes32(bytes(role_)), recipient_
         );
         vm.stopBroadcast();
     }

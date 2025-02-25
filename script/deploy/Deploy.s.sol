@@ -28,6 +28,7 @@ import {PriceConfigV2} from "src/policies/PriceConfig.v2.sol";
 import {MegaTokenOracle} from "src/policies/MegaTokenOracle.sol";
 
 // solhint-disable max-states-count
+// solhint-disable custom-errors
 /// @notice Script to deploy the system
 /// @dev    The address that this script is broadcast from must have write access to the contracts being configured
 contract Deploy is Script, WithSalts, WithEnvironment {
@@ -606,7 +607,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
             inputs[0] = "mkdir";
             inputs[1] = "deployments";
 
-            vm.ffi(inputs);
+            _ffi(inputs);
         }
 
         // Create file path
@@ -648,7 +649,7 @@ contract Deploy is Script, WithSalts, WithEnvironment {
             inputs[1] = string.concat("current.", chain_, ".", deployKey);
             inputs[2] = vm.toString(deployedTo[deployKey]);
 
-            vm.ffi(inputs);
+            _ffi(inputs);
         }
         console2.log("Done");
     }

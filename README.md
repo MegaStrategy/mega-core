@@ -80,7 +80,7 @@ The following must be performed to deploy and activate the system:
     - e.g. `./shell/deploy.sh --sequence ./script/deploy/sequences/launch.json --account <CAST_ACCOUNT> --broadcast <true|false> --verify <true|false> --resume <true|false> --env .env.base`
 3. Install the modules and policies into the Kernel using the `kernelInstallation.sh` script
 4. Grant admin, emergency and manager roles using the `Tasks.s.sol` script
-    - e.g. `forge script ./script/Tasks.s.sol --sig "addAdmin(string,address)()" base-sepolia <ADMIN_ADDRESS> --rpc-url <RPC_URL> --account <CAST_ACCOUNT> --sender <SIGNER_ADDRESS> --slow -vvv --broadcast`
+    - e.g. `./shell/grant_role.sh --account <CAST_ACCOUNT> --env .env.base --role admin --recipient <RECIPIENT> --broadcast false`
 5. Install the PRICE submodules by calling `installSubmodules()` in the `PriceConfiguration.s.sol` script
 6. Initialize the Banker using the `Tasks.s.sol` script
 
@@ -107,6 +107,7 @@ After deployment, a launch auction needs to be created in order to accept wETH d
 Follow these steps to create the launch auction:
 
 1. Set the auction details in the `script/auctions/launch.json` file.
+    - Note that the `start` value is an absolute timestamp
 2. Create a CSV file with the allowlist addresses and allocations.
 3. Generate the merkle root from the CSV file using the [oz-merkle-tree tool](https://github.com/Axis-Fi/axis-utils/tree/master/packages/oz-merkle-tree)
 4. Run the `createLaunchAuction.sh` script: `./shell/createLaunchAuction.sh --account <CAST_ACCOUNT> --allowlist <PATH_TO_ALLOWLIST_CSV> --merkleRoot <MERKLE_ROOT> --testnet <true|false> --broadcast <true|false> --env <PATH_TO_ENV_FILE>`
